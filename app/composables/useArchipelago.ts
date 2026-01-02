@@ -6,6 +6,15 @@ type Status = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 // Track if event handlers have been set up (to avoid duplicates)
 let eventHandlersInitialized = false;
+// Track the highest item index we've processed to avoid reprocessing on reconnect
+// Load from localStorage to survive page refreshes
+let highestItemIndexProcessed = (() => {
+  if (import.meta.client) {
+    const stored = localStorage.getItem('nonogram_ap_highestItemIndex');
+    return stored ? parseInt(stored, 10) : -1;
+  }
+  return -1;
+})();
 
 export function useArchipelago() {
   const nuxt = useNuxtApp();
@@ -13,7 +22,7 @@ export function useArchipelago() {
 
   const host = useState('ap_host', () => 'archipelago.gg');
   const port = useState('ap_port', () => 38281);
-  const slot = useState('ap_slot', () => 'NonogramPlayer');
+  const slot = useState('ap_slot', () => 'NonogramPlayer1');
   const password = useState('ap_password', () => '');
 
   const status = useState<Status>('ap_status', () => 'disconnected');
@@ -50,7 +59,23 @@ export function useArchipelago() {
 
     // Handle received items
     client.items.on('itemsReceived', (receivedItems: Item[], startingIndex: number) => {
-      for (const item of receivedItems) {
+      for (let i = 0; i < receivedItems.length; i++) {
+        const currentIndex = startingIndex + i;
+
+        // Skip items we've already processed
+        if (currentIndex <= highestItemIndexProcessed) {
+          continue;
+        }
+
+        // Update the highest index we've processed and persist it
+        highestItemIndexProcessed = currentIndex;
+        if (import.meta.client) {
+          localStorage.setItem('nonogram_ap_highestItemIndex', currentIndex.toString());
+        }
+
+        const item = receivedItems[i];
+        if (!item) continue; // Safety check
+
         // item.id is the item ID from the AP world
         const itemName = handleItemReceived(item.id);
         if (itemName) {
@@ -58,8 +83,8 @@ export function useArchipelago() {
           const sender = item.sender?.name || 'Unknown';
           const receiver = slot.value;
           let extra = '';
-          if (item.location && item.location.name) {
-            extra = ` (${item.location.name})`;
+          if (item.locationId) {
+            extra = ` (Location #${item.locationId})`;
           }
           addLogMessage(`${sender} sent ${itemName} to ${receiver}${extra}`.replace(/ ,/g, ''), 'item');
         }
@@ -126,8 +151,8 @@ export function useArchipelago() {
       lastMessage.value = '';
       goalCompleted.value = false;
 
-      // Enable Archipelago mode when connecting
-      items.enableArchipelagoMode();
+      // Enable Archipelago mode when connecting (preserve persisted state)
+      items.enableArchipelagoModeForConnection();
       addLogMessage('Connecting to Archipelago...', 'info');
 
       // Set up event handlers before connecting
@@ -154,14 +179,20 @@ export function useArchipelago() {
       // Store slot data for use by items composable
       slotData.value = receivedSlotData as Record<string, any>;
 
-      // Apply slot data settings
+      // Apply slot data settings (only on first connection, not reconnect)
+      // Check if we're reconnecting by seeing if archipelago mode was already enabled
+      const isFirstConnection = !items.archipelagoMode.value;
+
       if (slotData.value) {
         if (typeof slotData.value.starting_lives === 'number') {
           items.baseLives.value = slotData.value.starting_lives;
         }
         if (typeof slotData.value.starting_coins === 'number') {
           items.startingCoins.value = slotData.value.starting_coins;
-          items.coins.value = slotData.value.starting_coins;
+          // Only reset coins on first connection; preserve persisted coins on reconnect
+          if (isFirstConnection) {
+            items.coins.value = slotData.value.starting_coins;
+          }
         }
         if (typeof slotData.value.starting_hints === 'number') {
           items.startingHintReveals.value = slotData.value.starting_hints;

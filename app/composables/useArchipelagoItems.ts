@@ -15,6 +15,9 @@
  * 4. Handle the item in `receiveItem()` function
  */
 
+import { computed, reactive, ref, watch, onMounted } from 'vue';
+import { usePersistentRef } from './usePersistence';
+
 // ============================================
 // ITEM IDS - Must match your Archipelago world
 // ============================================
@@ -183,45 +186,47 @@ export function useArchipelagoItems() {
   // Remove unlocks object, as abilities are always available
 
   // Whether we're in Archipelago mode (locked) or free play (unlocked)
-  const archipelagoMode = ref(false);
+  const archipelagoMode = usePersistentRef('ap_archipelagoMode', false);
 
   // Hint reveal system - tracks how many row/col hints to reveal per puzzle
-  const startingHintReveals = ref(1); // Starting hints revealed setting (configurable)
-  const hintReveals = ref(0); // Number of hints revealed (permanent, stackable)
-  const revealedRows = ref<Set<number>>(new Set()); // Which row hints are revealed for current puzzle
-  const revealedCols = ref<Set<number>>(new Set()); // Which col hints are revealed for current puzzle
+  const startingHintReveals = usePersistentRef('ap_startingHintReveals', 1); // Starting hints revealed setting (configurable)
+  const hintReveals = usePersistentRef('ap_hintReveals', 0); // Number of hints revealed (permanent, stackable)
+  const revealedRows = usePersistentRef<Set<number>>('ap_revealedRows', new Set()); // Which row hints are revealed for current puzzle
+  const revealedCols = usePersistentRef<Set<number>>('ap_revealedCols', new Set()); // Which col hints are revealed for current puzzle
   const allHintsRevealed = computed(() => !archipelagoMode.value); // In free play, all hints shown
-  const currentPuzzleRows = ref(0); // Track current puzzle dimensions for re-selecting hints
-  const currentPuzzleCols = ref(0);
+  const currentPuzzleRows = usePersistentRef('ap_currentPuzzleRows', 0); // Track current puzzle dimensions for re-selecting hints
+  const currentPuzzleCols = usePersistentRef('ap_currentPuzzleCols', 0);
   const totalHintReveals = computed(() => startingHintReveals.value + hintReveals.value); // Total hints to reveal
 
   // Lives system
-  const baseLives = ref(3); // Default starting lives per puzzle (configurable)
-  const extraLives = ref(0); // Permanent extra lives from AP rewards
-  const currentLives = ref(baseLives.value); // Current lives for the puzzle
+  const baseLives = usePersistentRef('ap_baseLives', 3); // Default starting lives per puzzle (configurable)
+  const extraLives = usePersistentRef('ap_extraLives', 0); // Permanent extra lives from AP rewards
+  const currentLives = usePersistentRef('ap_currentLives', 3); // Current lives for the puzzle
   const maxLives = computed(() => baseLives.value + extraLives.value);
-  const unlimitedLives = ref(false); // Setting for unlimited lives (independent of AP mode)
+  const unlimitedLives = usePersistentRef('ap_unlimitedLives', false); // Setting for unlimited lives (independent of AP mode)
 
   // Coins system
-  const startingCoins = ref(5); // Starting coins (configurable)
-  const coins = ref(0); // Current coins
-  const coinsPerBundle = ref(5); // Coins received from AP bundle (configurable)
-  const unlimitedCoins = ref(false); // Setting for unlimited coins (independent of AP mode)
+  const startingCoins = usePersistentRef('ap_startingCoins', 5); // Starting coins (configurable)
+  const coins = usePersistentRef('ap_coins', 0); // Current coins
+  const coinsPerBundle = usePersistentRef('ap_coinsPerBundle', 5); // Coins received from AP bundle (configurable)
+  const unlimitedCoins = usePersistentRef('ap_unlimitedCoins', false); // Setting for unlimited coins (independent of AP mode)
 
   // Random cell solve tokens
-  const randomCellSolves = ref(0); // Number of random cell solves available
+  const randomCellSolves = usePersistentRef('ap_randomCellSolves', 0); // Number of random cell solves available
 
   // Temporary hint reveals (only for current puzzle, purchased from shop)
-  const tempHintReveals = ref(0); // Temporary hints for current puzzle
-  const TEMP_HINT_COST = ref(5); // Cost to buy a temporary hint reveal
+  const tempHintReveals = usePersistentRef('ap_tempHintReveals', 0); // Temporary hints for current puzzle
+  const TEMP_HINT_COST = usePersistentRef('ap_tempHintCost', 5); // Cost to buy a temporary hint reveal
 
   // Difficulty system
-  const currentDifficulty = ref(5); // Starting grid size (5x5)
-  const DIFFICULTY_INCREASE_COST = ref(30); // Cost to increase difficulty
+  const currentDifficulty = usePersistentRef('ap_currentDifficulty', 5); // Starting grid size (5x5)
+  const DIFFICULTY_INCREASE_COST = usePersistentRef('ap_difficultyIncreaseCost', 30); // Cost to increase difficulty
   const DIFFICULTY_STEP = 5; // How much to increase per purchase
 
   // Check/Location tracking
-  const completedChecks = ref<Set<number>>(new Set()); // Location IDs that have been sent
+  const completedChecks = usePersistentRef<Set<number>>('ap_completedChecks', new Set()); // Location IDs that have been sent
+
+  // Use reactive for the puzzle tracking objects
   const puzzlesCompleted = reactive({
     '5x5': 0,
     '10x10': 0,
@@ -234,14 +239,96 @@ export function useArchipelagoItems() {
     '15x15': false,
     '20x20': false,
   }); // First line completed per difficulty
-  const totalCoinsEarned = ref(0); // Total coins ever earned (for milestone tracking)
+
+  const totalCoinsEarned = usePersistentRef('ap_totalCoinsEarned', 0); // Total coins ever earned (for milestone tracking)
   const coinMilestones = reactive({
     50: false,
     100: false,
   }); // Coin milestones reached
 
   // Track received items for the UI
-  const receivedItems = ref<number[]>([]);
+  const receivedItems = usePersistentRef<number[]>('ap_receivedItems', []);
+
+  // Load persisted reactive object data on mount
+  onMounted(() => {
+    // Load puzzlesCompleted
+    const savedPuzzlesCompleted = localStorage.getItem('nonogram_ap_puzzlesCompleted');
+    if (savedPuzzlesCompleted) {
+      try {
+        const data = JSON.parse(savedPuzzlesCompleted);
+        Object.assign(puzzlesCompleted, data);
+      } catch (e) {
+        console.error('Failed to load puzzlesCompleted from storage:', e);
+      }
+    }
+
+    // Load firstLineCompleted
+    const savedFirstLineCompleted = localStorage.getItem('nonogram_ap_firstLineCompleted');
+    if (savedFirstLineCompleted) {
+      try {
+        const data = JSON.parse(savedFirstLineCompleted);
+        Object.assign(firstLineCompleted, data);
+      } catch (e) {
+        console.error('Failed to load firstLineCompleted from storage:', e);
+      }
+    }
+
+    // Load coinMilestones
+    const savedCoinMilestones = localStorage.getItem('nonogram_ap_coinMilestones');
+    if (savedCoinMilestones) {
+      try {
+        const data = JSON.parse(savedCoinMilestones);
+        Object.assign(coinMilestones, data);
+      } catch (e) {
+        console.error('Failed to load coinMilestones from storage:', e);
+      }
+    }
+  });
+
+  // Watch reactive objects and persist changes
+  watch(
+    () => puzzlesCompleted,
+    (newVal) => {
+      try {
+        localStorage.setItem('nonogram_ap_puzzlesCompleted', JSON.stringify(newVal));
+      } catch (e) {
+        console.error('Failed to save puzzlesCompleted to storage:', e);
+      }
+    },
+    { deep: true },
+  );
+
+  watch(
+    () => firstLineCompleted,
+    (newVal) => {
+      try {
+        localStorage.setItem('nonogram_ap_firstLineCompleted', JSON.stringify(newVal));
+      } catch (e) {
+        console.error('Failed to save firstLineCompleted to storage:', e);
+      }
+    },
+    { deep: true },
+  );
+
+  watch(
+    () => coinMilestones,
+    (newVal) => {
+      try {
+        localStorage.setItem('nonogram_ap_coinMilestones', JSON.stringify(newVal));
+      } catch (e) {
+        console.error('Failed to save coinMilestones to storage:', e);
+      }
+    },
+    { deep: true },
+  );
+
+  // Ensure completedChecks is a Set (convert if it's a plain object from old localStorage format)
+  function ensureCompletedChecksIsSet() {
+    if (!(completedChecks.value instanceof Set)) {
+      const data = Array.isArray(completedChecks.value) ? completedChecks.value : [];
+      completedChecks.value = new Set(data) as any;
+    }
+  }
 
   // Get item definition by ID
   function getItemDefinition(itemId: number): ItemDefinition | undefined {
@@ -251,6 +338,16 @@ export function useArchipelagoItems() {
   // Check if an item has been received
   function hasItem(itemId: number): boolean {
     return receivedItems.value.includes(itemId);
+  }
+
+  // Helper to add to completedChecks and trigger persistence
+  function addCompletedCheck(locationId: number) {
+    ensureCompletedChecksIsSet();
+    completedChecks.value.add(locationId);
+    // Manually trigger persistence for Set
+    if ((completedChecks as any).triggerPersist) {
+      (completedChecks as any).triggerPersist();
+    }
   }
 
   // Receive an item from Archipelago
@@ -292,7 +389,8 @@ export function useArchipelagoItems() {
     return { itemName: itemDef?.name ?? `Item #${itemId}`, checks: newChecks };
   }
 
-  // Enable Archipelago mode (lock everything)
+  // Enable Archipelago mode (lock everything, reset to initial state)
+  // This is called when manually enabling AP mode from settings
   function enableArchipelagoMode() {
     archipelagoMode.value = true;
     receivedItems.value = [];
@@ -317,6 +415,12 @@ export function useArchipelagoItems() {
     totalCoinsEarned.value = 0;
     coinMilestones[50] = false;
     coinMilestones[100] = false;
+  }
+
+  // Enable Archipelago mode without resetting persistent data (for reconnecting)
+  function enableArchipelagoModeForConnection() {
+    archipelagoMode.value = true;
+    // Don't reset any values - keep all persisted state
   }
 
   // Disable Archipelago mode (unlock everything for free play)
@@ -349,6 +453,8 @@ export function useArchipelagoItems() {
 
     console.log('[DEBUG addCoins] amount:', amount, 'totalCoinsEarned:', totalCoinsEarned.value, 'archipelagoMode:', archipelagoMode.value);
 
+    ensureCompletedChecksIsSet();
+
     // Check for coin milestones
     const newChecks: number[] = [];
     if (!coinMilestones[50] && totalCoinsEarned.value >= 50) {
@@ -356,7 +462,7 @@ export function useArchipelagoItems() {
       coinMilestones[50] = true;
       if (archipelagoMode.value && !completedChecks.value.has(AP_LOCATIONS.OBTAIN_50_COINS)) {
         console.log('[DEBUG addCoins] Adding 50 coin check:', AP_LOCATIONS.OBTAIN_50_COINS);
-        completedChecks.value.add(AP_LOCATIONS.OBTAIN_50_COINS);
+        addCompletedCheck(AP_LOCATIONS.OBTAIN_50_COINS);
         newChecks.push(AP_LOCATIONS.OBTAIN_50_COINS);
       }
     }
@@ -365,7 +471,7 @@ export function useArchipelagoItems() {
       coinMilestones[100] = true;
       if (archipelagoMode.value && !completedChecks.value.has(AP_LOCATIONS.OBTAIN_100_COINS)) {
         console.log('[DEBUG addCoins] Adding 100 coin check:', AP_LOCATIONS.OBTAIN_100_COINS);
-        completedChecks.value.add(AP_LOCATIONS.OBTAIN_100_COINS);
+        addCompletedCheck(AP_LOCATIONS.OBTAIN_100_COINS);
         newChecks.push(AP_LOCATIONS.OBTAIN_100_COINS);
       }
     }
@@ -516,6 +622,7 @@ export function useArchipelagoItems() {
 
   // Buy difficulty increase
   function buyDifficultyIncrease(): { success: boolean; checks: number[]; reason?: string } {
+    ensureCompletedChecksIsSet();
     // Only allow increasing if all puzzles for current difficulty are completed
     const difficulties = [5, 10, 15, 20];
     const idx = difficulties.indexOf(currentDifficulty.value);
@@ -531,13 +638,13 @@ export function useArchipelagoItems() {
       const newChecks: number[] = [];
       if (archipelagoMode.value) {
         if (currentDifficulty.value === 10 && !completedChecks.value.has(AP_LOCATIONS.UNLOCK_10X10)) {
-          completedChecks.value.add(AP_LOCATIONS.UNLOCK_10X10);
+          addCompletedCheck(AP_LOCATIONS.UNLOCK_10X10);
           newChecks.push(AP_LOCATIONS.UNLOCK_10X10);
         } else if (currentDifficulty.value === 15 && !completedChecks.value.has(AP_LOCATIONS.UNLOCK_15X15)) {
-          completedChecks.value.add(AP_LOCATIONS.UNLOCK_15X15);
+          addCompletedCheck(AP_LOCATIONS.UNLOCK_15X15);
           newChecks.push(AP_LOCATIONS.UNLOCK_15X15);
         } else if (currentDifficulty.value === 20 && !completedChecks.value.has(AP_LOCATIONS.UNLOCK_20X20)) {
-          completedChecks.value.add(AP_LOCATIONS.UNLOCK_20X20);
+          addCompletedCheck(AP_LOCATIONS.UNLOCK_20X20);
           newChecks.push(AP_LOCATIONS.UNLOCK_20X20);
         }
       }
@@ -562,6 +669,8 @@ export function useArchipelagoItems() {
     if (!archipelagoMode.value) return null;
     if (firstLineCompleted[difficulty]) return null;
 
+    ensureCompletedChecksIsSet();
+
     firstLineCompleted[difficulty] = true;
 
     const locationIds = {
@@ -573,7 +682,7 @@ export function useArchipelagoItems() {
 
     const locationId = locationIds[difficulty];
     if (!completedChecks.value.has(locationId)) {
-      completedChecks.value.add(locationId);
+      addCompletedCheck(locationId);
       return locationId;
     }
     return null;
@@ -582,6 +691,8 @@ export function useArchipelagoItems() {
   // Mark puzzle as completed and return any new location IDs that should be sent
   function markPuzzleCompleted(difficulty: '5x5' | '10x10' | '15x15' | '20x20'): number[] {
     if (!archipelagoMode.value) return [];
+
+    ensureCompletedChecksIsSet();
 
     puzzlesCompleted[difficulty] += 1;
     const newChecks: number[] = [];
@@ -593,7 +704,7 @@ export function useArchipelagoItems() {
     if (count <= maxCount) {
       const locationId = getPuzzleLocationId(difficulty, count);
       if (!completedChecks.value.has(locationId)) {
-        completedChecks.value.add(locationId);
+        addCompletedCheck(locationId);
         newChecks.push(locationId);
       }
     }
@@ -608,6 +719,7 @@ export function useArchipelagoItems() {
 
   // Check if a location has been completed
   function isLocationCompleted(locationId: number): boolean {
+    ensureCompletedChecksIsSet();
     return completedChecks.value.has(locationId);
   }
 
@@ -621,8 +733,10 @@ export function useArchipelagoItems() {
     return ITEM_REGISTRY.filter((item) => receivedItems.value.includes(item.id));
   });
 
-  // Start in free play mode by default
-  disableArchipelagoMode();
+  // Start in free play mode by default (only if not already in archipelago mode)
+  if (!archipelagoMode.value) {
+    disableArchipelagoMode();
+  }
 
   return {
     // State
@@ -682,6 +796,7 @@ export function useArchipelagoItems() {
     getLocationDefinition,
     isLocationCompleted,
     enableArchipelagoMode,
+    enableArchipelagoModeForConnection,
     disableArchipelagoMode,
     resetUnlocks,
     resetLivesForNewPuzzle,
