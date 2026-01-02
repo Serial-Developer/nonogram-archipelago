@@ -8,6 +8,7 @@
   import { useNonogram } from '~/composables/useNonogram';
   import { useArchipelago } from '~/composables/useArchipelago';
   import { AP_ITEMS } from '~/composables/useArchipelagoItems';
+  import { clearAllPersistence } from '~/composables/usePersistence';
 
   const {
     rows,
@@ -381,10 +382,39 @@
     return Math.max(min, Math.min(max, n));
   }
 
+  function clearAllProgress() {
+    const confirmed = confirm(
+      'Are you sure you want to delete ALL game data? This will reset:\n' +
+        '- Current puzzle progress\n' +
+        '- All items and coins\n' +
+        '- Puzzle completion history\n' +
+        '- Archipelago connection state\n\n' +
+        'This action cannot be undone.',
+    );
+
+    if (confirmed) {
+      // Clear persistence
+      clearAllPersistence();
+
+      // Reset all game state
+      // Clear player grid
+      clearPlayer();
+
+      // Reset items system
+      items.enableArchipelagoMode();
+      items.disableArchipelagoMode();
+
+      // Generate fresh puzzle
+      newRandom(5, 5);
+
+      alert('All game data has been cleared. Starting fresh!');
+    }
+  }
+
   /** Right panel tabs - on mobile, 'puzzle' is also a tab */
   type MobileTab = 'puzzle' | 'archipelago' | 'settings' | 'chat' | 'shop' | 'debug';
   type RightTab = 'archipelago' | 'settings' | 'chat' | 'shop' | 'debug';
-  const activeTab = ref<RightTab>('settings');
+  const activeTab = ref<RightTab>('archipelago');
   const activeMobileTab = ref<MobileTab>('puzzle');
 
   // Computed to check if a specific tab should be shown
@@ -1073,8 +1103,16 @@
                 <!-- Game Actions -->
                 <section class="space-y-4">
                   <h3 class="section-heading">Game Actions</h3>
-                  <div class="bg-neutral-800/30 rounded-sm p-4">
-                    <button type="button" class="btn-destructive w-full" @click="clearPlayer()">Clear Progress</button>
+                  <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
+                    <button type="button" class="btn-destructive w-full" @click="clearPlayer()">Clear Current Puzzle</button>
+                    <button
+                      type="button"
+                      class="btn-destructive w-full opacity-75 hover:opacity-100"
+                      @click="clearAllProgress()"
+                      title="Delete all saved progress including game state, items, coins, and puzzle history"
+                    >
+                      🗑️ Clear All Game Data
+                    </button>
                   </div>
                 </section>
               </div>
@@ -1289,52 +1327,6 @@
                       </div>
                     </div>
                   </button>
-                </div>
-              </section>
-
-              <!-- Unlocked Items -->
-              <section class="space-y-3">
-                <h3 class="section-heading flex items-center gap-2">
-                  <span class="text-lime-400">✓</span> Unlocked ({{ unlockedNonConsumables.length }})
-                </h3>
-                <div v-if="unlockedNonConsumables.length === 0" class="text-xs text-neutral-500 italic p-3 bg-neutral-800/20 rounded">
-                  No items unlocked yet
-                </div>
-                <div v-else class="space-y-2">
-                  <div v-for="item in unlockedNonConsumables" :key="item.id" class="p-3 bg-lime-500/10 border border-lime-500/20 rounded-sm">
-                    <div class="flex items-start justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-lime-300">{{ item.name }}</div>
-                        <div class="text-xs text-neutral-400">{{ item.description }}</div>
-                      </div>
-                      <span class="px-2 py-0.5 bg-lime-500/20 text-lime-300 rounded text-xs">{{ item.category }}</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Locked Items -->
-              <section class="space-y-3">
-                <h3 class="section-heading flex items-center gap-2">
-                  <span class="text-neutral-500">🔒</span> Locked ({{ lockedNonConsumables.length }})
-                </h3>
-                <div v-if="lockedNonConsumables.length === 0" class="text-xs text-lime-400 italic p-3 bg-neutral-800/20 rounded">
-                  All items unlocked! 🎉
-                </div>
-                <div v-else class="space-y-2">
-                  <div
-                    v-for="item in lockedNonConsumables"
-                    :key="item.id"
-                    class="p-3 bg-neutral-800/30 border border-neutral-700/30 rounded-sm opacity-60"
-                  >
-                    <div class="flex items-start justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-neutral-300">{{ item.name }}</div>
-                        <div class="text-xs text-neutral-500">{{ item.description }}</div>
-                      </div>
-                      <span class="px-2 py-0.5 bg-neutral-700/30 text-neutral-500 rounded text-xs">{{ item.category }}</span>
-                    </div>
-                  </div>
                 </div>
               </section>
             </div>

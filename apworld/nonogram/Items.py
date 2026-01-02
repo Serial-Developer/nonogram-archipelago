@@ -29,10 +29,6 @@ class NonogramItem(Item):
 
 item_table: Dict[str, NonogramItemData] = {
     # === Settings Unlocks (Progression) ===
-    "Place X": NonogramItemData(
-        code=8000001,
-        classification=ItemClassification.progression
-    ),
     "Auto-X": NonogramItemData(
         code=8000002,
         classification=ItemClassification.useful
@@ -92,7 +88,6 @@ item_groups: Dict[str, Set[str]] = {
         "Check Mistakes",
     },
     "Progression": {
-        "Place X",
         "Hint Reveal",
     },
     "Consumables": {

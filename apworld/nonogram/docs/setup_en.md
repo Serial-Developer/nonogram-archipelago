@@ -26,11 +26,6 @@ Complete nonogram puzzles to find location checks and receive items from other p
 - **Click + Drag**: Paint multiple cells (once unlocked)
 
 ### Items You Can Receive
-- **Place X**: Unlock the ability to mark cells with X
-- **Auto-X**: Automatically marks empty cells in completed lines
-- **Grey Completed Hints**: Greys out completed hint numbers
-- **Drag Painting**: Click and drag to paint multiple cells
-- **Check Mistakes**: Highlight incorrect cells
 - **Hint Reveal**: Reveals an additional row/column hint per puzzle
 - **Extra Life**: Increases your maximum lives
 - **Coin Bundle**: Grants coins for the in-game shop

@@ -1,4 +1,4 @@
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import {
   type Cell,
   type Clue,
@@ -12,15 +12,16 @@ import {
   makeGrid,
   randomSolution,
 } from '~/utils/nonogram';
+import { usePersistentRef } from './usePersistence';
 
 export function useNonogram() {
-  const rows = ref(5);
-  const cols = ref(5);
+  const rows = usePersistentRef('nonogram_rows', 5);
+  const cols = usePersistentRef('nonogram_cols', 5);
   const fillRate = ref(0.45);
 
   // SSR-safe deterministic initial state
-  const solution = ref<Grid<Cell>>(makeGrid(rows.value, cols.value, 0 as Cell));
-  const player = ref<Grid<Mark>>(makeGrid(rows.value, cols.value, 'empty'));
+  const solution = usePersistentRef('nonogram_solution', makeGrid(5, 5, 0 as Cell));
+  const player = usePersistentRef('nonogram_player', makeGrid(5, 5, 'empty'));
 
   // Full clue objects with position data (for completion checking)
   const rowClues = computed(() => computeRowClues(solution.value));
