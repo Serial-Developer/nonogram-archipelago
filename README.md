@@ -177,11 +177,6 @@ In Archipelago Mode:
 - Receive items from other players in your multiworld
 
 ### Items You Can Receive
-- **Place X** - Mark cells as empty
-- **Auto-X** - Automatically mark completed lines
-- **Grey Completed Hints** - Grey out finished hints
-- **Drag Painting** - Click and drag to paint
-- **Check Mistakes** - Highlight errors
 - **Hint Reveal** - See more row/column hints
 - **Extra Life** - Increase max lives
 - **Coin Bundle** - Get coins for the shop
@@ -193,7 +188,7 @@ In Archipelago Mode:
 
 ### Controls
 - **Left Click**: Fill a cell
-- **Right Click**: Mark a cell with X (when unlocked)
+- **Right Click**: Mark a cell with X
 - **Shift + Click** or **Click again**: Erase a cell
 
 ## Development
