@@ -18,7 +18,7 @@ https://stefanducharme.github.io/nonogram-archipelago/
 
 - [Node.js](https://nodejs.org/) (v18 or higher recommended)
 - npm (comes with Node.js)
-- Archipelago (only required for building the .apworld) https://github.com/ArchipelagoMW/Archipelago
+- Archipelago (only required to generate or host a game) https://github.com/ArchipelagoMW/Archipelago
 
 ## Getting Started
 
