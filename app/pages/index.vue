@@ -1,8 +1,8 @@
 <script setup lang="ts">
   // Compute the latest item message (sent or received)
   const latestItemMessage = computed(() => {
-    const itemsOnly = (messageLog?.value ?? []).filter((m) => m.type === 'item');
-    return itemsOnly.length > 0 ? itemsOnly[itemsOnly.length - 1]?.text ?? '' : '';
+    const messages = messageLog?.value ?? [];
+    return messages.length > 0 ? messages[messages.length - 1]?.text.replaceAll(',', ' ') ?? '' : '';
   });
   import NonogramBoard from '~/components/NonogramBoard.vue';
   import { useNonogram } from '~/composables/useNonogram';
@@ -416,6 +416,29 @@
   type RightTab = 'archipelago' | 'settings' | 'chat' | 'shop' | 'debug';
   const activeTab = ref<RightTab>('archipelago');
   const activeMobileTab = ref<MobileTab>('puzzle');
+
+  // Ref for chat log container to enable auto-scroll
+  const chatLogContainer = ref<HTMLElement | null>(null);
+
+  // Function to navigate to chat tab
+  const navigateToChat = () => {
+    if (isMobile.value) {
+      activeMobileTab.value = 'chat';
+    } else {
+      activeTab.value = 'chat';
+    }
+  };
+
+  // Watch for chat tab opening and auto-scroll to bottom
+  watch([activeTab, activeMobileTab], () => {
+    if (isTabVisible('chat')) {
+      nextTick(() => {
+        if (chatLogContainer.value) {
+          chatLogContainer.value.scrollTop = chatLogContainer.value.scrollHeight;
+        }
+      });
+    }
+  });
 
   // Computed to check if a specific tab should be shown
   const isTabVisible = (tab: RightTab) => {
@@ -1174,7 +1197,7 @@
               </div>
 
               <div class="bg-neutral-800/30 rounded-sm flex-1 min-h-0 overflow-hidden" style="height: auto">
-                <div class="h-full p-4 overflow-auto custom-scrollbar">
+                <div ref="chatLogContainer" class="h-full p-4 overflow-auto custom-scrollbar">
                   <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
                     <div class="text-center space-y-2">
                       <div>No messages yet</div>
@@ -1194,7 +1217,7 @@
                       }"
                     >
                       <span class="text-neutral-600 mr-2">{{ msg.time.toLocaleTimeString() }}</span>
-                      {{ msg.text }}
+                      {{ msg.text.replaceAll(',', ' ') }}
                     </div>
                   </div>
                 </div>
@@ -1410,11 +1433,17 @@
 
           <!-- Right side: Latest item message (sent or received) and version (always takes half) -->
           <div class="w-1/2 text-xs text-neutral-400 truncate text-right">
-            <span v-if="latestItemMessage" :key="latestItemMessage" class="inline-block animate-message-flash">
-              <span class="opacity-60">Latest item:</span> {{ latestItemMessage }}
-            </span>
+            <button
+              v-if="latestItemMessage"
+              :key="latestItemMessage"
+              @click="navigateToChat"
+              class="inline-block animate-message-flash hover:text-lime-400 transition-colors cursor-pointer"
+            >
+              <span class="opacity-60">Latest:</span> {{ latestItemMessage }}
+            </button>
             <span v-else class="opacity-40">No item messages</span>
-            <span class="ml-4 opacity-30">v0.3</span>
+            <!-- version -->
+            <span class="ml-4 opacity-30">v0.4</span>
           </div>
         </div>
       </div>
