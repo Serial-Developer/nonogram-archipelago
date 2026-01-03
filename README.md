@@ -182,10 +182,6 @@ In Archipelago Mode:
 - **Coin Bundle** - Get coins for the shop
 - **Random Cell Solve** - Auto-solve one cell
 
-### Location Checks
-- Complete your first row/column
-- Complete 1, 2, 4, 8, 16, 32, or 64 puzzles
-
 ### Controls
 - **Left Click**: Fill a cell
 - **Right Click**: Mark a cell with X
