@@ -55,8 +55,8 @@ def create_regions(world: "NonogramWorld") -> None:
     goal_puzzles = world.options.goal_puzzles.value
 
     # Victory requires completing the goal number of 5x5 puzzles (default)
-    # The location name is "Complete X 5x5 Puzzles"
-    goal_location_name = f"Complete {goal_puzzles} 5x5 Puzzles" if goal_puzzles > 1 else "Complete 1 5x5 Puzzle"
+    # The location name is "Complete X 5x5 Puzzle(s)" - must match Locations.py format
+    goal_location_name = f"Complete {goal_puzzles} 5x5 Puzzle{'s' if goal_puzzles > 1 else ''}"
     victory_location.access_rule = lambda state, loc=goal_location_name: state.can_reach(
         loc, "Location", player
     )
