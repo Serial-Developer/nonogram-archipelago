@@ -26,7 +26,7 @@ https://stefanducharme.github.io/nonogram-archipelago/
 
 **Option A: Clone with Git**
 ```bash
-git clone https://github.com/yourusername/nonogram-archipelago.git
+git clone https://github.com/StefanDucharme/nonogram-archipelago.git
 cd nonogram-archipelago/nuxt-nonogram
 ```
 
