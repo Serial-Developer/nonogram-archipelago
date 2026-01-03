@@ -266,6 +266,26 @@
   function solveRandomCell() {
     if (!solution.value) return false;
 
+    // Helper function to check if a row is complete
+    const isRowComplete = (r: number): boolean => {
+      for (let c = 0; c < cols.value; c++) {
+        const shouldBeFilled = solution.value[r]?.[c] === 1;
+        const playerFilled = player.value[r]?.[c] === 'fill';
+        if (shouldBeFilled !== playerFilled) return false;
+      }
+      return true;
+    };
+
+    // Helper function to check if a column is complete
+    const isColComplete = (c: number): boolean => {
+      for (let r = 0; r < rows.value; r++) {
+        const shouldBeFilled = solution.value[r]?.[c] === 1;
+        const playerFilled = player.value[r]?.[c] === 'fill';
+        if (shouldBeFilled !== playerFilled) return false;
+      }
+      return true;
+    };
+
     // Find all unsolved cells
     const unsolvedCells: Array<{ r: number; c: number }> = [];
     for (let r = 0; r < rows.value; r++) {
@@ -273,12 +293,17 @@
         const currentState = player.value[r]?.[c];
         const shouldBeFilled = solution.value[r]?.[c] === 1;
 
-        // Cell is unsolved if it's empty, or filled wrong, or x'd wrong
-        if (currentState === 'empty') {
-          unsolvedCells.push({ r, c });
-        } else if (currentState === 'fill' && !shouldBeFilled) {
-          unsolvedCells.push({ r, c });
-        } else if (currentState === 'x' && shouldBeFilled) {
+        // Cell is correctly solved if:
+        // - It's filled and should be filled, OR
+        // - It's x'd and should be x'd, OR
+        // - It's empty, shouldn't be filled, and would be auto-X'd (row or col complete)
+        const isCorrectlySolved =
+          (currentState === 'fill' && shouldBeFilled) ||
+          (currentState === 'x' && !shouldBeFilled) ||
+          (currentState === 'empty' && !shouldBeFilled && effectiveAutoX.value && (isRowComplete(r) || isColComplete(c)));
+
+        // Only add cells that are NOT correctly solved
+        if (!isCorrectlySolved) {
           unsolvedCells.push({ r, c });
         }
       }
@@ -292,17 +317,33 @@
     if (!cell) return false;
 
     const shouldBeFilled = solution.value[cell.r]?.[cell.c] === 1;
+    const currentState = player.value[cell.r]?.[cell.c];
 
-    // Set the correct value (use cycleCell to set it)
-    // First clear it if needed
-    if (player.value[cell.r]?.[cell.c] !== 'empty') {
+    // Double-check this cell is actually unsolved (defensive programming)
+    const isAlreadyCorrect = (currentState === 'fill' && shouldBeFilled) || (currentState === 'x' && !shouldBeFilled);
+    if (isAlreadyCorrect) {
+      // This shouldn't happen, but if it does, try again
+      console.warn('Selected an already-solved cell, retrying...');
+      return solveRandomCell();
+    }
+
+    // Set the correct value
+    // First, ensure the cell is empty
+    if (currentState !== 'empty') {
       cycleCell(cell.r, cell.c, 'erase');
     }
 
+    // Now set the correct value (cell is guaranteed to be empty)
     if (shouldBeFilled) {
-      cycleCell(cell.r, cell.c, 'fill');
+      cycleCell(cell.r, cell.c, 'fill'); // Will toggle empty -> fill
     } else {
-      cycleCell(cell.r, cell.c, 'x');
+      cycleCell(cell.r, cell.c, 'x'); // Will toggle empty -> x
+    }
+
+    // Award coins for the correct placement
+    const coinChecks = items.addCoins(1);
+    if (coinChecks.length > 0) {
+      checkLocations(coinChecks);
     }
 
     // Check for newly completed lines
