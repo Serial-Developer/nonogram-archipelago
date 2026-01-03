@@ -205,6 +205,11 @@
 
   // Handle cell changes - award coins for correct moves
   function handleCellChange(r: number, c: number, mode: 'fill' | 'x' | 'erase') {
+    // Block interaction if puzzle is solved or game is over
+    if (solved.value || gameOver.value) {
+      return;
+    }
+
     // Block X placement if not unlocked
     if (mode === 'x' && !canPlaceX.value) {
       return; // Silently ignore X placement attempts
@@ -247,6 +252,9 @@
         if (coinChecks.length > 0) {
           checkLocations(coinChecks);
         }
+      } else {
+        items.loseLife(); // Mistake
+        player.value = player.value.slice(); // Force update after mistake
       }
     }
 
