@@ -9,7 +9,7 @@ https://stefanducharme.github.io/nonogram-archipelago/
 
 - **Nonogram Puzzles**: Classic logic puzzle gameplay
 - **Archipelago Integration**: Connect to Archipelago multiworld servers to receive items and send checks
-- **Progressive Unlocks**: Start with limited abilities and unlock features like Auto-X, Drag Painting, and Hint Visibility
+- **Progressive Unlocks**: Start with limited Hint Visibility
 - **Resource System**: Manage lives and coins as you solve puzzles
 - **Difficulty Progression**: Start at 5x5 grids and unlock larger puzzles
 - **Shop System**: Spend coins on temporary hints and other powerups
