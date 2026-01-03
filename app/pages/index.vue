@@ -91,7 +91,7 @@
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
-  const coinsPerLine = ref(1); // Coins earned per completed row/column
+  const coinsPerLine = ref(0); // Coins earned per completed row/column
 
   // Computed values that combine user preferences with unlock state
   const effectiveShowMistakes = computed(() => showMistakes.value); // Always available, just a preference
@@ -144,10 +144,31 @@
 
       if (rowComplete) {
         completedRows.value.add(r);
-        const coinChecks = items.addCoins(coinsPerLine.value);
-        if (coinChecks.length > 0) {
-          checkLocations(coinChecks);
+
+        // Award coins for completing the row
+        let rowCoinChecks = items.addCoins(coinsPerLine.value);
+
+        // If auto-X is enabled, award coins for auto-X'd cells in this row
+        if (effectiveAutoX.value) {
+          let autoXCount = 0;
+          for (let c = 0; c < cols.value; c++) {
+            const shouldBeFilled = solution.value[r]?.[c] === 1;
+            const currentState = player.value[r]?.[c];
+            // Count empty cells that shouldn't be filled (will be auto-X'd)
+            if (!shouldBeFilled && currentState === 'empty') {
+              autoXCount++;
+            }
+          }
+          if (autoXCount > 0) {
+            const autoXCoinChecks = items.addCoins(autoXCount);
+            rowCoinChecks = [...rowCoinChecks, ...autoXCoinChecks];
+          }
         }
+
+        if (rowCoinChecks.length > 0) {
+          checkLocations(rowCoinChecks);
+        }
+
         // Check for first line completion and send to AP
         if (!hasCompletedFirstLineThisPuzzle.value) {
           hasCompletedFirstLineThisPuzzle.value = true;
@@ -186,10 +207,31 @@
 
       if (colComplete) {
         completedCols.value.add(c);
-        const coinChecks = items.addCoins(coinsPerLine.value);
-        if (coinChecks.length > 0) {
-          checkLocations(coinChecks);
+
+        // Award coins for completing the column
+        let colCoinChecks = items.addCoins(coinsPerLine.value);
+
+        // If auto-X is enabled, award coins for auto-X'd cells in this column
+        if (effectiveAutoX.value) {
+          let autoXCount = 0;
+          for (let r = 0; r < rows.value; r++) {
+            const shouldBeFilled = solution.value[r]?.[c] === 1;
+            const currentState = player.value[r]?.[c];
+            // Count empty cells that shouldn't be filled (will be auto-X'd)
+            if (!shouldBeFilled && currentState === 'empty') {
+              autoXCount++;
+            }
+          }
+          if (autoXCount > 0) {
+            const autoXCoinChecks = items.addCoins(autoXCount);
+            colCoinChecks = [...colCoinChecks, ...autoXCoinChecks];
+          }
         }
+
+        if (colCoinChecks.length > 0) {
+          checkLocations(colCoinChecks);
+        }
+
         // Check for first line completion and send to AP
         if (!hasCompletedFirstLineThisPuzzle.value) {
           hasCompletedFirstLineThisPuzzle.value = true;
