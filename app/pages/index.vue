@@ -1109,6 +1109,51 @@
                 </div>
               </section>
 
+              <!-- Shop Prices -->
+              <section class="space-y-3">
+                <h3 class="section-heading">Shop Prices</h3>
+                <div class="bg-neutral-800/30 rounded-sm p-4 space-y-4" :class="{ 'opacity-60': items.archipelagoMode.value }">
+                  <!-- Lock notice for Archipelago mode -->
+                  <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70 mb-2">🔒 Shop prices are locked in Archipelago mode</div>
+                  <div class="flex items-center justify-between">
+                    <label for="random-cell-solve-cost" class="text-sm text-neutral-300">Random Cell Solve Cost</label>
+                    <input
+                      id="random-cell-solve-cost"
+                      type="number"
+                      min="1"
+                      max="50"
+                      class="input-field w-20 text-center text-sm"
+                      v-model.number="items.RANDOM_CELL_SOLVE_COST.value"
+                      :disabled="items.archipelagoMode.value"
+                    />
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <label for="temp-hint-cost" class="text-sm text-neutral-300">Temporary Hint Cost</label>
+                    <input
+                      id="temp-hint-cost"
+                      type="number"
+                      min="1"
+                      max="50"
+                      class="input-field w-20 text-center text-sm"
+                      v-model.number="items.TEMP_HINT_COST.value"
+                      :disabled="items.archipelagoMode.value"
+                    />
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <label for="difficulty-increase-cost" class="text-sm text-neutral-300">Difficulty Increase Cost</label>
+                    <input
+                      id="difficulty-increase-cost"
+                      type="number"
+                      min="1"
+                      max="100"
+                      class="input-field w-20 text-center text-sm"
+                      v-model.number="items.DIFFICULTY_INCREASE_COST.value"
+                      :disabled="items.archipelagoMode.value"
+                    />
+                  </div>
+                </div>
+              </section>
+
               <div class="space-y-6">
                 <!-- Game Display -->
                 <section class="space-y-4">
@@ -1375,15 +1420,15 @@
                   <button
                     class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
                     :class="
-                      items.coins.value >= items.RANDOM_CELL_SOLVE_COST
+                      items.coins.value >= items.RANDOM_CELL_SOLVE_COST.value
                         ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
                         : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
                     "
-                    :disabled="items.coins.value < items.RANDOM_CELL_SOLVE_COST"
+                    :disabled="items.coins.value < items.RANDOM_CELL_SOLVE_COST.value"
                     @click="buyAndUseRandomCellSolve()"
                   >
                     <span>🎯 Buy & Use Random Cell Solve</span>
-                    <span class="text-xs">🪙 {{ items.RANDOM_CELL_SOLVE_COST }}</span>
+                    <span class="text-xs">🪙 {{ items.RANDOM_CELL_SOLVE_COST.value }}</span>
                   </button>
 
                   <!-- Temporary Hint Reveal (only in AP mode) -->

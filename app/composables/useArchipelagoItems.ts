@@ -597,9 +597,9 @@ export function useArchipelagoItems() {
   }
 
   // Buy a random cell solve from the shop
-  const RANDOM_CELL_SOLVE_COST = 5;
+  const RANDOM_CELL_SOLVE_COST = usePersistentRef('ap_randomCellSolveCost', 5);
   function buyRandomCellSolve(): boolean {
-    if (spendCoins(RANDOM_CELL_SOLVE_COST)) {
+    if (spendCoins(RANDOM_CELL_SOLVE_COST.value)) {
       return true;
     }
     return false;
