@@ -1,5 +1,5 @@
 # Example Nonopelagram Archipelago Player YAML
-name: NonopelagramPlayer1          # Slot name (must match client)
+name: NonopelagramP1          # Slot name (must match client)
 game: Nonopelagram                 # Do not change
 
 Nonopelagram:
