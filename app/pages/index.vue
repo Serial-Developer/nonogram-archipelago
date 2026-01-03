@@ -1579,7 +1579,7 @@
             </button>
             <span v-else class="opacity-40">No item messages</span>
             <!-- version -->
-            <span class="ml-4 opacity-30">v0.5</span>
+            <span class="ml-4 opacity-30">v0.6</span>
           </div>
         </div>
       </div>
