@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Package the Nonogram APWorld for distribution.
+Package the Nonopelagram APWorld for distribution.
 
 Usage:
     python build_apworld.py
 
-This creates a nonogram.apworld file that can be installed in Archipelago.
+This creates a nonopelagram.apworld file that can be installed in Archipelago.
 """
 
 import os
@@ -15,8 +15,8 @@ from pathlib import Path
 def build_apworld():
     # Get the directory where this script is located
     script_dir = Path(__file__).parent
-    world_dir = script_dir / "nonogram"
-    output_file = script_dir / "nonogram.apworld"
+    world_dir = script_dir / "nonopelagram"
+    output_file = script_dir / "nonopelagram.apworld"
 
     # Check that the world directory exists
     if not world_dir.exists():
@@ -40,8 +40,8 @@ def build_apworld():
                     continue
 
                 file_path = Path(root) / file
-                # Calculate the archive name (relative to apworld directory, with nonogram/ prefix)
-                arcname = "nonogram" / file_path.relative_to(world_dir)
+                # Calculate the archive name (relative to apworld directory, with nonopelagram/ prefix)
+                arcname = "nonopelagram" / file_path.relative_to(world_dir)
                 zipf.write(file_path, arcname)
                 print(f"  Added: {arcname}")
 
@@ -51,14 +51,14 @@ def build_apworld():
 
 
 if __name__ == "__main__":
-    print("Building Nonogram APWorld...")
+    print("Building nonopelagram APWorld...")
     print("-" * 40)
     success = build_apworld()
     print("-" * 40)
     if success:
         print("\nTo install:")
-        print("1. Copy nonogram.apworld to your Archipelago/custom_worlds/ folder")
+        print("1. Copy nonopelagram.apworld to your Archipelago/custom_worlds/ folder")
         print("   OR")
-        print("2. Copy the nonogram/ folder to Archipelago/worlds/")
+        print("2. Copy the nonopelagram/ folder to Archipelago/worlds/")
     else:
         print("\nBuild failed!")

@@ -2,7 +2,7 @@
 Nonogram Regions
 
 Defines the region structure for the world.
-Nonogram is simple - just one main region with all locations.
+Nonopelagram is simple - just one main region with all locations.
 """
 
 from typing import TYPE_CHECKING

@@ -22,7 +22,7 @@ export function useArchipelago() {
 
   const host = useState('ap_host', () => 'archipelago.gg');
   const port = useState('ap_port', () => 38281);
-  const slot = useState('ap_slot', () => 'NonogramPlayer1');
+  const slot = useState('ap_slot', () => 'NonopelagramPlayer1');
   const password = useState('ap_password', () => '');
 
   const status = useState<Status>('ap_status', () => 'disconnected');
@@ -79,7 +79,7 @@ export function useArchipelago() {
         // item.id is the item ID from the AP world
         const itemName = handleItemReceived(item.id);
         if (itemName) {
-          // Format: NonogramPlayer2 sent Extra Cooldown Trap to Player2 (Complete 2 5x5 Puzzles)
+          // Format: NonopelagramPlayer2 sent Extra Cooldown Trap to Player2 (Complete 2 5x5 Puzzles)
           const sender = item.sender?.name || 'Unknown';
           const receiver = slot.value;
           let extra = '';
@@ -168,7 +168,7 @@ export function useArchipelago() {
         tags.push('DeathLink');
       }
 
-      const receivedSlotData = await client.login(url, slot.value, 'Nonogram', {
+      const receivedSlotData = await client.login(url, slot.value, 'Nonopelagram', {
         password: password.value || '',
         // Request all items (own, starting, others)
         items: itemsHandlingFlags.all,

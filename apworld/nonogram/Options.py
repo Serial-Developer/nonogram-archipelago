@@ -1,5 +1,5 @@
 """
-Nonogram Options
+Nonopelagram Options
 
 Defines all YAML options for world generation.
 """

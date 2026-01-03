@@ -1,5 +1,5 @@
 """
-Nonogram Locations
+Nonopelagram Locations
 
 Defines all locations (checks) that can be sent to Archipelago.
 Location IDs must match the client's AP_LOCATIONS constants.
@@ -16,8 +16,8 @@ class NonogramLocationData(NamedTuple):
 
 
 class NonogramLocation(Location):
-    """Custom location class for Nonogram."""
-    game: str = "Nonogram"
+    """Custom location class for Nonopelagram."""
+    game: str = "Nonopelagram"
 
 
 # Location ID ranges (must match client's useArchipelagoItems.ts):

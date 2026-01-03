@@ -1,5 +1,5 @@
 """
-Nonogram Items
+Nonopelagram Items
 
 Defines all items that can be received from Archipelago.
 Item IDs must match the client's AP_ITEMS constants.
@@ -16,8 +16,8 @@ class NonogramItemData(NamedTuple):
 
 
 class NonogramItem(Item):
-    """Custom item class for Nonogram."""
-    game: str = "Nonogram"
+    """Custom item class for Nonopelagram."""
+    game: str = "Nonopelagram"
 
 
 # Item ID ranges (must match client's useArchipelagoItems.ts):

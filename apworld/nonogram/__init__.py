@@ -1,5 +1,5 @@
 """
-Nonogram Archipelago World
+Nonopelagram Archipelago World
 
 A picross/nonogram puzzle game for Archipelago multiworld randomizer.
 """
@@ -14,30 +14,30 @@ from .Regions import create_regions
 
 
 class NonogramWebWorld(WebWorld):
-    """Web world for Nonogram - provides tutorial and theme info."""
+    """Web world for Nonopelagram - provides tutorial and theme info."""
 
     theme = "partyTime"
 
     tutorials = [
         Tutorial(
             tutorial_name="Setup Guide",
-            description="A guide to setting up the Nonogram client for Archipelago.",
+            description="A guide to setting up the Nonopelagram client for Archipelago.",
             language="English",
             file_name="setup_en.md",
             link="setup/en",
-            authors=["YourName"]
+            authors=["StefanDucharme"]
         )
     ]
 
 
 class NonogramWorld(World):
     """
-    Nonogram (Picross) is a picture logic puzzle where you fill in cells
+    Nonopelagram (Picross) is a picture logic puzzle where you fill in cells
     based on number clues to reveal a hidden image. This Archipelago
     integration adds progression items that unlock game features.
     """
 
-    game = "Nonogram"
+    game = "Nonopelagram"
     web = NonogramWebWorld()
 
     options_dataclass = NonogramOptions

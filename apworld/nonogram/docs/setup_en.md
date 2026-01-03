@@ -1,13 +1,13 @@
-# Nonogram Setup Guide
+# Nonopelagram Setup Guide
 
 ## Required Software
 
 - A modern web browser (Chrome, Firefox, Edge, Safari)
-- Access to the Nonogram Archipelago client (web-based)
+- Access to the Nonopelagram Archipelago client (web-based)
 
 ## Connecting to a Server
 
-1. Open the Nonogram client in your web browser
+1. Open the Nonopelagram client in your web browser
 2. In the Archipelago panel, enter:
    - **Host**: The server address (e.g., `archipelago.gg` or `localhost`)
    - **Port**: The server port (default: `38281`)

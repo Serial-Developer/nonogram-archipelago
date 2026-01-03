@@ -1,8 +1,8 @@
-# Example Nonogram Archipelago Player YAML
-name: NonogramPlayer1          # Slot name (must match client)
-game: Nonogram                 # Do not change
+# Example Nonopelagram Archipelago Player YAML
+name: NonopelagramPlayer1          # Slot name (must match client)
+game: Nonopelagram                 # Do not change
 
-Nonogram:
+Nonopelagram:
   starting_lives: 3            # Number of lives at start
   starting_coins: 5            # Coins at start
   starting_hints: 1            # Hints at start

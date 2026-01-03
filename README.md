@@ -1,13 +1,13 @@
-# Archipelago Nonogram
+# Archipelago Nonopelagram
 
-A web-based Nonogram (Picross) puzzle game with [Archipelago](https://archipelago.gg/) multiworld randomizer integration.
+A web-based Nonogram (Picross) puzzle game called "Nonopelagram" with [Archipelago](https://archipelago.gg/) multiworld randomizer integration.
 
 ## Playable online at:
 https://stefanducharme.github.io/nonogram-archipelago/
 
 ## Features
 
-- **Nonogram Puzzles**: Classic logic puzzle gameplay
+- **Nonopelagram Puzzles**: Classic logic puzzle gameplay
 - **Archipelago Integration**: Connect to Archipelago multiworld servers to receive items and send checks
 - **Progressive Unlocks**: Start with limited Hint Visibility
 - **Resource System**: Manage lives and coins as you solve puzzles
@@ -18,7 +18,7 @@ https://stefanducharme.github.io/nonogram-archipelago/
 
 - [Node.js](https://nodejs.org/) (v18 or higher recommended)
 - npm (comes with Node.js)
-- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) (only required to generate or host a game) 
+- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) (only required to generate or host a game)
 
 ## Getting Started
 
@@ -87,8 +87,8 @@ Or create `Players/Nonogram.yaml` with:
 
 ```yaml
 name: TestPlayer
-game: Nonogram
-Nonogram:
+game: Nonopelagram
+Nonopelagram:
   starting_lives: 3
   starting_coins: 5
   starting_hints: 1
@@ -121,7 +121,7 @@ The server will display:
 Server running on port 38281
 ```
 
-### 6. Start the Nonogram Client
+### 6. Start the Nonopelagram Client
 
 In a new terminal:
 
