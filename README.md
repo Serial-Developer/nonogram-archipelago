@@ -208,7 +208,6 @@ nonogram-archipelago/
 │   ├── nonogram/           # Python world implementation
 │   ├── build_apworld.py    # APWorld packaging script
 │   └── Nonogram.yaml       # Example player YAML
-├── LOCAL_TESTING.md        # Local testing guide
 └── README.md               # This file
 ```
 
