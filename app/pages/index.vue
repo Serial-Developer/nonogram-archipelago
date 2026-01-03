@@ -698,7 +698,7 @@
     "
   >
     <div style="text-align: center">
-      <h1 style="font-size: 1.5rem; font-weight: bold; color: #f5f5f5; margin-bottom: 0.5rem">Archipelago Nonogram</h1>
+      <h1 style="font-size: 1.5rem; font-weight: bold; color: #f5f5f5; margin-bottom: 0.5rem">Nonopelagram</h1>
       <p style="font-size: 0.875rem; color: #a3a3a3">Loading puzzle...</p>
     </div>
   </div>
@@ -738,7 +738,7 @@
           <div class="flex flex-wrap items-center justify-between gap-2 mb-1 pb-1 border-b border-neutral-700/50">
             <div class="flex flex-wrap items-center gap-3 sm:gap-6">
               <div class="hidden sm:flex items-center gap-2">
-                <span class="text-sm text-neutral-400">Archipelago Nonogram</span>
+                <span class="text-sm text-neutral-400">Nonopelagram</span>
               </div>
               <!-- Lives Display -->
               <div class="flex items-center gap-1 sm:gap-2">
@@ -1588,7 +1588,7 @@
             </button>
             <span v-else class="opacity-40">No item messages</span>
             <!-- version -->
-            <span class="ml-4 opacity-30">v0.6.1</span>
+            <span class="ml-4 opacity-30">v0.6.2</span>
           </div>
         </div>
       </div>
