@@ -2,6 +2,9 @@
 
 A web-based Nonogram (Picross) puzzle game with [Archipelago](https://archipelago.gg/) multiworld randomizer integration.
 
+## Playable online at:
+https://stefanducharme.github.io/nonogram-archipelago/
+
 ## Features
 
 - **Nonogram Puzzles**: Classic logic puzzle gameplay
