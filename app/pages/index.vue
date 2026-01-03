@@ -1565,6 +1565,15 @@
             <div class="text-xs text-neutral-500 hidden lg:block">
               Left click: fill &nbsp;&nbsp;•&nbsp;&nbsp; Right click: X &nbsp;&nbsp;•&nbsp;&nbsp; Shift+click or click again: erase
             </div>
+            <div>
+              <button
+                type="button"
+                data-sleek
+                class="px-3 py-1.5 rounded text-xs transition-colors bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/30"
+              >
+                Give Feedback
+              </button>
+            </div>
           </div>
 
           <!-- Right side: Latest item message (sent or received) and version (always takes half) -->
@@ -1579,7 +1588,7 @@
             </button>
             <span v-else class="opacity-40">No item messages</span>
             <!-- version -->
-            <span class="ml-4 opacity-30">v0.6</span>
+            <span class="ml-4 opacity-30">v0.6.1</span>
           </div>
         </div>
       </div>
