@@ -1,13 +1,13 @@
-# Archipelago Nonopelagram
+# Nonopelagram
 
-A web-based Nonogram (Picross) puzzle game called "Nonopelagram" with [Archipelago](https://archipelago.gg/) multiworld randomizer integration.
+A web-based Nonogram (Picross) puzzle game with [Archipelago](https://archipelago.gg/) multiworld randomizer integration.
 
 ## Playable online at:
 https://stefanducharme.github.io/nonogram-archipelago/
 
 ## Features
 
-- **Nonopelagram Puzzles**: Classic logic puzzle gameplay
+- **Nonogram Puzzles**: Classic logic puzzle gameplay
 - **Archipelago Integration**: Connect to Archipelago multiworld servers to receive items and send checks
 - **Progressive Unlocks**: Start with limited Hint Visibility
 - **Resource System**: Manage lives and coins as you solve puzzles
