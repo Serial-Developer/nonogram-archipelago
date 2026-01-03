@@ -1414,7 +1414,7 @@
               <span class="opacity-60">Latest item:</span> {{ latestItemMessage }}
             </span>
             <span v-else class="opacity-40">No item messages</span>
-            <span class="ml-4 opacity-30">v0.2</span>
+            <span class="ml-4 opacity-30">v0.3</span>
           </div>
         </div>
       </div>

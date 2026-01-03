@@ -28,23 +28,6 @@ class NonogramItem(Item):
 # Consumables:     8004001
 
 item_table: Dict[str, NonogramItemData] = {
-    # === Settings Unlocks (Progression) ===
-    "Auto-X": NonogramItemData(
-        code=8000002,
-        classification=ItemClassification.useful
-    ),
-    "Grey Completed Hints": NonogramItemData(
-        code=8000003,
-        classification=ItemClassification.useful
-    ),
-    "Drag Painting": NonogramItemData(
-        code=8000004,
-        classification=ItemClassification.useful
-    ),
-    "Check Mistakes": NonogramItemData(
-        code=8000005,
-        classification=ItemClassification.useful
-    ),
 
     # === Hint Reveals (Progression - needed to solve harder puzzles) ===
     "Hint Reveal": NonogramItemData(
@@ -80,13 +63,6 @@ item_table: Dict[str, NonogramItemData] = {
 
 # Item groups for hint system
 item_groups: Dict[str, Set[str]] = {
-    "Settings": {
-        "Place X",
-        "Auto-X",
-        "Grey Completed Hints",
-        "Drag Painting",
-        "Check Mistakes",
-    },
     "Progression": {
         "Hint Reveal",
     },
