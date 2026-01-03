@@ -56,8 +56,6 @@ The app will be available at `http://localhost:3000`
 
 ## Archipelago Local Testing & Setup
 
-For detailed local testing, see [LOCAL_TESTING.md](LOCAL_TESTING.md). Below is a summary of the most up-to-date process:
-
 ### 1. Build the APWorld file
 
 Open a terminal and run:
