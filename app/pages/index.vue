@@ -1,10 +1,6 @@
 <script setup lang="ts">
-  // Compute the latest item message (sent or received)
-  const latestItemMessage = computed(() => {
-    const messages = messageLog?.value ?? [];
-    return messages.length > 0 ? messages[messages.length - 1]?.text.replaceAll(',', ' ') ?? '' : '';
-  });
   import NonogramBoard from '~/components/NonogramBoard.vue';
+  import ThemePicker from '~/components/ThemePicker.vue';
   import { useNonogram } from '~/composables/useNonogram';
   import { useArchipelago } from '~/composables/useArchipelago';
   import { AP_ITEMS } from '~/composables/useArchipelagoItems';
@@ -49,6 +45,12 @@
     debugReceiveItem,
     items,
   } = useArchipelago();
+
+  // Compute the latest item message (sent or received)
+  const latestItemMessage = computed(() => {
+    const messages = messageLog?.value ?? [];
+    return messages.length > 0 ? messages[messages.length - 1]?.text.replaceAll(',', ' ') ?? '' : '';
+  });
 
   // Loading state - start as true on server, will be set false on client after hydration
   const isLoading = ref(true);
@@ -784,6 +786,10 @@
                     ✕
                   </button>
                 </div>
+              </div>
+              <!-- Theme Picker - aligned to the right -->
+              <div class="ml-auto">
+                <ThemePicker />
               </div>
             </div>
           </div>
