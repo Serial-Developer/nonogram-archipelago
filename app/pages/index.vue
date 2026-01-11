@@ -961,7 +961,7 @@
                 v-for="loc in items.LOCATION_REGISTRY"
                 :key="loc.id"
                 class="flex items-center gap-1.5 text-[10px]"
-                :class="items.isLocationCompleted(loc.id) ? 'text-lime-400' : 'text-neutral-600'"
+                :class="items.isLocationCompleted(loc.id) ? 'text-lime-400' : 'text-white/70'"
               >
                 <span>{{ items.isLocationCompleted(loc.id) ? '✓' : '○' }}</span>
                 <span>{{ loc.name }}</span>
@@ -1569,7 +1569,7 @@
               <span class="text-neutral-400 font-medium">Archipelago</span>
               <span :class="statusMeta.text" class="font-semibold">{{ statusMeta.label }}</span>
             </div>
-            <div class="text-xs text-neutral-500 hidden lg:block">
+            <div class="text-xs text-white/70 hidden lg:block">
               Left click: fill &nbsp;&nbsp;•&nbsp;&nbsp; Right click: X &nbsp;&nbsp;•&nbsp;&nbsp; Shift+click or click again: erase
             </div>
             <div>
@@ -1593,9 +1593,9 @@
             >
               <span class="opacity-60">Latest:</span> {{ latestItemMessage }}
             </button>
-            <span v-else class="opacity-40">No item messages</span>
+            <span v-else class="opacity-50">No item messages</span>
             <!-- version -->
-            <span class="ml-4 opacity-30">v0.6.3</span>
+            <span class="ml-4 opacity-50">v0.6.3</span>
           </div>
         </div>
       </div>

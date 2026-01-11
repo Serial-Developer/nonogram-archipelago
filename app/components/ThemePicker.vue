@@ -3,7 +3,7 @@
   import { useTheme } from '~/composables/useTheme';
   import { themeList } from '~/utils/themes';
 
-  const { themeId, setThemeById } = useTheme();
+  const { themeId, themeName, setThemeById } = useTheme();
 
   const isOpen = ref(false);
 </script>
@@ -25,7 +25,7 @@
           d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.5a2 2 0 00-1 .276m-4 5.414l-2.5-2.5"
         />
       </svg>
-      <span class="hidden sm:inline">Theme</span>
+      <span class="hidden sm:inline">{{ themeName }}</span>
     </button>
 
     <!-- Theme Dropdown Menu -->
