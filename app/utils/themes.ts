@@ -64,11 +64,24 @@ export interface Theme {
     'tab-inactive-text': string;
     'tab-inactive-bg': string;
     'section-heading': string;
+
+    // Nonogram grid
+    'grid-line-thin': string;
+    'grid-line-thick': string;
+    'grid-cell-filled': string;
+    'grid-cell-hover': string;
+    'grid-cell-selected': string;
+    'grid-clue-text': string;
+    'grid-clue-text-complete': string;
+    'grid-mistake-bg': string;
+    'grid-x-mark': string;
+    'grid-x-mark-wrong': string;
+    'grid-x-mark-auto': string;
   };
 }
 
 export const themes: Record<string, Theme> = {
-  // High contrast default - optimized for accessibility
+  // dark default
   default: {
     id: 'default',
     name: 'Dark (Default)',
@@ -122,6 +135,19 @@ export const themes: Record<string, Theme> = {
       'tab-inactive-text': '#9ca3af',
       'tab-inactive-bg': 'rgba(31, 41, 55, 0.5)',
       'section-heading': '#e5e7eb',
+
+      // Nonogram grid colors
+      'grid-line-thin': 'rgba(255, 255, 255, 0.1)',
+      'grid-line-thick': 'rgba(255, 255, 255, 0.45)',
+      'grid-cell-filled': '#1f2937',
+      'grid-cell-hover': 'rgba(107, 114, 128, 0.2)',
+      'grid-cell-selected': 'rgba(75, 85, 99, 0.3)',
+      'grid-clue-text': '#fff',
+      'grid-clue-text-complete': '#a1a5af',
+      'grid-mistake-bg': 'rgba(239, 68, 68, 0.5)',
+      'grid-x-mark': '#9ca3af',
+      'grid-x-mark-wrong': '#ef4444',
+      'grid-x-mark-auto': '#cbd5e1',
     },
   },
 
@@ -178,6 +204,19 @@ export const themes: Record<string, Theme> = {
       'tab-inactive-text': '#cccccc',
       'tab-inactive-bg': 'rgba(51, 51, 51, 0.8)',
       'section-heading': '#ffff00',
+
+      // Nonogram grid colors - maximum contrast
+      'grid-line-thin': 'rgba(255, 255, 255, 0.3)',
+      'grid-line-thick': 'rgba(255, 255, 255, 0.8)',
+      'grid-cell-filled': 'rgba(255, 255, 0, 0.3)',
+      'grid-cell-hover': 'rgba(255, 255, 0, 0.2)',
+      'grid-cell-selected': 'rgba(255, 255, 0, 0.3)',
+      'grid-clue-text': '#ffff00',
+      'grid-clue-text-complete': 'rgba(255, 255, 0, 0.6)',
+      'grid-mistake-bg': 'rgba(255, 0, 0, 0.8)',
+      'grid-x-mark': '#00ffff',
+      'grid-x-mark-wrong': '#ff0000',
+      'grid-x-mark-auto': '#ffffff',
     },
   },
 };

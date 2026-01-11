@@ -849,6 +849,7 @@
                   :is-row-hint-revealed="items.isRowHintRevealed"
                   :is-col-hint-revealed="items.isColHintRevealed"
                   :mobile-cell-mode="mobileCellMode"
+                  :disabled="gameOver && !solved"
                   @cell="handleCellChange"
                 />
                 <div v-else class="flex items-center justify-center" style="width: 300px; height: 300px">

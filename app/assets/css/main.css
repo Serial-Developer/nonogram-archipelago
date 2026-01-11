@@ -60,6 +60,19 @@
   --color-tab-inactive-bg: rgba(31, 41, 55, 0.5);
   --color-section-heading: #e5e7eb;
 
+  /* Nonogram grid */
+  --color-grid-line-thin: rgba(255, 255, 255, 0.1);
+  --color-grid-line-thick: rgba(255, 255, 255, 0.45);
+  --color-grid-cell-filled: #1f2937;
+  --color-grid-cell-hover: rgba(107, 114, 128, 0.2);
+  --color-grid-cell-selected: rgba(75, 85, 99, 0.3);
+  --color-grid-clue-text: #fff;
+  --color-grid-clue-text-complete: #6b7280;
+  --color-grid-mistake-bg: rgba(239, 68, 68, 0.5);
+  --color-grid-x-mark: #9ca3af;
+  --color-grid-x-mark-wrong: #ef4444;
+  --color-grid-x-mark-auto: #6b7280;
+
   /* Legacy design tokens for consistent theming */
   --color-primary: #525252;
   --color-primary-legacy-hover: #404040;
@@ -386,6 +399,17 @@ body {
 
 .animate-message-flash {
   animation: message-flash 1s ease-out;
+}
+
+/* Nonogram grid helpers */
+.clue-text-default {
+  color: var(--color-grid-clue-text);
+  @apply font-bold;
+}
+
+.clue-text-complete {
+  color: var(--color-grid-clue-text-complete);
+  @apply font-bold;
 }
 
 /* Mobile touch improvements */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue';
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
   import type { Cell, Mark } from '~/utils/nonogram';
 
   const props = defineProps<{
@@ -19,6 +19,7 @@
     isRowHintRevealed?: (rowIndex: number) => boolean;
     isColHintRevealed?: (colIndex: number) => boolean;
     mobileCellMode?: 'fill' | 'x'; // For mobile mode toggle
+    disabled?: boolean; // Disable interactions when puzzle is failed or completed
   }>();
 
   const emit = defineEmits<{
@@ -66,6 +67,14 @@
     window.removeEventListener('resize', updateWindowWidth);
   });
 
+  // Clear selected cell when puzzle changes
+  watch(
+    () => props.rows,
+    () => {
+      selected.value = null;
+    },
+  );
+
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
 
@@ -112,6 +121,9 @@
   // Prevent double event firing on mobile (touchstart then pointerdown)
   let lastTouchTime = 0;
   function onPointerDown(e: PointerEvent | TouchEvent, r: number, c: number) {
+    // Ignore all clicks when disabled
+    if (props.disabled) return;
+
     const now = Date.now();
     const mobile = window.innerWidth < 1024;
     if (mobile && e.type === 'pointerdown') {
@@ -374,13 +386,13 @@
               :class="
                 (() => {
                   const clueArray = colClues[c - 1];
-                  if (!clueArray) return 'text-neutral-300';
+                  if (!clueArray) return 'clue-text-default';
                   const clueIndex = i - 1 - (colDepth - clueArray.length);
                   if (clueIndex >= 0 && clueIndex < clueArray.length) {
                     const isComplete = props.greyCompletedHints && props.isColClueComplete?.(c - 1, clueIndex);
-                    return isComplete ? 'text-neutral-600' : 'text-neutral-300';
+                    return isComplete ? 'clue-text-complete' : 'clue-text-default';
                   }
-                  return 'text-neutral-300';
+                  return 'clue-text-default';
                 })()
               "
             >
@@ -421,13 +433,13 @@
               :class="
                 (() => {
                   const clueArray = rowClues[r - 1];
-                  if (!clueArray) return 'text-neutral-300';
+                  if (!clueArray) return 'clue-text-default';
                   const clueIndex = i - 1 - (rowDepth - clueArray.length);
                   if (clueIndex >= 0 && clueIndex < clueArray.length) {
                     const isComplete = props.greyCompletedHints && props.isRowClueComplete?.(r - 1, clueIndex);
-                    return isComplete ? 'text-neutral-600' : 'text-neutral-300';
+                    return isComplete ? 'clue-text-complete' : 'clue-text-default';
                   }
-                  return 'text-neutral-300';
+                  return 'clue-text-default';
                 })()
               "
             >
@@ -467,10 +479,10 @@
             shape-rendering="crispEdges"
           >
             <!-- OUTER BORDER (half-pixel inset so all sides render the same) -->
-            <line x1="0.5" y1="0.5" :x2="boardW - 0.5" y2="0.5" stroke="rgba(255,255,255,0.10)" stroke-width="1" />
-            <line x1="0.5" y1="0.5" x2="0.5" :y2="boardH - 0.5" stroke="rgba(255,255,255,0.10)" stroke-width="1" />
-            <line x1="0.5" :y1="boardH - 0.5" :x2="boardW - 0.5" :y2="boardH - 0.5" stroke="rgba(255,255,255,0.10)" stroke-width="1" />
-            <line :x1="boardW - 0.5" y1="0.5" :x2="boardW - 0.5" :y2="boardH - 0.5" stroke="rgba(255,255,255,0.10)" stroke-width="1" />
+            <line x1="0.5" y1="0.5" :x2="boardW - 0.5" y2="0.5" :stroke="`var(--color-grid-line-thin)`" stroke-width="1" />
+            <line x1="0.5" y1="0.5" x2="0.5" :y2="boardH - 0.5" :stroke="`var(--color-grid-line-thin)`" stroke-width="1" />
+            <line x1="0.5" :y1="boardH - 0.5" :x2="boardW - 0.5" :y2="boardH - 0.5" :stroke="`var(--color-grid-line-thin)`" stroke-width="1" />
+            <line :x1="boardW - 0.5" y1="0.5" :x2="boardW - 0.5" :y2="boardH - 0.5" :stroke="`var(--color-grid-line-thin)`" stroke-width="1" />
 
             <!-- INTERNAL vertical lines at cell boundaries -->
             <template v-for="i in cols - 1" :key="`v-${i}`">
@@ -479,7 +491,7 @@
                 y1="0"
                 :x2="i * cellSize"
                 :y2="boardH"
-                :stroke="isThick(i) ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.10)'"
+                :stroke="isThick(i) ? `var(--color-grid-line-thick)` : `var(--color-grid-line-thin)`"
                 :stroke-width="isThick(i) ? 2 : 1"
               />
             </template>
@@ -491,7 +503,7 @@
                 :y1="i * cellSize"
                 :x2="boardW"
                 :y2="i * cellSize"
-                :stroke="isThick(i) ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.10)'"
+                :stroke="isThick(i) ? `var(--color-grid-line-thick)` : `var(--color-grid-line-thin)`"
                 :stroke-width="isThick(i) ? 2 : 1"
               />
             </template>
@@ -513,31 +525,28 @@
             <button
               v-for="idx in rows * cols"
               :key="idx"
-              class="flex items-center justify-center transition active:scale-[0.98] hover:bg-neutral-700/30"
-              :class="
-                (() => {
+              class="flex items-center justify-center transition active:scale-[0.98]"
+              :style="{
+                backgroundColor: (() => {
                   const r = Math.floor((idx - 1) / cols);
                   const c = (idx - 1) % cols;
                   const playerRow = player[r];
-                  if (!playerRow) return 'bg-transparent';
+                  if (!playerRow) {
+                    const sel = selected && selected.r === r && selected.c === c;
+                    return sel ? `var(--color-grid-cell-selected)` : 'transparent';
+                  }
                   const v = playerRow[c];
                   const sel = selected && selected.r === r && selected.c === c;
+                  const wrongFill = isWrongFill(r, c);
+                  const autoXing = shouldAutoX(r, c);
 
-                  return [
-                    // normal cell look
-                    v === 'fill' ? 'bg-neutral-800' : 'bg-transparent',
-
-                    // selection: cell itself turns blue (even if empty)
-                    sel ? 'bg-neutral-600/30' : '',
-
-                    // auto-X styling (before mistakes so mistakes can override)
-                    shouldAutoX(r, c) ? 'bg-neutral-700/40' : '',
-
-                    // mistakes (optional) - fill mistakes
-                    isWrongFill(r, c) ? 'bg-red-500/50' : '',
-                  ];
-                })()
-              "
+                  if (wrongFill) return `var(--color-grid-mistake-bg)`;
+                  if (sel) return `var(--color-grid-cell-selected)`;
+                  if (autoXing) return `var(--color-grid-cell-hover)`;
+                  if (v === 'fill') return `var(--color-grid-cell-filled)`;
+                  return 'transparent';
+                })(),
+              }"
               @pointerdown="(e) => onPointerDown(e as PointerEvent, Math.floor((idx - 1) / cols), (idx - 1) % cols)"
               @pointermove="(e) => onPointerMove(e as PointerEvent, Math.floor((idx - 1) / cols), (idx - 1) % cols)"
               @pointerup="(e) => onPointerUp(e as PointerEvent)"
@@ -546,16 +555,15 @@
               <span
                 v-if="player[Math.floor((idx - 1) / cols)]?.[(idx - 1) % cols] === 'x' || shouldAutoX(Math.floor((idx - 1) / cols), (idx - 1) % cols)"
                 class="text-sm font-bold"
-                :class="
-                  (() => {
+                :style="{
+                  color: (() => {
                     const r = Math.floor((idx - 1) / cols);
                     const c = (idx - 1) % cols;
-                    // Make mistake X marks obvious with red text
-                    if (isWrongX(r, c)) return 'text-red-500';
-                    if (shouldAutoX(r, c)) return 'text-neutral-500';
-                    return 'text-neutral-400 opacity-70';
-                  })()
-                "
+                    if (isWrongX(r, c)) return `var(--color-grid-x-mark-wrong)`;
+                    if (shouldAutoX(r, c)) return `var(--color-grid-x-mark-auto)`;
+                    return `var(--color-grid-x-mark)`;
+                  })(),
+                }"
               >
                 ✕
               </span>
