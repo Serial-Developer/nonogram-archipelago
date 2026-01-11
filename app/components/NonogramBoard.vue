@@ -75,6 +75,14 @@
     },
   );
 
+  // Also clear selection when a new solution is loaded (new puzzle)
+  watch(
+    () => props.solution,
+    () => {
+      selected.value = null;
+    },
+  );
+
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
 
