@@ -141,7 +141,7 @@ export const themes: Record<string, Theme> = {
       'grid-line-thick': 'rgba(255, 255, 255, 0.45)',
       'grid-cell-filled': '#1f2937',
       'grid-cell-hover': 'rgba(107, 114, 128, 0.2)',
-      'grid-cell-selected': 'rgba(75, 85, 99, 0.3)',
+      'grid-cell-selected': '#1f2937',
       'grid-clue-text': '#fff',
       'grid-clue-text-complete': '#a1a5af',
       'grid-mistake-bg': 'rgba(239, 68, 68, 0.5)',
