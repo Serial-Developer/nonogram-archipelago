@@ -1603,7 +1603,7 @@
             </button>
             <span v-else class="opacity-50">No item messages</span>
             <!-- version -->
-            <span class="ml-4 opacity-50">v0.6.4</span>
+            <span class="ml-4 opacity-50">v0.6.5</span>
           </div>
         </div>
       </div>
