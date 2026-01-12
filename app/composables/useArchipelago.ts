@@ -28,6 +28,9 @@ export function useArchipelago() {
   const status = useState<Status>('ap_status', () => 'disconnected');
   const lastMessage = useState<string>('ap_lastMessage', () => '');
 
+  // Secure connection setting (true = wss://, false = ws://)
+  const useSecureConnection = useState('ap_useSecure', () => true);
+
   // Death Link state
   const deathLinkEnabled = useState('ap_deathLink', () => false);
   const lastDeathTime = useState('ap_lastDeathTime', () => 0);
@@ -160,7 +163,8 @@ export function useArchipelago() {
 
       // Build the connection URL
       // archipelago.js v2 uses: client.login(url, name, game, options)
-      const url = `wss://${host.value}:${port.value}`;
+      const protocol = useSecureConnection.value ? 'wss' : 'ws';
+      const url = `${protocol}://${host.value}:${port.value}`;
 
       // Build tags array
       const tags: string[] = [];
@@ -336,6 +340,7 @@ export function useArchipelago() {
     port,
     slot,
     password,
+    useSecureConnection,
     status,
     lastMessage,
     messageLog,

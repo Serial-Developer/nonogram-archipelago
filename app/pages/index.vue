@@ -28,6 +28,7 @@
     port,
     slot,
     password,
+    useSecureConnection,
     status,
     lastMessage,
     messageLog,
@@ -1312,6 +1313,13 @@
                   <div class="space-y-1">
                     <label class="text-xs font-medium text-neutral-300">Password</label>
                     <input v-model="password" type="password" class="input-field" placeholder="Optional password" />
+                  </div>
+                  <div class="flex items-center gap-3 pt-2">
+                    <input type="checkbox" v-model="useSecureConnection" class="checkbox-field" id="secure-connection" />
+                    <label for="secure-connection" class="text-xs text-neutral-300 cursor-pointer">
+                      Use secure connection
+                      <span class="text-neutral-500 text-2xs ml-1">(uncheck for local servers)</span>
+                    </label>
                   </div>
                 </div>
 
