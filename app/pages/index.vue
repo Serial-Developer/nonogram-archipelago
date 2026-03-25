@@ -50,7 +50,7 @@
   // Compute the latest item message (sent or received)
   const latestItemMessage = computed(() => {
     const messages = messageLog?.value ?? [];
-    return messages.length > 0 ? messages[messages.length - 1]?.text.replaceAll(',', ' ') ?? '' : '';
+    return messages.length > 0 ? (messages[messages.length - 1]?.text.replaceAll(',', ' ') ?? '') : '';
   });
 
   // Loading state - start as true on server, will be set false on client after hydration
@@ -1544,11 +1544,25 @@
                       :key="item.id"
                       class="px-2 py-1 text-xs rounded transition-colors"
                       :class="
-                      items.hasItem(item.id) && ![items.AP_ITEMS.EXTRA_LIFE, items.AP_ITEMS.COINS_BUNDLE, items.AP_ITEMS.UNLOCK_HINTS, items.AP_ITEMS.SOLVE_RANDOM_CELL].includes(item.id as any)
-                        ? 'bg-lime-500/20 text-lime-300 cursor-default'
-                        : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-200'
-                    "
-                      :disabled="items.hasItem(item.id) && ![items.AP_ITEMS.EXTRA_LIFE, items.AP_ITEMS.COINS_BUNDLE, items.AP_ITEMS.UNLOCK_HINTS, items.AP_ITEMS.SOLVE_RANDOM_CELL].includes(item.id as any)"
+                        items.hasItem(item.id) &&
+                        ![
+                          items.AP_ITEMS.EXTRA_LIFE,
+                          items.AP_ITEMS.COINS_BUNDLE,
+                          items.AP_ITEMS.UNLOCK_HINTS,
+                          items.AP_ITEMS.SOLVE_RANDOM_CELL,
+                        ].includes(item.id as any)
+                          ? 'bg-lime-500/20 text-lime-300 cursor-default'
+                          : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-200'
+                      "
+                      :disabled="
+                        items.hasItem(item.id) &&
+                        ![
+                          items.AP_ITEMS.EXTRA_LIFE,
+                          items.AP_ITEMS.COINS_BUNDLE,
+                          items.AP_ITEMS.UNLOCK_HINTS,
+                          items.AP_ITEMS.SOLVE_RANDOM_CELL,
+                        ].includes(item.id as any)
+                      "
                       @click="debugReceiveItem(item.id)"
                     >
                       {{ item.name }}
@@ -1603,7 +1617,7 @@
             </button>
             <span v-else class="opacity-50">No item messages</span>
             <!-- version -->
-            <span class="ml-4 opacity-50">v0.6.5</span>
+            <span class="ml-4 opacity-50">v0.6.6</span>
           </div>
         </div>
       </div>
