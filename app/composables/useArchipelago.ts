@@ -325,6 +325,29 @@ export function useArchipelago() {
     }
   }
 
+  // Scout the items contained at the given locations (no hint creation), so the banner can show
+  // what was found and for whom. AP exposes item name/game/receiver and classification flags, but
+  // NO icon in the protocol — the caller derives icons from game/flags.
+  async function scoutChecks(locationIds: number[]) {
+    if (status.value !== 'connected' || locationIds.length === 0) return [];
+    try {
+      const scouted = await client.scout(locationIds, 0); // 0 = do not create/broadcast hints
+      return scouted.map((it) => ({
+        locationId: it.locationId,
+        itemId: it.id,
+        itemName: it.name,
+        itemGame: it.game,
+        receiver: it.receiver?.name ?? 'Unknown',
+        progression: it.progression,
+        useful: it.useful,
+        trap: it.trap,
+      }));
+    } catch (e: any) {
+      console.error('Scout failed:', e?.message ?? e);
+      return [];
+    }
+  }
+
   // Legacy function name for compatibility
   function checkPuzzleSolved() {
     // This should be called when a puzzle is completed
@@ -402,6 +425,7 @@ export function useArchipelago() {
     disconnect,
     checkLocation,
     checkLocations,
+    scoutChecks,
     checkPuzzleSolved,
     checkGoalCompletion,
     completeGoal,

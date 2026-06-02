@@ -39,6 +39,7 @@
     disconnect,
     checkLocation,
     checkLocations,
+    scoutChecks,
     checkPuzzleSolved,
     checkGoalCompletion,
     toggleDeathLink,
@@ -159,6 +160,45 @@
       .filter((id) => !start.has(id))
       .map((id) => ({ id, name: items.getLocationDefinition(id)?.name ?? `Location #${id}`, icon: checkIconFor(id) }));
   });
+
+  // Items actually found at the checks unlocked this puzzle (populated by scouting on solve).
+  type ScoutedItem = {
+    locationId: number;
+    itemId: number;
+    itemName: string;
+    itemGame: string;
+    receiver: string;
+    progression: boolean;
+    useful: boolean;
+    trap: boolean;
+  };
+  const solvedItems = ref<ScoutedItem[]>([]);
+
+  const AP_IT = items.AP_ITEMS;
+  function itemIconFor(it: ScoutedItem): string {
+    if (it.itemGame === 'Nonopelagram') {
+      switch (it.itemId) {
+        case AP_IT.UNLOCK_HINTS:
+          return '👁️';
+        case AP_IT.EXTRA_LIFE:
+          return '❤️';
+        case AP_IT.COINS_BUNDLE:
+          return '🪙';
+        case AP_IT.SOLVE_RANDOM_CELL:
+          return '✨';
+        default:
+          return '🧩';
+      }
+    }
+    // Item belonging to another game: AP carries no per-item art, so use the generic island icon.
+    return '🏝️';
+  }
+  function itemClassBadge(it: ScoutedItem): string {
+    if (it.progression) return '⭐';
+    if (it.trap) return '💀';
+    if (it.useful) return '🔧';
+    return '';
+  }
 
   // Helper to get difficulty string from current puzzle size
   function getCurrentDifficulty(): '5x5' | '10x10' | '15x15' | '20x20' {
@@ -490,7 +530,7 @@
   }
 
   // Track puzzle completion - only fire once when solved transitions from false to true
-  watch(solved, (isSolved, wasSolved) => {
+  watch(solved, async (isSolved, wasSolved) => {
     if (isSolved && !wasSolved) {
       // Mark puzzle completed and get any new location checks
       const difficulty = getCurrentDifficulty();
@@ -502,6 +542,9 @@
       checkPuzzleSolved(); // Legacy logging
       // Check if we've reached the goal
       checkGoalCompletion();
+      // Scout the checks unlocked during this puzzle to show the items found (and for whom)
+      const unlockedIds = solvedUnlockedChecks.value.map((c) => c.id);
+      solvedItems.value = unlockedIds.length > 0 ? await scoutChecks(unlockedIds) : [];
     }
   });
 
@@ -660,6 +703,7 @@
     hasCompletedFirstLineThisPuzzle.value = false;
     // Baseline the checks already unlocked, so the solved banner only shows checks earned in this puzzle
     snapshotChecksBaseline();
+    solvedItems.value = [];
     // Select which hints to reveal for this puzzle
     items.selectRevealedHints(rows.value, cols.value);
   }
@@ -857,17 +901,35 @@
                 <span class="text-xl sm:text-2xl">🎉</span>
                 <div>
                   <div class="font-semibold text-sm sm:text-base">Puzzle Solved!</div>
-                  <!-- Archipelago: show the checks unlocked by solving this puzzle -->
-                  <div v-if="solvedUnlockedChecks.length > 0 || goalCompleted" class="mt-1 space-y-0.5">
-                    <div class="text-[11px] uppercase tracking-wider text-accent-300/70">Checks débloqués</div>
-                    <div
-                      v-for="c in solvedUnlockedChecks"
-                      :key="c.id"
-                      class="flex items-center gap-1.5 text-xs sm:text-sm text-accent-200"
-                    >
-                      <span>{{ c.icon }}</span>
-                      <span>{{ c.name }}</span>
+                  <!-- Archipelago: show what solving this puzzle unlocked -->
+                  <div v-if="solvedItems.length > 0 || solvedUnlockedChecks.length > 0 || goalCompleted" class="mt-1 space-y-0.5">
+                    <div class="text-[11px] uppercase tracking-wider text-accent-300/70">
+                      {{ solvedItems.length > 0 ? 'Items envoyés' : 'Checks débloqués' }}
                     </div>
+                    <!-- Items found (scouted): icon + name + classification badge + recipient -->
+                    <template v-if="solvedItems.length > 0">
+                      <div
+                        v-for="it in solvedItems"
+                        :key="it.locationId"
+                        class="flex items-center gap-1.5 text-xs sm:text-sm text-accent-200"
+                      >
+                        <span>{{ itemIconFor(it) }}</span>
+                        <span>{{ it.itemName }}</span>
+                        <span v-if="itemClassBadge(it)">{{ itemClassBadge(it) }}</span>
+                        <span class="text-accent-300/70">→ {{ it.receiver === slot ? 'toi' : it.receiver }}</span>
+                      </div>
+                    </template>
+                    <!-- Fallback when scouting is unavailable: show the location names -->
+                    <template v-else>
+                      <div
+                        v-for="c in solvedUnlockedChecks"
+                        :key="c.id"
+                        class="flex items-center gap-1.5 text-xs sm:text-sm text-accent-200"
+                      >
+                        <span>{{ c.icon }}</span>
+                        <span>{{ c.name }}</span>
+                      </div>
+                    </template>
                     <div v-if="goalCompleted" class="flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
                       <span>🏆</span>
                       <span>Objectif atteint !</span>
