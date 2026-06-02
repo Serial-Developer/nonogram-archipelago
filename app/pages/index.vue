@@ -267,8 +267,9 @@
           for (let c = 0; c < cols.value; c++) {
             const shouldBeFilled = solution.value[r]?.[c] === 1;
             const currentState = player.value[r]?.[c];
-            // Count empty cells that shouldn't be filled (will be auto-X'd)
-            if (!shouldBeFilled && currentState === 'empty') {
+            // Count empty cells that shouldn't be filled (will be auto-X'd),
+            // unless their row is already complete (already auto-X'd & awarded).
+            if (!shouldBeFilled && currentState === 'empty' && !completedRows.value.has(r)) {
               autoXCount++;
             }
           }
@@ -330,8 +331,9 @@
           for (let r = 0; r < rows.value; r++) {
             const shouldBeFilled = solution.value[r]?.[c] === 1;
             const currentState = player.value[r]?.[c];
-            // Count empty cells that shouldn't be filled (will be auto-X'd)
-            if (!shouldBeFilled && currentState === 'empty') {
+            // Count empty cells that shouldn't be filled (will be auto-X'd),
+            // unless their column is already complete (already auto-X'd & awarded).
+            if (!shouldBeFilled && currentState === 'empty' && !completedCols.value.has(c)) {
               autoXCount++;
             }
           }
@@ -378,8 +380,15 @@
     // Block changing correct cells (can't erase or toggle off correct answers)
     const isCorrectFill = currentState === 'fill' && shouldBeFilled;
     const isCorrectX = currentState === 'x' && !shouldBeFilled;
-    if (isCorrectFill || isCorrectX) {
-      return; // Can't modify correct cells
+    // Auto-X'd cells (empty, shouldn't be filled, in a completed row/col) are already
+    // resolved and were already awarded coins — treat them as locked to prevent double rewards.
+    const isAutoXed =
+      currentState === 'empty' &&
+      !shouldBeFilled &&
+      effectiveAutoX.value &&
+      (completedRows.value.has(r) || completedCols.value.has(c));
+    if (isCorrectFill || isCorrectX || isAutoXed) {
+      return; // Can't modify already-resolved cells
     }
 
     // Apply the change
