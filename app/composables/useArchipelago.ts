@@ -1,5 +1,6 @@
 import type { Client, Item } from 'archipelago.js';
 import { clientStatuses, itemsHandlingFlags } from 'archipelago.js';
+import { onMounted, watch } from 'vue';
 import { useArchipelagoItems, AP_LOCATIONS } from './useArchipelagoItems';
 
 type Status = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -46,6 +47,37 @@ export function useArchipelago() {
 
   // Get items composable
   const items = useArchipelagoItems();
+
+  // Persist connection settings across page reloads (F5). useState alone resets on a full reload,
+  // so we mirror host/port/slot/secure into localStorage. The password is intentionally NOT
+  // persisted (avoid storing a secret in plaintext localStorage).
+  if (import.meta.client) {
+    onMounted(() => {
+      try {
+        const saved = localStorage.getItem('nonogram_ap_connection');
+        if (saved) {
+          const c = JSON.parse(saved);
+          if (typeof c.host === 'string') host.value = c.host;
+          if (typeof c.port === 'number') port.value = c.port;
+          if (typeof c.slot === 'string') slot.value = c.slot;
+          if (typeof c.useSecure === 'boolean') useSecureConnection.value = c.useSecure;
+        }
+      } catch (e) {
+        console.error('Failed to load AP connection settings:', e);
+      }
+    });
+
+    watch([host, port, slot, useSecureConnection], () => {
+      try {
+        localStorage.setItem(
+          'nonogram_ap_connection',
+          JSON.stringify({ host: host.value, port: port.value, slot: slot.value, useSecure: useSecureConnection.value }),
+        );
+      } catch (e) {
+        console.error('Failed to save AP connection settings:', e);
+      }
+    });
+  }
 
   function addLogMessage(text: string, type: 'info' | 'item' | 'chat' | 'error' = 'info') {
     messageLog.value.push({ time: new Date(), text, type });

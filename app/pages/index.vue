@@ -72,6 +72,8 @@
     nextTick(() => {
       // Generate a fresh puzzle to ensure clean state
       newRandom(rows.value, cols.value);
+      // Baseline the checks already unlocked for the first puzzle of the session
+      snapshotChecksBaseline();
       // Small delay to ensure styles are fully applied
       setTimeout(() => {
         isClientReady.value = true;
@@ -106,6 +108,22 @@
   const effectiveDragPainting = computed(() => dragPainting.value); // Always allow drag painting
   const gameOver = computed(() => !items.unlimitedLives.value && items.currentLives.value <= 0);
 
+  // Shop: difficulty gating
+  // Current AP difficulty as a tier key ('5x5' | '10x10' | '15x15' | '20x20').
+  const apDifficultyKey = computed<'5x5' | '10x10' | '15x15' | '20x20'>(() => {
+    const d = items.currentDifficulty.value;
+    if (d >= 20) return '20x20';
+    if (d >= 15) return '15x15';
+    if (d >= 10) return '10x10';
+    return '5x5';
+  });
+  // True once every puzzle of the current tier has been completed (mirrors buyDifficultyIncrease rule).
+  const currentTierComplete = computed(
+    () => items.puzzlesCompleted[apDifficultyKey.value] >= items.PUZZLE_COUNTS[apDifficultyKey.value],
+  );
+  // True at the highest tier, where there is nothing left to unlock.
+  const isMaxDifficulty = computed(() => items.currentDifficulty.value >= 20);
+
   // Filter out consumables from unlocked/locked items display
   const unlockedNonConsumables = computed(() => items.unlockedItems.value.filter((item) => item.category !== 'consumable'));
   const lockedNonConsumables = computed(() => items.lockedItems.value.filter((item) => item.category !== 'consumable'));
@@ -114,6 +132,33 @@
   const completedRows = ref<Set<number>>(new Set());
   const completedCols = ref<Set<number>>(new Set());
   const hasCompletedFirstLineThisPuzzle = ref(false); // Track if we've sent first line check for current puzzle
+
+  // --- "Puzzle Solved" banner: show the checks unlocked while solving this puzzle ---
+  // Snapshot the server-confirmed checks when a puzzle begins, then diff against them on solve.
+  const checksAtPuzzleStart = ref<Set<number>>(new Set());
+  function snapshotChecksBaseline() {
+    const cc: unknown = items.completedChecks.value;
+    checksAtPuzzleStart.value = new Set(cc instanceof Set ? cc : Array.isArray(cc) ? cc : []);
+  }
+
+  const AP_LOC = items.AP_LOCATIONS;
+  function checkIconFor(id: number): string {
+    if (id === AP_LOC.OBTAIN_50_COINS || id === AP_LOC.OBTAIN_100_COINS) return '🪙';
+    if (id === AP_LOC.FIRST_LINE_5X5 || id === AP_LOC.FIRST_LINE_10X10 || id === AP_LOC.FIRST_LINE_15X15 || id === AP_LOC.FIRST_LINE_20X20)
+      return '📏';
+    if (id === AP_LOC.UNLOCK_10X10 || id === AP_LOC.UNLOCK_15X15 || id === AP_LOC.UNLOCK_20X20) return '🔓';
+    return '🧩'; // puzzle-completion milestone
+  }
+
+  // Location checks newly unlocked since the current puzzle began (insertion order preserved).
+  const solvedUnlockedChecks = computed(() => {
+    const cc: unknown = items.completedChecks.value;
+    const all = cc instanceof Set ? [...cc] : Array.isArray(cc) ? cc : [];
+    const start = checksAtPuzzleStart.value;
+    return all
+      .filter((id) => !start.has(id))
+      .map((id) => ({ id, name: items.getLocationDefinition(id)?.name ?? `Location #${id}`, icon: checkIconFor(id) }));
+  });
 
   // Helper to get difficulty string from current puzzle size
   function getCurrentDifficulty(): '5x5' | '10x10' | '15x15' | '20x20' {
@@ -613,6 +658,8 @@
     completedRows.value = new Set();
     completedCols.value = new Set();
     hasCompletedFirstLineThisPuzzle.value = false;
+    // Baseline the checks already unlocked, so the solved banner only shows checks earned in this puzzle
+    snapshotChecksBaseline();
     // Select which hints to reveal for this puzzle
     items.selectRevealedHints(rows.value, cols.value);
   }
@@ -626,6 +673,12 @@
       }
     },
   );
+
+  // After connecting (and the server reconciliation in connect()), re-baseline so the solved
+  // banner doesn't list checks that were already completed on the server.
+  watch(status, (s) => {
+    if (s === 'connected') snapshotChecksBaseline();
+  });
 
   // Debug functions
   function debugHints() {
@@ -800,11 +853,28 @@
             class="mb-4 sm:mb-6 p-3 sm:p-4 rounded-sm border border-accent-500/40 bg-accent-500/10 text-accent-200 celebration-glow animate-slide-up"
           >
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
+              <div class="flex items-start gap-3">
                 <span class="text-xl sm:text-2xl">🎉</span>
                 <div>
                   <div class="font-semibold text-sm sm:text-base">Puzzle Solved!</div>
-                  <div class="text-xs sm:text-sm text-accent-300/80">Congratulations on completing the nonogram!</div>
+                  <!-- Archipelago: show the checks unlocked by solving this puzzle -->
+                  <div v-if="solvedUnlockedChecks.length > 0 || goalCompleted" class="mt-1 space-y-0.5">
+                    <div class="text-[11px] uppercase tracking-wider text-accent-300/70">Checks débloqués</div>
+                    <div
+                      v-for="c in solvedUnlockedChecks"
+                      :key="c.id"
+                      class="flex items-center gap-1.5 text-xs sm:text-sm text-accent-200"
+                    >
+                      <span>{{ c.icon }}</span>
+                      <span>{{ c.name }}</span>
+                    </div>
+                    <div v-if="goalCompleted" class="flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
+                      <span>🏆</span>
+                      <span>Objectif atteint !</span>
+                    </div>
+                  </div>
+                  <!-- Free play / no new check: keep the generic congratulations -->
+                  <div v-else class="text-xs sm:text-sm text-accent-300/80">Congratulations on completing the nonogram!</div>
                 </div>
               </div>
               <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">New Puzzle</button>
@@ -1018,12 +1088,14 @@
                     <div class="text-xs text-neutral-400">Lock features until received from AP</div>
                   </div>
                   <button
-                    class="px-3 py-1.5 rounded text-xs font-medium transition-colors"
+                    class="px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50"
                     :class="
                       items.archipelagoMode.value
                         ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
                         : 'bg-neutral-600/30 text-neutral-300 hover:bg-neutral-600/50'
                     "
+                    :disabled="status === 'connected'"
+                    :title="status === 'connected' ? 'Connecté à un serveur Archipelago — le mode est verrouillé' : ''"
                     @click="items.archipelagoMode.value ? items.disableArchipelagoMode() : items.enableArchipelagoMode()"
                   >
                     {{ items.archipelagoMode.value ? 'Disable' : 'Enable' }}
@@ -1465,16 +1537,16 @@
                     <span class="text-xs">🪙 {{ items.TEMP_HINT_COST.value }}</span>
                   </button>
 
-                  <!-- Increase Difficulty (only in AP mode) -->
+                  <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
                   <button
-                    v-if="items.archipelagoMode.value"
+                    v-if="items.archipelagoMode.value && !isMaxDifficulty"
                     class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
                     :class="
-                      items.coins.value >= items.DIFFICULTY_INCREASE_COST.value
+                      currentTierComplete && items.coins.value >= items.DIFFICULTY_INCREASE_COST.value
                         ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
                         : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
                     "
-                    :disabled="items.coins.value < items.DIFFICULTY_INCREASE_COST.value"
+                    :disabled="!currentTierComplete || items.coins.value < items.DIFFICULTY_INCREASE_COST.value"
                     @click="buyDifficultyIncrease()"
                   >
                     <div class="text-left">
@@ -1486,11 +1558,18 @@
                     </div>
                     <span class="text-xs">🪙 {{ items.DIFFICULTY_INCREASE_COST.value }}</span>
                   </button>
-                  <!-- Decrease Difficulty (shop, always available in AP mode) -->
+                  <!-- Locked hint: finish every puzzle of the current tier first -->
+                  <p
+                    v-if="items.archipelagoMode.value && !isMaxDifficulty && !currentTierComplete"
+                    class="text-[11px] text-amber-400/80 -mt-1 px-1"
+                  >
+                    🔒 Termine toutes les grilles {{ apDifficultyKey }} pour débloquer
+                    ({{ items.puzzlesCompleted[apDifficultyKey] }}/{{ items.PUZZLE_COUNTS[apDifficultyKey] }})
+                  </p>
+                  <!-- Decrease Difficulty (only shown once difficulty has been increased above the base 5x5) -->
                   <button
-                    v-if="items.archipelagoMode.value"
+                    v-if="items.archipelagoMode.value && items.currentDifficulty.value > 5"
                     class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
-                    :disabled="items.currentDifficulty.value <= 5"
                     @click="buyDifficultyDecrease()"
                   >
                     <div class="text-left">
