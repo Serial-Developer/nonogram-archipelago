@@ -939,7 +939,7 @@
                   <div v-else class="text-xs sm:text-sm text-accent-300/80">Congratulations on completing the nonogram!</div>
                 </div>
               </div>
-              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">New Puzzle</button>
+              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">Next Puzzle</button>
             </div>
           </div>
 

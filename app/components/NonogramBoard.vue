@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+  import { ref, computed, onMounted, onUnmounted } from 'vue';
   import type { Cell, Mark } from '~/utils/nonogram';
 
   const props = defineProps<{
@@ -25,8 +25,6 @@
   const emit = defineEmits<{
     (e: 'cell', r: number, c: number, mode: 'fill' | 'x' | 'erase'): void;
   }>();
-
-  const selected = ref<{ r: number; c: number } | null>(null);
 
   // Drag painting state
   const isDragging = ref(false);
@@ -66,22 +64,6 @@
     document.removeEventListener('pointerup', handleGlobalPointerUp);
     window.removeEventListener('resize', updateWindowWidth);
   });
-
-  // Clear selected cell when puzzle changes
-  watch(
-    () => props.rows,
-    () => {
-      selected.value = null;
-    },
-  );
-
-  // Also clear selection when a new solution is loaded (new puzzle)
-  watch(
-    () => props.solution,
-    () => {
-      selected.value = null;
-    },
-  );
 
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
@@ -151,9 +133,6 @@
       return;
     }
     e.preventDefault();
-
-    // Only left click sets "selected" (for pointer events)
-    if ((e as PointerEvent).button === 0 || (e as TouchEvent).touches) selected.value = { r, c };
 
     // On mobile, use the toggle for mode
     let mode: 'fill' | 'x' | 'erase';
@@ -540,16 +519,13 @@
                   const c = (idx - 1) % cols;
                   const playerRow = player[r];
                   if (!playerRow) {
-                    const sel = selected && selected.r === r && selected.c === c;
-                    return sel ? `var(--color-grid-cell-selected)` : 'transparent';
+                    return 'transparent';
                   }
                   const v = playerRow[c];
-                  const sel = selected && selected.r === r && selected.c === c;
                   const wrongFill = isWrongFill(r, c);
                   const autoXing = shouldAutoX(r, c);
 
                   if (wrongFill) return `var(--color-grid-mistake-bg)`;
-                  if (sel) return `var(--color-grid-cell-selected)`;
                   if (autoXing) return `var(--color-grid-cell-hover)`;
                   if (v === 'fill') return `var(--color-grid-cell-filled)`;
                   return 'transparent';
