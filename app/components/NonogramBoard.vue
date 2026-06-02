@@ -43,12 +43,14 @@
   // Track if component is mounted (client-side)
   const isMounted = ref(false);
 
-  // Reactive window width for responsive sizing - use consistent default for SSR
+  // Reactive window size for responsive sizing - consistent defaults for SSR
   const windowWidth = ref(520);
+  const windowHeight = ref(800);
 
   function updateWindowWidth() {
     if (typeof window !== 'undefined') {
       windowWidth.value = window.innerWidth;
+      windowHeight.value = window.innerHeight;
     }
   }
 
@@ -68,34 +70,37 @@
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
 
-  // Minimum cell size for usability (only enforced for large grids that need scrolling)
+  // Cell size floor: below this we stop shrinking and let the grid scroll (clues stay pinned).
   const MIN_CELL_SIZE = 24;
 
-  // Calculate available space and ideal cell size
+  // Compute the largest cell size that keeps the WHOLE grid (cells + clues) within the visible
+  // area, on both axes. Priority is "fit everything"; we only fall back to scrolling once cells
+  // would drop below MIN_CELL_SIZE.
   const cellSize = computed(() => {
     const count = Math.max(props.rows, props.cols);
 
+    // Height budget: keep cells + the top clue header inside the scroll area, matching
+    // ScrollableGrid's max-height (~100dvh - 160px). This stops the top clues from being
+    // silently scrolled out of view. Total height ≈ rows*cell + colDepth*(cell*0.5).
+    const availH = windowHeight.value - 168;
+    const byHeight = Math.floor(availH / (props.rows + 0.5 * colDepth.value));
+
+    let byWidth: number;
+    let cap: number;
     if (windowWidth.value >= 640) {
-      // Desktop: max 520px board, min 14px cells
-      const idealSize = Math.floor(520 / count);
-      return Math.max(14, Math.min(idealSize, 45));
+      // Desktop: board capped around 520px wide.
+      byWidth = Math.floor(520 / count);
+      cap = 45;
+    } else {
+      // Mobile: fit width minus the left row-clues and padding.
+      const rowClueWidth = rowDepth.value * 12;
+      const availableWidth = windowWidth.value - 48 - rowClueWidth - 16;
+      byWidth = Math.floor(availableWidth / props.cols);
+      cap = count <= 10 ? 42 : 32;
     }
 
-    // Mobile: try to fit grid on screen first
-    // Available width: screen - padding (48px for px-3 on each side + glass-card p-3)
-    // Need to also account for row clues (roughly rowDepth * 12px)
-    const rowClueWidth = rowDepth.value * 12;
-    const availableWidth = windowWidth.value - 48 - rowClueWidth - 16; // 16 for gaps
-    const idealSize = Math.floor(availableWidth / props.cols);
-
-    // For small grids (≤10), use larger cells - they should fit comfortably
-    if (count <= 10) {
-      // Use larger cells, cap at 42px
-      return Math.max(28, Math.min(idealSize, 42));
-    }
-
-    // For larger grids, use minimum cell size and allow scrolling
-    return Math.max(MIN_CELL_SIZE, Math.min(idealSize, 32));
+    const ideal = Math.min(byWidth, byHeight, cap);
+    return Math.max(MIN_CELL_SIZE, ideal);
   });
 
   const groupSize = 5;
