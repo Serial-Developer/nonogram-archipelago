@@ -619,33 +619,13 @@
   }
 
   /** Right panel tabs - on mobile, 'puzzle' is also a tab */
-  type MobileTab = 'puzzle' | 'archipelago' | 'settings' | 'chat' | 'shop' | 'debug';
-  type RightTab = 'archipelago' | 'settings' | 'chat' | 'shop' | 'debug';
+  type MobileTab = 'puzzle' | 'archipelago' | 'settings' | 'goals' | 'chat' | 'shop' | 'debug';
+  type RightTab = 'archipelago' | 'settings' | 'goals' | 'chat' | 'shop' | 'debug';
   const activeTab = ref<RightTab>('archipelago');
   const activeMobileTab = ref<MobileTab>('puzzle');
 
   // Ref for chat log container to enable auto-scroll
   const chatLogContainer = ref<HTMLElement | null>(null);
-
-  // Function to navigate to chat tab
-  const navigateToChat = () => {
-    if (isMobile.value) {
-      activeMobileTab.value = 'chat';
-    } else {
-      activeTab.value = 'chat';
-    }
-  };
-
-  // Watch for chat tab opening and auto-scroll to bottom
-  watch([activeTab, activeMobileTab], () => {
-    if (isTabVisible('chat')) {
-      nextTick(() => {
-        if (chatLogContainer.value) {
-          chatLogContainer.value.scrollTop = chatLogContainer.value.scrollHeight;
-        }
-      });
-    }
-  });
 
   // Computed to check if a specific tab should be shown
   const isTabVisible = (tab: RightTab) => {
@@ -654,6 +634,41 @@
     }
     return activeTab.value === tab;
   };
+
+  // Desktop layout: Shop is an always-open middle column and Chat is an always-visible bottom strip;
+  // on mobile they are tab pages. The right column (tabs + chat) shows on desktop, or on mobile when
+  // a right-column tab or chat is active.
+  const showShopArea = computed(() => !isMobile.value || activeMobileTab.value === 'shop');
+  const showChatArea = computed(() => !isMobile.value || activeMobileTab.value === 'chat');
+  const showTabsArea = computed(
+    () => !isMobile.value || (['archipelago', 'settings', 'goals', 'debug'] as MobileTab[]).includes(activeMobileTab.value),
+  );
+  const showRightColumn = computed(
+    () => !isMobile.value || (['archipelago', 'settings', 'goals', 'debug', 'chat'] as MobileTab[]).includes(activeMobileTab.value),
+  );
+
+  // Function to navigate to chat (mobile switches to the chat tab; desktop chat is always visible)
+  const navigateToChat = () => {
+    if (isMobile.value) {
+      activeMobileTab.value = 'chat';
+    }
+    nextTick(() => {
+      if (chatLogContainer.value) {
+        chatLogContainer.value.scrollTop = chatLogContainer.value.scrollHeight;
+      }
+    });
+  };
+
+  // Auto-scroll chat to the bottom when it becomes visible
+  watch([activeTab, activeMobileTab, isMobile], () => {
+    if (showChatArea.value) {
+      nextTick(() => {
+        if (chatLogContainer.value) {
+          chatLogContainer.value.scrollTop = chatLogContainer.value.scrollHeight;
+        }
+      });
+    }
+  });
 
   /** Keep rows & cols equal */
   const lockSize = ref(true);
@@ -839,6 +854,9 @@
       </button>
       <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'settings' }" @click="activeMobileTab = 'settings'">
         <span class="text-xs">⚙️</span>
+      </button>
+      <button v-if="items.archipelagoMode.value" class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'goals' }" @click="activeMobileTab = 'goals'">
+        <span class="text-xs">📋</span>
       </button>
       <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'chat' }" @click="activeMobileTab = 'chat'">
         <span class="text-xs">💬</span>
@@ -1097,64 +1115,175 @@
       </div>
 
       <!-- RIGHT: sidebar attached to right side (hidden on mobile when puzzle tab active) -->
+      <!-- layout: [Shop column][right column: tabs 75% + chat 25%] -->
       <div
         class="w-full lg:w-1/3 shrink-0 bg-neutral-900/95 backdrop-blur-lg border-t lg:border-t-0 lg:border-l border-neutral-700 flex flex-col lg:flex-row min-h-0 flex-1 lg:flex-initial"
         :class="{ 'hidden lg:flex': activeMobileTab === 'puzzle' }"
       >
-        <!-- Active Abilities Panel - hidden on mobile, shown on desktop -->
-        <div class="hidden lg:block lg:w-44 shrink-0 p-3 lg:border-r border-neutral-700/50 bg-neutral-900/95 lg:overflow-auto">
-          <div class="flex flex-wrap gap-3 lg:flex-col lg:gap-0 lg:space-y-2">
-            <!-- Hint Reveals -->
-            <div
-              class="flex items-center gap-1.5 text-xs"
-              :class="items.totalHintReveals.value > 0 || !items.archipelagoMode.value ? 'text-lime-400' : 'text-neutral-500'"
-            >
-              <span>{{ items.archipelagoMode.value ? items.totalHintReveals.value : '∞' }}</span>
-              <span>Hints</span>
-            </div>
-            <!-- Difficulty -->
-            <div v-if="items.archipelagoMode.value" class="flex items-center gap-1.5 text-xs text-purple-400">
-              <span>{{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }}</span>
-              <span>Grid</span>
-            </div>
-          </div>
-
-          <!-- Checks Section - hidden on mobile for space -->
-          <div v-if="items.archipelagoMode.value" class="hidden lg:block mt-3 pt-3 border-t border-neutral-700/50">
-            <h3 class="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Checks</h3>
-            <div class="space-y-1">
-              <div
-                v-for="loc in items.LOCATION_REGISTRY"
-                :key="loc.id"
-                class="flex items-center gap-1.5 text-[10px]"
-                :class="items.isLocationCompleted(loc.id) ? 'text-lime-400' : 'text-white/70'"
-              >
-                <span>{{ items.isLocationCompleted(loc.id) ? '✓' : '○' }}</span>
-                <span>{{ loc.name }}</span>
+        <!-- MIDDLE COLUMN: Shop (always open on desktop; a tab page on mobile) -->
+        <div
+          v-show="showShopArea"
+          class="w-full lg:w-[300px] shrink-0 lg:border-r border-neutral-700/50 bg-neutral-900/95 overflow-y-auto p-4"
+        >
+          <div class="space-y-6">
+            <div class="flex items-center gap-3">
+              <div>
+                <h2 class="font-semibold text-neutral-100">Shop & Items</h2>
+                <p class="text-xs text-neutral-400">Spend coins and use items</p>
               </div>
             </div>
-          </div>
 
-          <div class="mt-3 pt-3 border-t border-neutral-700/50 text-[10px] text-neutral-500 leading-tight">
-            <span v-if="items.archipelagoMode.value">Unlock via AP</span>
-            <span v-else>Free Play</span>
+            <!-- Current Resources -->
+            <section class="space-y-3">
+              <h3 class="section-heading">Your Resources</h3>
+              <div class="bg-neutral-800/30 rounded-sm p-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">🪙</span>
+                    <div>
+                      <div class="text-lg font-bold text-amber-400">{{ items.coins.value }}</div>
+                      <div class="text-xs text-neutral-500">Coins</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">🎯</span>
+                    <div>
+                      <div class="text-lg font-bold text-cyan-400">{{ items.randomCellSolves.value }}</div>
+                      <div class="text-xs text-neutral-500">Cell Solves</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Use Items -->
+            <section class="space-y-3">
+              <h3 class="section-heading">Use Items</h3>
+              <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
+                <button
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                  :class="
+                    items.randomCellSolves.value > 0
+                      ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="items.randomCellSolves.value <= 0"
+                  @click="useRandomCellSolve()"
+                >
+                  <span>🎯 Solve Random Cell</span>
+                  <span class="text-xs opacity-70">{{ items.randomCellSolves.value }} available</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- Shop -->
+            <section class="space-y-3">
+              <h3 class="section-heading">Shop</h3>
+              <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
+                <!-- Random Cell Solve -->
+                <button
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                  :class="
+                    items.coins.value >= items.RANDOM_CELL_SOLVE_COST.value
+                      ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="items.coins.value < items.RANDOM_CELL_SOLVE_COST.value"
+                  @click="buyAndUseRandomCellSolve()"
+                >
+                  <span>🎯 Buy & Use Random Cell Solve</span>
+                  <span class="text-xs">🪙 {{ items.RANDOM_CELL_SOLVE_COST.value }}</span>
+                </button>
+
+                <!-- Temporary Hint Reveal (only in AP mode) -->
+                <button
+                  v-if="items.archipelagoMode.value"
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                  :class="
+                    items.coins.value >= items.TEMP_HINT_COST.value
+                      ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="items.coins.value < items.TEMP_HINT_COST.value"
+                  @click="buyTempHint()"
+                >
+                  <div class="text-left">
+                    <span>👁️ Temporary Hint Reveal</span>
+                    <div class="text-[10px] opacity-70">Reveals 1 hint (this puzzle only)</div>
+                  </div>
+                  <span class="text-xs">🪙 {{ items.TEMP_HINT_COST.value }}</span>
+                </button>
+
+                <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
+                <button
+                  v-if="items.archipelagoMode.value && !isMaxDifficulty"
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                  :class="
+                    currentTierComplete && items.coins.value >= items.DIFFICULTY_INCREASE_COST.value
+                      ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="!currentTierComplete || items.coins.value < items.DIFFICULTY_INCREASE_COST.value"
+                  @click="buyDifficultyIncrease()"
+                >
+                  <div class="text-left">
+                    <span>📈 Increase Difficulty</span>
+                    <div class="text-[10px] opacity-70">
+                      {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
+                      {{ items.currentDifficulty.value + items.DIFFICULTY_STEP }}x{{ items.currentDifficulty.value + items.DIFFICULTY_STEP }}
+                    </div>
+                  </div>
+                  <span class="text-xs">🪙 {{ items.DIFFICULTY_INCREASE_COST.value }}</span>
+                </button>
+                <!-- Locked hint: finish every puzzle of the current tier first -->
+                <p
+                  v-if="items.archipelagoMode.value && !isMaxDifficulty && !currentTierComplete"
+                  class="text-[11px] text-amber-400/80 -mt-1 px-1"
+                >
+                  🔒 Termine toutes les grilles {{ apDifficultyKey }} pour débloquer
+                  ({{ items.puzzlesCompleted[apDifficultyKey] }}/{{ items.PUZZLE_COUNTS[apDifficultyKey] }})
+                </p>
+                <!-- Decrease Difficulty (only shown once difficulty has been increased above the base 5x5) -->
+                <button
+                  v-if="items.archipelagoMode.value && items.currentDifficulty.value > 5"
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+                  @click="buyDifficultyDecrease()"
+                >
+                  <div class="text-left">
+                    <span>📉 Decrease Difficulty</span>
+                    <div class="text-[10px] opacity-70">
+                      {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
+                      {{ items.currentDifficulty.value - items.DIFFICULTY_STEP }}x{{ items.currentDifficulty.value - items.DIFFICULTY_STEP }}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </section>
           </div>
         </div>
 
-        <!-- Right side: tabs and content -->
-        <div class="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-          <!-- tab bar (desktop only - mobile uses top tab bar) -->
-          <div class="hidden lg:flex border-b border-neutral-700/50 shrink-0 overflow-x-auto">
-            <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'archipelago' }" @click="activeTab = 'archipelago'">
-              Archipelago
-            </button>
-            <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">
-              Settings
-            </button>
-            <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'chat' }" @click="activeTab = 'chat'">Chat</button>
-            <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'shop' }" @click="activeTab = 'shop'">Shop</button>
-            <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'debug' }" @click="activeTab = 'debug'">Debug</button>
-          </div>
+        <!-- RIGHT COLUMN: tabs (top ~75%) + chat (bottom ~25%) -->
+        <div v-show="showRightColumn" class="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+          <!-- Top ~75%: tab bar + active tab content -->
+          <div v-show="showTabsArea" class="flex flex-col min-h-0 flex-1 lg:flex-none lg:h-3/4 overflow-hidden">
+            <!-- tab bar (desktop only - mobile uses top tab bar) -->
+            <div class="hidden lg:flex border-b border-neutral-700/50 shrink-0 overflow-x-auto">
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'archipelago' }" @click="activeTab = 'archipelago'">
+                Archipelago
+              </button>
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">
+                Settings
+              </button>
+              <button
+                v-if="items.archipelagoMode.value"
+                class="tab-button whitespace-nowrap"
+                :class="{ active: activeTab === 'goals' }"
+                @click="activeTab = 'goals'"
+              >
+                Goals
+              </button>
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'debug' }" @click="activeTab = 'debug'">Debug</button>
+            </div>
 
           <!-- tab content - on mobile, show based on activeMobileTab; on desktop, show based on activeTab -->
           <div class="p-4 flex-1 overflow-y-auto min-h-0">
@@ -1505,178 +1634,23 @@
               </div>
             </div>
 
-            <!-- CHAT -->
-            <div v-else-if="isTabVisible('chat')" class="space-y-6">
-              <div class="flex items-center gap-3">
-                <div>
-                  <h2 class="font-semibold text-neutral-100">Game Log</h2>
-                  <p class="text-xs text-neutral-400">Messages and events</p>
+            <!-- GOALS (location checks) -->
+            <div v-else-if="isTabVisible('goals')" class="space-y-3">
+              <div>
+                <h2 class="font-semibold text-neutral-100">Goals</h2>
+                <p class="text-xs text-neutral-400">Location checks for this world</p>
+              </div>
+              <div class="space-y-1">
+                <div
+                  v-for="loc in items.LOCATION_REGISTRY"
+                  :key="loc.id"
+                  class="flex items-center gap-1.5 text-xs"
+                  :class="items.isLocationCompleted(loc.id) ? 'text-lime-400' : 'text-white/70'"
+                >
+                  <span>{{ items.isLocationCompleted(loc.id) ? '✓' : '○' }}</span>
+                  <span>{{ loc.name }}</span>
                 </div>
               </div>
-
-              <div class="bg-neutral-800/30 rounded-sm flex-1 min-h-0 overflow-hidden" style="height: auto">
-                <div ref="chatLogContainer" class="h-full p-4 overflow-auto custom-scrollbar">
-                  <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
-                    <div class="text-center space-y-2">
-                      <div>No messages yet</div>
-                      <div class="text-2xs">Game events will appear here</div>
-                    </div>
-                  </div>
-                  <div v-else class="space-y-2">
-                    <div
-                      v-for="(msg, idx) in messageLog"
-                      :key="idx"
-                      class="text-xs py-1 border-b border-neutral-700/30 last:border-0"
-                      :class="{
-                        'text-lime-300': msg.type === 'item',
-                        'text-red-300': msg.type === 'error',
-                        'text-blue-300': msg.type === 'chat',
-                        'text-neutral-400': msg.type === 'info',
-                      }"
-                    >
-                      <span class="text-neutral-600 mr-2">{{ msg.time.toLocaleTimeString() }}</span>
-                      {{ msg.text.replaceAll(',', ' ') }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- SHOP / ITEMS -->
-            <div v-else-if="isTabVisible('shop')" class="space-y-6">
-              <div class="flex items-center gap-3">
-                <div>
-                  <h2 class="font-semibold text-neutral-100">Shop & Items</h2>
-                  <p class="text-xs text-neutral-400">Spend coins and use items</p>
-                </div>
-              </div>
-
-              <!-- Current Resources -->
-              <section class="space-y-3">
-                <h3 class="section-heading">Your Resources</h3>
-                <div class="bg-neutral-800/30 rounded-sm p-4">
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="flex items-center gap-2">
-                      <span class="text-lg">🪙</span>
-                      <div>
-                        <div class="text-lg font-bold text-amber-400">{{ items.coins.value }}</div>
-                        <div class="text-xs text-neutral-500">Coins</div>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-lg">🎯</span>
-                      <div>
-                        <div class="text-lg font-bold text-cyan-400">{{ items.randomCellSolves.value }}</div>
-                        <div class="text-xs text-neutral-500">Cell Solves</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Use Items -->
-              <section class="space-y-3">
-                <h3 class="section-heading">Use Items</h3>
-                <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
-                  <button
-                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
-                    :class="
-                      items.randomCellSolves.value > 0
-                        ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
-                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
-                    "
-                    :disabled="items.randomCellSolves.value <= 0"
-                    @click="useRandomCellSolve()"
-                  >
-                    <span>🎯 Solve Random Cell</span>
-                    <span class="text-xs opacity-70">{{ items.randomCellSolves.value }} available</span>
-                  </button>
-                </div>
-              </section>
-
-              <!-- Shop -->
-              <section class="space-y-3">
-                <h3 class="section-heading">Shop</h3>
-                <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
-                  <!-- Random Cell Solve -->
-                  <button
-                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
-                    :class="
-                      items.coins.value >= items.RANDOM_CELL_SOLVE_COST.value
-                        ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
-                    "
-                    :disabled="items.coins.value < items.RANDOM_CELL_SOLVE_COST.value"
-                    @click="buyAndUseRandomCellSolve()"
-                  >
-                    <span>🎯 Buy & Use Random Cell Solve</span>
-                    <span class="text-xs">🪙 {{ items.RANDOM_CELL_SOLVE_COST.value }}</span>
-                  </button>
-
-                  <!-- Temporary Hint Reveal (only in AP mode) -->
-                  <button
-                    v-if="items.archipelagoMode.value"
-                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
-                    :class="
-                      items.coins.value >= items.TEMP_HINT_COST.value
-                        ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
-                    "
-                    :disabled="items.coins.value < items.TEMP_HINT_COST.value"
-                    @click="buyTempHint()"
-                  >
-                    <div class="text-left">
-                      <span>👁️ Temporary Hint Reveal</span>
-                      <div class="text-[10px] opacity-70">Reveals 1 hint (this puzzle only)</div>
-                    </div>
-                    <span class="text-xs">🪙 {{ items.TEMP_HINT_COST.value }}</span>
-                  </button>
-
-                  <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
-                  <button
-                    v-if="items.archipelagoMode.value && !isMaxDifficulty"
-                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
-                    :class="
-                      currentTierComplete && items.coins.value >= items.DIFFICULTY_INCREASE_COST.value
-                        ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
-                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
-                    "
-                    :disabled="!currentTierComplete || items.coins.value < items.DIFFICULTY_INCREASE_COST.value"
-                    @click="buyDifficultyIncrease()"
-                  >
-                    <div class="text-left">
-                      <span>📈 Increase Difficulty</span>
-                      <div class="text-[10px] opacity-70">
-                        {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
-                        {{ items.currentDifficulty.value + items.DIFFICULTY_STEP }}x{{ items.currentDifficulty.value + items.DIFFICULTY_STEP }}
-                      </div>
-                    </div>
-                    <span class="text-xs">🪙 {{ items.DIFFICULTY_INCREASE_COST.value }}</span>
-                  </button>
-                  <!-- Locked hint: finish every puzzle of the current tier first -->
-                  <p
-                    v-if="items.archipelagoMode.value && !isMaxDifficulty && !currentTierComplete"
-                    class="text-[11px] text-amber-400/80 -mt-1 px-1"
-                  >
-                    🔒 Termine toutes les grilles {{ apDifficultyKey }} pour débloquer
-                    ({{ items.puzzlesCompleted[apDifficultyKey] }}/{{ items.PUZZLE_COUNTS[apDifficultyKey] }})
-                  </p>
-                  <!-- Decrease Difficulty (only shown once difficulty has been increased above the base 5x5) -->
-                  <button
-                    v-if="items.archipelagoMode.value && items.currentDifficulty.value > 5"
-                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
-                    @click="buyDifficultyDecrease()"
-                  >
-                    <div class="text-left">
-                      <span>📉 Decrease Difficulty</span>
-                      <div class="text-[10px] opacity-70">
-                        {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
-                        {{ items.currentDifficulty.value - items.DIFFICULTY_STEP }}x{{ items.currentDifficulty.value - items.DIFFICULTY_STEP }}
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </section>
             </div>
 
             <!-- DEBUG -->
@@ -1748,6 +1722,40 @@
                   </div>
                 </div>
               </section>
+            </div>
+          </div>
+          </div>
+          <!-- Bottom ~25%: Chat (always visible on desktop; a tab page on mobile) -->
+          <div
+            v-show="showChatArea"
+            class="border-t border-neutral-700/50 flex flex-col min-h-0 flex-1 lg:flex-none lg:h-1/4 overflow-hidden"
+          >
+            <div class="px-4 pt-3 pb-1 shrink-0">
+              <h2 class="text-sm font-semibold text-neutral-100">Game Log</h2>
+            </div>
+            <div ref="chatLogContainer" class="flex-1 min-h-0 px-4 pb-3 overflow-auto custom-scrollbar">
+              <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
+                <div class="text-center space-y-1">
+                  <div>No messages yet</div>
+                  <div class="text-2xs">Game events will appear here</div>
+                </div>
+              </div>
+              <div v-else class="space-y-2">
+                <div
+                  v-for="(msg, idx) in messageLog"
+                  :key="idx"
+                  class="text-xs py-1 border-b border-neutral-700/30 last:border-0"
+                  :class="{
+                    'text-lime-300': msg.type === 'item',
+                    'text-red-300': msg.type === 'error',
+                    'text-blue-300': msg.type === 'chat',
+                    'text-neutral-400': msg.type === 'info',
+                  }"
+                >
+                  <span class="text-neutral-600 mr-2">{{ msg.time.toLocaleTimeString() }}</span>
+                  {{ msg.text.replaceAll(',', ' ') }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
