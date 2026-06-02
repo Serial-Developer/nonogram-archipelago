@@ -125,6 +125,31 @@
   // True at the highest tier, where there is nothing left to unlock.
   const isMaxDifficulty = computed(() => items.currentDifficulty.value >= 20);
 
+  // The unlock location for the difficulty above the current one (null at the max tier).
+  const nextUnlockLocId = computed<number | null>(() => {
+    switch (apDifficultyKey.value) {
+      case '5x5':
+        return items.AP_LOCATIONS.UNLOCK_10X10;
+      case '10x10':
+        return items.AP_LOCATIONS.UNLOCK_15X15;
+      case '15x15':
+        return items.AP_LOCATIONS.UNLOCK_20X20;
+      default:
+        return null;
+    }
+  });
+  // Show a "go unlock the next difficulty in the shop" hint when the current tier is fully done
+  // and the next difficulty hasn't been unlocked yet. Covers both finishing the tier and replaying
+  // an already-finished one, and stays quiet once the next difficulty is unlocked.
+  const showTierUnlockHint = computed(
+    () =>
+      items.archipelagoMode.value &&
+      currentTierComplete.value &&
+      !isMaxDifficulty.value &&
+      nextUnlockLocId.value !== null &&
+      !items.isLocationCompleted(nextUnlockLocId.value),
+  );
+
   // Filter out consumables from unlocked/locked items display
   const unlockedNonConsumables = computed(() => items.unlockedItems.value.filter((item) => item.category !== 'consumable'));
   const lockedNonConsumables = computed(() => items.lockedItems.value.filter((item) => item.category !== 'consumable'));
@@ -937,6 +962,14 @@
                   </div>
                   <!-- Free play / no new check: keep the generic congratulations -->
                   <div v-else class="text-xs sm:text-sm text-accent-300/80">Congratulations on completing the nonogram!</div>
+                  <!-- Tier completed: nudge the player to unlock the next difficulty in the shop -->
+                  <div
+                    v-if="showTierUnlockHint"
+                    class="mt-2 flex items-center gap-1.5 rounded bg-amber-500/15 px-2 py-1 text-xs sm:text-sm text-amber-300"
+                  >
+                    <span>🛒</span>
+                    <span>Tu as terminé toutes les grilles {{ apDifficultyKey }} ! Débloque la difficulté supérieure dans la boutique.</span>
+                  </div>
                 </div>
               </div>
               <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">Next Puzzle</button>
