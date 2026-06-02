@@ -61,12 +61,73 @@
   // Track if we're on mobile for tab visibility logic
   const isMobile = ref(false);
 
+  // --- Resizable panels (desktop only) ---
+  // resizeReady gates stored px sizes until after mount; defaults match SSR so no hydration mismatch.
+  const resizeReady = ref(false);
+  const optionsRegionEl = ref<HTMLElement | null>(null);
+  const optionsPanelWidth = usePersistentRef('layout_optionsWidth', 600); // px: width of the right options region
+  const shopWidth = usePersistentRef('layout_shopWidth', 300); // px: width of the shop within the top area
+  const logHeight = usePersistentRef('layout_logHeight', 200); // px: height of the bottom log strip
+
+  // bounds (px) to keep every panel usable
+  const MIN_OPTIONS = 360;
+  const MIN_GAME = 480;
+  const MIN_SHOP = 200;
+  const MIN_TAB = 200;
+  const MIN_LOG = 90;
+  const MIN_TOP = 160;
+
+  const clampOptionsWidth = (w: number) => {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
+    return Math.min(Math.max(w, MIN_OPTIONS), Math.max(MIN_OPTIONS, vw - MIN_GAME));
+  };
+  const clampShopWidth = (w: number) =>
+    Math.min(Math.max(w, MIN_SHOP), Math.max(MIN_SHOP, optionsPanelWidth.value - MIN_TAB));
+  const clampLogHeight = (h: number) => {
+    const regionH = optionsRegionEl.value?.clientHeight ?? (typeof window !== 'undefined' ? window.innerHeight - 200 : 600);
+    return Math.min(Math.max(h, MIN_LOG), Math.max(MIN_LOG, regionH - MIN_TOP));
+  };
+
+  // keep the shop within bounds if the options width shrinks
+  watch(optionsPanelWidth, () => {
+    shopWidth.value = clampShopWidth(shopWidth.value);
+  });
+
+  const optionsStyle = computed(() => (isMobile.value ? undefined : { width: (resizeReady.value ? optionsPanelWidth.value : 600) + 'px' }));
+  const shopStyle = computed(() => (isMobile.value ? undefined : { width: (resizeReady.value ? shopWidth.value : 300) + 'px' }));
+  const logStyle = computed(() => (isMobile.value ? undefined : { height: (resizeReady.value ? logHeight.value : 200) + 'px' }));
+
+  function startResize(axis: 'options' | 'shop' | 'log', ev: PointerEvent) {
+    ev.preventDefault();
+    const startX = ev.clientX;
+    const startY = ev.clientY;
+    const startOptions = optionsPanelWidth.value;
+    const startShop = shopWidth.value;
+    const startLog = logHeight.value;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = axis === 'log' ? 'row-resize' : 'col-resize';
+    const onMove = (e: PointerEvent) => {
+      if (axis === 'options') optionsPanelWidth.value = clampOptionsWidth(startOptions - (e.clientX - startX));
+      else if (axis === 'shop') shopWidth.value = clampShopWidth(startShop + (e.clientX - startX));
+      else logHeight.value = clampLogHeight(startLog - (e.clientY - startY));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
   onMounted(() => {
     // Check mobile on mount and resize
     const checkMobile = () => {
       isMobile.value = window.innerWidth < 1024; // lg breakpoint
     };
     checkMobile();
+    resizeReady.value = true;
     window.addEventListener('resize', checkMobile);
 
     // Wait for next tick after mount to ensure hydration is complete
@@ -268,8 +329,8 @@
             const shouldBeFilled = solution.value[r]?.[c] === 1;
             const currentState = player.value[r]?.[c];
             // Count empty cells that shouldn't be filled (will be auto-X'd),
-            // unless their row is already complete (already auto-X'd & awarded).
-            if (!shouldBeFilled && currentState === 'empty' && !completedRows.value.has(r)) {
+            // unless their column is already complete (already auto-X'd & awarded).
+            if (!shouldBeFilled && currentState === 'empty' && !completedCols.value.has(c)) {
               autoXCount++;
             }
           }
@@ -332,8 +393,8 @@
             const shouldBeFilled = solution.value[r]?.[c] === 1;
             const currentState = player.value[r]?.[c];
             // Count empty cells that shouldn't be filled (will be auto-X'd),
-            // unless their column is already complete (already auto-X'd & awarded).
-            if (!shouldBeFilled && currentState === 'empty' && !completedCols.value.has(c)) {
+            // unless their row is already complete (already auto-X'd & awarded).
+            if (!shouldBeFilled && currentState === 'empty' && !completedRows.value.has(r)) {
               autoXCount++;
             }
           }
@@ -632,6 +693,7 @@
   type RightTab = 'archipelago' | 'settings' | 'goals' | 'chat' | 'shop' | 'debug';
   const activeTab = ref<RightTab>('archipelago');
   const activeMobileTab = ref<MobileTab>('puzzle');
+  const activeLogTab = ref<'log' | 'debug'>('log');
 
   // Ref for chat log container to enable auto-scroll
   const chatLogContainer = ref<HTMLElement | null>(null);
@@ -650,7 +712,7 @@
   const showShopArea = computed(() => !isMobile.value || activeMobileTab.value === 'shop');
   const showChatArea = computed(() => !isMobile.value || activeMobileTab.value === 'chat');
   const showTabsArea = computed(
-    () => !isMobile.value || (['archipelago', 'settings', 'goals', 'debug'] as MobileTab[]).includes(activeMobileTab.value),
+    () => !isMobile.value || (['archipelago', 'settings', 'goals'] as MobileTab[]).includes(activeMobileTab.value),
   );
   const showRightColumn = computed(
     () => !isMobile.value || (['archipelago', 'settings', 'goals', 'debug', 'chat'] as MobileTab[]).includes(activeMobileTab.value),
@@ -873,9 +935,6 @@
       <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'shop' }" @click="activeMobileTab = 'shop'">
         <span class="text-xs">🛒</span>
       </button>
-      <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'debug' }" @click="activeMobileTab = 'debug'">
-        <span class="text-xs">🐛</span>
-      </button>
     </div>
 
     <div class="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
@@ -936,6 +995,25 @@
                     ✕
                   </button>
                 </div>
+              </div>
+              <!-- Power-ups: click an icon to use it directly -->
+              <div class="flex items-center gap-1 sm:gap-2">
+                <span class="text-xs sm:text-sm text-neutral-400">Power-ups:</span>
+                <button
+                  class="flex items-center gap-1 px-2 py-1 rounded text-base sm:text-lg transition-colors"
+                  :class="
+                    items.randomCellSolves.value > 0
+                      ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="items.randomCellSolves.value <= 0"
+                  @click="useRandomCellSolve()"
+                  title="Solve a random cell"
+                  aria-label="Use a random cell solve"
+                >
+                  <span>🎯</span>
+                  <span class="text-sm font-bold">{{ items.randomCellSolves.value }}</span>
+                </button>
               </div>
               <!-- Theme Picker - aligned to the right -->
               <div class="ml-auto">
@@ -1123,67 +1201,36 @@
         </div>
       </div>
 
-      <!-- RIGHT: sidebar attached to right side (hidden on mobile when puzzle tab active) -->
-      <!-- layout: [Shop column][right column: tabs 75% + chat 25%] -->
+      <!-- Resize handle: game / options panel width (desktop only) -->
       <div
-        class="w-full lg:w-1/3 shrink-0 bg-neutral-900/95 backdrop-blur-lg border-t lg:border-t-0 lg:border-l border-neutral-700 flex flex-col lg:flex-row min-h-0 flex-1 lg:flex-initial"
+        class="hidden lg:block shrink-0 w-1.5 cursor-col-resize bg-neutral-700/40 hover:bg-cyan-500/60 transition-colors touch-none"
+        @pointerdown="startResize('options', $event)"
+        title="Glisser pour redimensionner Jeu / Options"
+      ></div>
+
+      <!-- RIGHT: sidebar attached to right side (hidden on mobile when puzzle tab active) -->
+      <!-- layout: top row [Shop column | open tab] (~75%) + Chat full width below (~25%) -->
+      <div
+        ref="optionsRegionEl"
+        class="w-full lg:w-[600px] shrink-0 bg-neutral-900/95 backdrop-blur-lg border-t lg:border-t-0 lg:border-l border-neutral-700 flex flex-col min-h-0 flex-1 lg:flex-initial"
         :class="{ 'hidden lg:flex': activeMobileTab === 'puzzle' }"
+        :style="optionsStyle"
       >
-        <!-- MIDDLE COLUMN: Shop (always open on desktop; a tab page on mobile) -->
-        <div
-          v-show="showShopArea"
-          class="w-full lg:w-[300px] shrink-0 lg:border-r border-neutral-700/50 bg-neutral-900/95 overflow-y-auto p-4"
-        >
+        <!-- TOP AREA: Shop column + open tab side by side; height fills above the log strip -->
+        <div v-show="showShopArea || showTabsArea" class="flex flex-col lg:flex-row min-h-0 flex-1 overflow-hidden">
+          <!-- MIDDLE COLUMN: Shop (always open on desktop; a tab page on mobile) -->
+          <div
+            v-show="showShopArea"
+            class="w-full lg:w-[300px] shrink-0 lg:border-r border-neutral-700/50 bg-neutral-900/95 overflow-y-auto p-4"
+            :style="shopStyle"
+          >
           <div class="space-y-6">
             <div class="flex items-center gap-3">
               <div>
                 <h2 class="font-semibold text-neutral-100">Shop & Items</h2>
-                <p class="text-xs text-neutral-400">Spend coins and use items</p>
+                <p class="text-xs text-neutral-400">Spend coins to unlock & boost</p>
               </div>
             </div>
-
-            <!-- Current Resources -->
-            <section class="space-y-3">
-              <h3 class="section-heading">Your Resources</h3>
-              <div class="bg-neutral-800/30 rounded-sm p-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="flex items-center gap-2">
-                    <span class="text-lg">🪙</span>
-                    <div>
-                      <div class="text-lg font-bold text-amber-400">{{ items.coins.value }}</div>
-                      <div class="text-xs text-neutral-500">Coins</div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-lg">🎯</span>
-                    <div>
-                      <div class="text-lg font-bold text-cyan-400">{{ items.randomCellSolves.value }}</div>
-                      <div class="text-xs text-neutral-500">Cell Solves</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Use Items -->
-            <section class="space-y-3">
-              <h3 class="section-heading">Use Items</h3>
-              <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
-                <button
-                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
-                  :class="
-                    items.randomCellSolves.value > 0
-                      ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
-                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
-                  "
-                  :disabled="items.randomCellSolves.value <= 0"
-                  @click="useRandomCellSolve()"
-                >
-                  <span>🎯 Solve Random Cell</span>
-                  <span class="text-xs opacity-70">{{ items.randomCellSolves.value }} available</span>
-                </button>
-              </div>
-            </section>
 
             <!-- Shop -->
             <section class="space-y-3">
@@ -1271,12 +1318,17 @@
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: tabs (top ~75%) + chat (bottom ~25%) -->
-        <div v-show="showRightColumn" class="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-          <!-- Top ~75%: tab bar + active tab content -->
-          <div v-show="showTabsArea" class="flex flex-col min-h-0 flex-1 lg:flex-none lg:h-3/4 overflow-hidden">
+          <!-- Resize handle: shop / open-tab width (desktop only) -->
+          <div
+            class="hidden lg:block shrink-0 w-1.5 cursor-col-resize bg-neutral-700/40 hover:bg-cyan-500/60 transition-colors touch-none"
+            @pointerdown="startResize('shop', $event)"
+            title="Glisser pour redimensionner Shop / Onglet"
+          ></div>
+
+          <!-- TAB COLUMN: tab bar + open tab content (fills the rest of the options width) -->
+          <div v-show="showTabsArea" class="w-full lg:w-auto lg:flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
             <!-- tab bar (desktop only - mobile uses top tab bar) -->
-            <div class="hidden lg:flex border-b border-neutral-700/50 shrink-0 overflow-x-auto">
+            <div class="hidden lg:flex border-b border-neutral-700/50 shrink-0">
               <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'archipelago' }" @click="activeTab = 'archipelago'">
                 Archipelago
               </button>
@@ -1291,7 +1343,6 @@
               >
                 Goals
               </button>
-              <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'debug' }" @click="activeTab = 'debug'">Debug</button>
             </div>
 
           <!-- tab content - on mobile, show based on activeMobileTab; on desktop, show based on activeTab -->
@@ -1662,8 +1713,51 @@
               </div>
             </div>
 
-            <!-- DEBUG -->
-            <div v-else-if="isTabVisible('debug')" class="space-y-6">
+          </div>
+          </div>
+        </div>
+        <!-- Resize handle: top panels / log height (desktop only) -->
+        <div
+          class="hidden lg:block shrink-0 h-1.5 cursor-row-resize bg-neutral-700/40 hover:bg-cyan-500/60 transition-colors touch-none"
+          @pointerdown="startResize('log', $event)"
+          title="Glisser pour redimensionner la hauteur du log"
+        ></div>
+        <!-- Bottom log panel (Game Log | Debug); height resizable on desktop -->
+        <div
+          v-show="showChatArea"
+          class="border-t border-neutral-700/50 flex flex-col min-h-0 flex-1 lg:flex-none overflow-hidden"
+          :style="logStyle"
+        >
+            <!-- mini tab bar: Game Log | Debug -->
+            <div class="flex border-b border-neutral-700/50 shrink-0">
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'log' }" @click="activeLogTab = 'log'">Game Log</button>
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'debug' }" @click="activeLogTab = 'debug'">Debug</button>
+            </div>
+            <div v-show="activeLogTab === 'log'" ref="chatLogContainer" class="flex-1 min-h-0 px-4 pb-3 overflow-auto custom-scrollbar">
+              <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
+                <div class="text-center space-y-1">
+                  <div>No messages yet</div>
+                  <div class="text-2xs">Game events will appear here</div>
+                </div>
+              </div>
+              <div v-else class="space-y-2">
+                <div
+                  v-for="(msg, idx) in messageLog"
+                  :key="idx"
+                  class="text-xs py-1 border-b border-neutral-700/30 last:border-0"
+                  :class="{
+                    'text-lime-300': msg.type === 'item',
+                    'text-red-300': msg.type === 'error',
+                    'text-blue-300': msg.type === 'chat',
+                    'text-neutral-400': msg.type === 'info',
+                  }"
+                >
+                  <span class="text-neutral-600 mr-2">{{ msg.time.toLocaleTimeString() }}</span>
+                  {{ msg.text.replaceAll(',', ' ') }}
+                </div>
+              </div>
+            </div>
+            <div v-show="activeLogTab === 'debug'" class="space-y-6 p-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
               <div class="flex items-center gap-3">
                 <div>
                   <h2 class="font-semibold text-neutral-100">Debug Tools</h2>
@@ -1733,41 +1827,6 @@
               </section>
             </div>
           </div>
-          </div>
-          <!-- Bottom ~25%: Chat (always visible on desktop; a tab page on mobile) -->
-          <div
-            v-show="showChatArea"
-            class="border-t border-neutral-700/50 flex flex-col min-h-0 flex-1 lg:flex-none lg:h-1/4 overflow-hidden"
-          >
-            <div class="px-4 pt-3 pb-1 shrink-0">
-              <h2 class="text-sm font-semibold text-neutral-100">Game Log</h2>
-            </div>
-            <div ref="chatLogContainer" class="flex-1 min-h-0 px-4 pb-3 overflow-auto custom-scrollbar">
-              <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
-                <div class="text-center space-y-1">
-                  <div>No messages yet</div>
-                  <div class="text-2xs">Game events will appear here</div>
-                </div>
-              </div>
-              <div v-else class="space-y-2">
-                <div
-                  v-for="(msg, idx) in messageLog"
-                  :key="idx"
-                  class="text-xs py-1 border-b border-neutral-700/30 last:border-0"
-                  :class="{
-                    'text-lime-300': msg.type === 'item',
-                    'text-red-300': msg.type === 'error',
-                    'text-blue-300': msg.type === 'chat',
-                    'text-neutral-400': msg.type === 'info',
-                  }"
-                >
-                  <span class="text-neutral-600 mr-2">{{ msg.time.toLocaleTimeString() }}</span>
-                  {{ msg.text.replaceAll(',', ' ') }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
