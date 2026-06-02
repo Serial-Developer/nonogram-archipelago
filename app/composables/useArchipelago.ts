@@ -106,42 +106,35 @@ export function useArchipelago() {
       addLogMessage('Connection lost.', 'error');
     });
 
-    // Handle bounced packets (for Death Link)
-    client.socket.on('bounced', (packet: any, data: any) => {
-      if (data?.time && data?.cause && data?.source) {
-        // This is a Death Link
-        handleDeathLinkReceived(data.source, data.cause);
-      }
+    // Handle received Death Links via the native DeathLinkManager.
+    // Deaths sent by this client never fire this event (no self-echo loop).
+    client.deathLink.on('deathReceived', (source: string, _time: number, cause?: string) => {
+      handleDeathLinkReceived(source, cause ?? 'Unknown cause');
     });
   }
 
-  // Handle receiving a Death Link
+  // Handle receiving a Death Link (always from another player; self-sent deaths never reach here).
   function handleDeathLinkReceived(source: string, cause: string) {
     if (!deathLinkEnabled.value) return;
 
-    // Prevent death loops - ignore if we just died
-    const now = Date.now();
-    if (now - lastDeathTime.value < 3000) return;
+    // Stamp the death time BEFORE losing a life. If this received death drops us to 0,
+    // the game-over watcher must NOT rebroadcast it (sendDeathLink guards on this timestamp).
+    lastDeathTime.value = Date.now();
 
     addLogMessage(`☠️ Death Link from ${source}: ${cause}`, 'error');
     items.loseLife();
   }
 
-  // Send a Death Link to other players
+  // Send a Death Link to other players via the native DeathLinkManager.
   function sendDeathLink(cause: string = 'Lost all lives') {
     if (status.value !== 'connected' || !deathLinkEnabled.value) return;
 
+    // Don't rebroadcast a death that was itself caused by a received Death Link.
+    if (Date.now() - lastDeathTime.value < 2000) return;
     lastDeathTime.value = Date.now();
 
     try {
-      client.bounce(
-        { tags: ['DeathLink'] },
-        {
-          time: Date.now() / 1000,
-          cause: cause,
-          source: slot.value,
-        },
-      );
+      client.deathLink.sendDeathLink(slot.value, cause);
       addLogMessage(`☠️ Sent Death Link: ${cause}`, 'error');
     } catch (e: any) {
       console.error('Failed to send Death Link:', e);
@@ -183,18 +176,32 @@ export function useArchipelago() {
       // Store slot data for use by items composable
       slotData.value = receivedSlotData as Record<string, any>;
 
-      // Apply slot data settings (only on first connection, not reconnect)
-      // Check if we're reconnecting by seeing if archipelago mode was already enabled
-      const isFirstConnection = !items.archipelagoMode.value;
+      // --- Seed-based state isolation (#3) ---
+      // The server is authoritative. Each seed (room) gets its own isolated local state.
+      // On a new seed, wipe local AP state and let the server's checked locations + the
+      // received-items replay rebuild it from scratch.
+      const seed = client.room.seedName;
+      const storedSeed = import.meta.client ? localStorage.getItem('nonogram_ap_seed') : null;
+      const isNewSeed = seed !== '' && seed !== storedSeed;
 
+      if (isNewSeed) {
+        items.enableArchipelagoMode(); // full reset to starting values
+        highestItemIndexProcessed = -1; // force the upcoming item replay to reprocess everything
+        if (import.meta.client) {
+          localStorage.setItem('nonogram_ap_highestItemIndex', '-1');
+          localStorage.setItem('nonogram_ap_seed', seed);
+        }
+      }
+
+      // Apply slot data settings (configuration coming from the player's YAML)
       if (slotData.value) {
         if (typeof slotData.value.starting_lives === 'number') {
           items.baseLives.value = slotData.value.starting_lives;
         }
         if (typeof slotData.value.starting_coins === 'number') {
           items.startingCoins.value = slotData.value.starting_coins;
-          // Only reset coins on first connection; preserve persisted coins on reconnect
-          if (isFirstConnection) {
+          // Reset current coins to the starting amount only when entering a new seed.
+          if (isNewSeed) {
             items.coins.value = slotData.value.starting_coins;
           }
         }
@@ -204,7 +211,17 @@ export function useArchipelago() {
         if (typeof slotData.value.coins_per_bundle === 'number') {
           items.coinsPerBundle.value = slotData.value.coins_per_bundle;
         }
+        // Death Link is driven entirely by slot data (#2); there is no manual UI toggle.
+        if (typeof slotData.value.death_link !== 'undefined') {
+          deathLinkEnabled.value = !!slotData.value.death_link;
+          if (deathLinkEnabled.value) {
+            client.deathLink.enableDeathLink();
+          }
+        }
       }
+
+      // Reconcile local check state with the server's authoritative checked locations (#3).
+      items.reconcileCheckedLocations(client.room.checkedLocations ?? []);
 
       status.value = 'connected';
       lastMessage.value = 'Connected!';
@@ -305,14 +322,16 @@ export function useArchipelago() {
     }
   }
 
-  // Toggle Death Link
+  // Toggle Death Link (kept for completeness; no UI currently calls this).
   function toggleDeathLink(enabled: boolean) {
     deathLinkEnabled.value = enabled;
 
-    // Update tags if connected
     if (status.value === 'connected') {
-      const tags = enabled ? ['DeathLink'] : [];
-      client.updateTags(tags);
+      if (enabled) {
+        client.deathLink.enableDeathLink();
+      } else {
+        client.deathLink.disableDeathLink();
+      }
       addLogMessage(`Death Link ${enabled ? 'enabled' : 'disabled'}`, 'info');
     }
   }

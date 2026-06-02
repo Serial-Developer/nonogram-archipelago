@@ -712,6 +712,59 @@ export function useArchipelagoItems() {
     return newChecks;
   }
 
+  // Reconcile local check/progress state with the server's authoritative list of checked
+  // locations (called on connect, #3). The server is the source of truth: completedChecks and
+  // every derived counter (puzzlesCompleted / firstLineCompleted / coinMilestones) are rebuilt
+  // from the server's checkedLocations rather than trusting the local browser session.
+  function reconcileCheckedLocations(checkedIds: number[]) {
+    ensureCompletedChecksIsSet();
+
+    // completedChecks = exactly what the server reports as checked.
+    completedChecks.value = new Set(checkedIds);
+    if ((completedChecks as any).triggerPersist) {
+      (completedChecks as any).triggerPersist();
+    }
+
+    // Rebuild derived structures from scratch.
+    puzzlesCompleted['5x5'] = 0;
+    puzzlesCompleted['10x10'] = 0;
+    puzzlesCompleted['15x15'] = 0;
+    puzzlesCompleted['20x20'] = 0;
+    firstLineCompleted['5x5'] = false;
+    firstLineCompleted['10x10'] = false;
+    firstLineCompleted['15x15'] = false;
+    firstLineCompleted['20x20'] = false;
+    coinMilestones[50] = false;
+    coinMilestones[100] = false;
+
+    const puzzleBases: Array<{ diff: '5x5' | '10x10' | '15x15' | '20x20'; base: number }> = [
+      { diff: '5x5', base: AP_LOCATIONS.PUZZLE_5X5_BASE },
+      { diff: '10x10', base: AP_LOCATIONS.PUZZLE_10X10_BASE },
+      { diff: '15x15', base: AP_LOCATIONS.PUZZLE_15X15_BASE },
+      { diff: '20x20', base: AP_LOCATIONS.PUZZLE_20X20_BASE },
+    ];
+
+    for (const id of checkedIds) {
+      if (id === AP_LOCATIONS.OBTAIN_50_COINS) coinMilestones[50] = true;
+      else if (id === AP_LOCATIONS.OBTAIN_100_COINS) coinMilestones[100] = true;
+      else if (id === AP_LOCATIONS.FIRST_LINE_5X5) firstLineCompleted['5x5'] = true;
+      else if (id === AP_LOCATIONS.FIRST_LINE_10X10) firstLineCompleted['10x10'] = true;
+      else if (id === AP_LOCATIONS.FIRST_LINE_15X15) firstLineCompleted['15x15'] = true;
+      else if (id === AP_LOCATIONS.FIRST_LINE_20X20) firstLineCompleted['20x20'] = true;
+      else {
+        // Puzzle completion checks are sequential (base+1 .. base+count); the count
+        // completed for a difficulty is the highest n that appears in the checked set.
+        for (const { diff, base } of puzzleBases) {
+          const n = id - base;
+          if (n >= 1 && n <= PUZZLE_COUNTS[diff]) {
+            if (n > puzzlesCompleted[diff]) puzzlesCompleted[diff] = n;
+            break;
+          }
+        }
+      }
+    }
+  }
+
   // Get location definition by ID
   function getLocationDefinition(locationId: number): LocationDefinition | undefined {
     return LOCATION_REGISTRY.find((loc) => loc.id === locationId);
@@ -795,6 +848,7 @@ export function useArchipelagoItems() {
     getItemDefinition,
     getLocationDefinition,
     isLocationCompleted,
+    reconcileCheckedLocations,
     enableArchipelagoMode,
     enableArchipelagoModeForConnection,
     disableArchipelagoMode,
