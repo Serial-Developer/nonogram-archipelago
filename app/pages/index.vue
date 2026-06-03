@@ -155,6 +155,11 @@
   const autoX = ref(true);
   const greyCompletedHints = ref(true);
   const showDebugGrid = ref(false);
+  // Debug: simulate Archipelago slot_data options without generating a seed
+  const simAutoX = ref(true);
+  const simGreyHints = ref(true);
+  const simUnlimitedLives = ref(false);
+  const simShowMistakes = ref(true);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -169,6 +174,39 @@
   // Allow drag painting on mobile
   const effectiveDragPainting = computed(() => dragPainting.value); // Always allow drag painting
   const gameOver = computed(() => !items.unlimitedLives.value && items.currentLives.value <= 0);
+
+  // Apply AP-locked UI preferences from slot data when connected to Archipelago.
+  // auto_x / grey_completed_hints are fixed by the YAML; show_mistakes is forced on
+  // while playing with lives (finite), and only follows the YAML when lives are unlimited.
+  watch(
+    slotData,
+    (sd) => {
+      if (!sd || typeof sd.auto_x === 'undefined') return; // not an AP slot_data payload
+      autoX.value = !!sd.auto_x;
+      if (typeof sd.grey_completed_hints !== 'undefined') greyCompletedHints.value = !!sd.grey_completed_hints;
+      const unlimited = !!sd.unlimited_lives;
+      showMistakes.value = unlimited ? !!sd.show_mistakes : true;
+    },
+    { deep: true, immediate: true },
+  );
+
+  // Debug: inject fake AP slot_data so the locked options can be tested without generating a seed.
+  function debugSimulateApOptions() {
+    items.enableArchipelagoModeForConnection(); // AP mode on, no state reset
+    items.unlimitedLives.value = simUnlimitedLives.value;
+    slotData.value = {
+      ...slotData.value,
+      auto_x: simAutoX.value,
+      grey_completed_hints: simGreyHints.value,
+      unlimited_lives: simUnlimitedLives.value,
+      // mirror fill_slot_data: with finite lives, show_mistakes is forced on
+      show_mistakes: simUnlimitedLives.value ? simShowMistakes.value : true,
+    };
+  }
+  function debugExitApSim() {
+    items.disableArchipelagoMode();
+    slotData.value = {};
+  }
 
   // Shop: difficulty gating
   // Current AP difficulty as a tier key ('5x5' | '10x10' | '15x15' | '20x20').
@@ -1523,22 +1561,27 @@
                 <section class="space-y-4">
                   <h3 class="section-heading">Behaviour</h3>
                   <div class="space-y-4 bg-neutral-800/30 rounded-sm p-4">
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                      <input type="checkbox" v-model="showMistakes" class="checkbox-field" />
-                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors"> Show mistakes in real-time </span>
-                    </label>
-
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                      <input type="checkbox" v-model="autoX" class="checkbox-field" />
+                    <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-60 cursor-not-allowed': items.archipelagoMode.value && !items.unlimitedLives.value }">
+                      <input type="checkbox" v-model="showMistakes" class="checkbox-field" :disabled="items.archipelagoMode.value && !items.unlimitedLives.value" />
                       <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
-                        Auto-X completed rows/columns
+                        Show mistakes in real-time
+                        <span v-if="items.archipelagoMode.value && !items.unlimitedLives.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
                       </span>
                     </label>
 
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                      <input type="checkbox" v-model="greyCompletedHints" class="checkbox-field" />
+                    <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-60 cursor-not-allowed': items.archipelagoMode.value }">
+                      <input type="checkbox" v-model="autoX" class="checkbox-field" :disabled="items.archipelagoMode.value" />
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
+                        Auto-X completed rows/columns
+                        <span v-if="items.archipelagoMode.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
+                      </span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-60 cursor-not-allowed': items.archipelagoMode.value }">
+                      <input type="checkbox" v-model="greyCompletedHints" class="checkbox-field" :disabled="items.archipelagoMode.value" />
                       <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
                         Grey out completed hints
+                        <span v-if="items.archipelagoMode.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
                       </span>
                     </label>
 
@@ -1781,6 +1824,34 @@
                 <h3 class="section-heading">Actions</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
                   <button type="button" class="btn-secondary w-full" @click="autoSolve()">Auto-Solve Puzzle</button>
+                </div>
+              </section>
+
+              <!-- Simulate AP options (slot_data) -->
+              <section class="space-y-3">
+                <h3 class="section-heading">Simulate AP options (slot_data)</h3>
+                <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
+                  <p class="text-xs text-neutral-400">Inject fake slot_data to test option locking without generating a seed.</p>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simAutoX" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">auto_x</span>
+                  </label>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simGreyHints" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">grey_completed_hints</span>
+                  </label>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simUnlimitedLives" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">unlimited_lives</span>
+                  </label>
+                  <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-50': !simUnlimitedLives }">
+                    <input type="checkbox" v-model="simShowMistakes" class="checkbox-field" :disabled="!simUnlimitedLives" />
+                    <span class="text-sm text-neutral-200">show_mistakes <span class="text-2xs text-neutral-500">(forcé ON si vies finies)</span></span>
+                  </label>
+                  <div class="flex gap-2">
+                    <button type="button" class="btn-secondary flex-1" @click="debugSimulateApOptions()">Apply as slot_data</button>
+                    <button type="button" class="btn-secondary flex-1" @click="debugExitApSim()">Exit AP sim</button>
+                  </div>
                 </div>
               </section>
 

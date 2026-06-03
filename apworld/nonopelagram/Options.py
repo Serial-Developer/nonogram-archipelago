@@ -92,6 +92,31 @@ class DeathLink(Toggle):
     display_name = "Death Link"
 
 
+class AutoX(DefaultOnToggle):
+    """Automatically place an X on the remaining cells of a completed row/column.
+    Fixed by the YAML for everyone playing this Archipelago game."""
+    display_name = "Auto-X Completed Rows/Columns"
+
+
+class GreyCompletedHints(DefaultOnToggle):
+    """Grey out hint numbers once they have been satisfied.
+    Fixed by the YAML for everyone playing this Archipelago game."""
+    display_name = "Grey Out Completed Hints"
+
+
+class UnlimitedLives(Toggle):
+    """Play without losing lives on mistakes. When disabled (default), mistakes cost a
+    life and Show Mistakes is forced on."""
+    display_name = "Unlimited Lives"
+
+
+class ShowMistakes(DefaultOnToggle):
+    """Highlight incorrect cells in real-time. This is forced on and locked whenever you
+    play with lives (Unlimited Lives disabled); it is only freely configurable when
+    Unlimited Lives is enabled."""
+    display_name = "Show Mistakes in Real-Time"
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -105,3 +130,7 @@ class NonogramOptions(PerGameCommonOptions):
     cell_solves_in_pool: CellSolvesInPool
     goal_puzzles: GoalPuzzles
     death_link: DeathLink
+    auto_x: AutoX
+    grey_completed_hints: GreyCompletedHints
+    unlimited_lives: UnlimitedLives
+    show_mistakes: ShowMistakes

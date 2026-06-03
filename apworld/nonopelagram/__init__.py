@@ -103,10 +103,16 @@ class NonogramWorld(World):
 
     def fill_slot_data(self) -> Dict[str, Any]:
         """Return slot data to be sent to the client."""
+        unlimited_lives = bool(self.options.unlimited_lives.value)
         return {
             "starting_lives": self.options.starting_lives.value,
             "starting_coins": self.options.starting_coins.value,
             "starting_hints": self.options.starting_hints.value,
             "coins_per_bundle": self.options.coins_per_bundle.value,
             "goal_puzzles": self.options.goal_puzzles.value,
+            "auto_x": bool(self.options.auto_x.value),
+            "grey_completed_hints": bool(self.options.grey_completed_hints.value),
+            "unlimited_lives": unlimited_lives,
+            # With finite lives, mistakes must be shown in real-time (locked on the client).
+            "show_mistakes": True if not unlimited_lives else bool(self.options.show_mistakes.value),
         }

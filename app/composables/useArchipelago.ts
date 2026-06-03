@@ -243,6 +243,10 @@ export function useArchipelago() {
         if (typeof slotData.value.coins_per_bundle === 'number') {
           items.coinsPerBundle.value = slotData.value.coins_per_bundle;
         }
+        // Unlimited lives is fixed by the YAML; the client toggle is locked in AP mode.
+        if (typeof slotData.value.unlimited_lives !== 'undefined') {
+          items.unlimitedLives.value = !!slotData.value.unlimited_lives;
+        }
         // Death Link is driven entirely by slot data (#2); there is no manual UI toggle.
         if (typeof slotData.value.death_link !== 'undefined') {
           deathLinkEnabled.value = !!slotData.value.death_link;
