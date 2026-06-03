@@ -30,31 +30,42 @@ def create_regions(world: "NonogramWorld") -> None:
     # Connect Menu to Puzzle Area (no requirements)
     menu_region.connect(puzzle_region)
 
-    # Add all locations to the puzzle region. Shop check locations are handled
-    # conditionally below (based on how many wallet upgrades are in the pool).
-    for location_name, location_data in location_table.items():
-        if location_name in WALLET_SHOP_LOCATION_NAMES:
+    def add_location(name: str) -> None:
+        data = location_table[name]
+        puzzle_region.locations.append(
+            NonogramLocation(player, name, data.code, puzzle_region)
+        )
+
+    counts = world.grid_counts
+    tiers = ["5x5", "10x10", "15x15", "20x20"]
+    active_tiers = [t for t in tiers if counts.get(t, 0) > 0]
+    start_tier = active_tiers[0] if active_tiers else "5x5"
+    unlock_names = {
+        "10x10": "Increased Difficulty to 10x10",
+        "15x15": "Increased Difficulty to 15x15",
+        "20x20": "Increased Difficulty to 20x20",
+    }
+
+    # Coin milestones are always reachable.
+    add_location("Obtain 50 Coins")
+    add_location("Obtain 100 Coins")
+
+    # Per-size locations (only for sizes that are actually played).
+    for tier in tiers:
+        n = counts.get(tier, 0)
+        if n <= 0:
             continue
-        if location_data.code is not None:  # Skip event locations for now
-            location = NonogramLocation(
-                player,
-                location_name,
-                location_data.code,
-                puzzle_region
-            )
-            puzzle_region.locations.append(location)
+        add_location(f"Complete First Line of a {tier} Puzzle")
+        # The starting size is not "unlocked"; every later played size is.
+        if tier != start_tier and tier in unlock_names:
+            add_location(unlock_names[tier])
+        for i in range(1, n + 1):
+            add_location(f"Complete {i} {tier} Puzzle{'s' if i > 1 else ''}")
 
     # Conditionally add wallet shop check locations (first N levels, N = wallets_in_pool).
     wallets_in_pool = world.options.wallets_in_pool.value
     for location_name in WALLET_SHOP_LOCATION_NAMES[:wallets_in_pool]:
-        location_data = location_table[location_name]
-        location = NonogramLocation(
-            player,
-            location_name,
-            location_data.code,
-            puzzle_region
-        )
-        puzzle_region.locations.append(location)
+        add_location(location_name)
 
     # Add victory event location
     victory_location = NonogramLocation(
@@ -66,12 +77,10 @@ def create_regions(world: "NonogramWorld") -> None:
     victory_location.place_locked_item(world.create_item("Victory"))
     puzzle_region.locations.append(victory_location)
 
-    # Set victory condition based on goal_puzzles option
-    goal_puzzles = world.options.goal_puzzles.value
-
-    # Victory requires completing the goal number of 5x5 puzzles (default)
-    # The location name is "Complete X 5x5 Puzzle(s)" - must match Locations.py format
-    goal_location_name = f"Complete {goal_puzzles} 5x5 Puzzle{'s' if goal_puzzles > 1 else ''}"
+    # Victory requires reaching the final puzzle of the highest played size.
+    last_tier = active_tiers[-1] if active_tiers else start_tier
+    final_count = counts.get(last_tier, 0) or 1
+    goal_location_name = f"Complete {final_count} {last_tier} Puzzle{'s' if final_count > 1 else ''}"
     victory_location.access_rule = lambda state, loc=goal_location_name: state.can_reach(
         loc, "Location", player
     )

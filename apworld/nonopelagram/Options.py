@@ -78,12 +78,51 @@ class CellSolvesInPool(Range):
     default = 3
 
 
-class GoalPuzzles(Range):
-    """Number of puzzles required to complete the goal."""
-    display_name = "Goal Puzzles"
-    range_start = 1
+class GridPreset(Choice):
+    """Preset distribution of puzzles per grid size (the goal is their sum).
+    Choose 'custom' to set each size yourself with the puzzles_* options.
+    easy=10/8/5/2, normal=10/10/10/10, hard=10/15/20/20, evil=0/0/0/66,
+    expedition_33=0/33/33/33 (sizes 5x5/10x10/15x15/20x20)."""
+    display_name = "Grid Count Preset"
+    option_easy = 0
+    option_normal = 1
+    option_hard = 2
+    option_evil = 3
+    option_expedition_33 = 4
+    option_custom = 5
+    default = 1
+
+
+class Puzzles5x5(Range):
+    """Number of 5x5 puzzles toward the goal (only used when grid_preset is custom)."""
+    display_name = "5x5 Puzzles (custom)"
+    range_start = 0
     range_end = 100
-    default = 64
+    default = 10
+
+
+class Puzzles10x10(Range):
+    """Number of 10x10 puzzles toward the goal (only used when grid_preset is custom)."""
+    display_name = "10x10 Puzzles (custom)"
+    range_start = 0
+    range_end = 100
+    default = 10
+
+
+class Puzzles15x15(Range):
+    """Number of 15x15 puzzles toward the goal (only used when grid_preset is custom)."""
+    display_name = "15x15 Puzzles (custom)"
+    range_start = 0
+    range_end = 100
+    default = 10
+
+
+class Puzzles20x20(Range):
+    """Number of 20x20 puzzles toward the goal (only used when grid_preset is custom)."""
+    display_name = "20x20 Puzzles (custom)"
+    range_start = 0
+    range_end = 100
+    default = 10
 
 
 class DeathLink(Toggle):
@@ -147,7 +186,11 @@ class NonogramOptions(PerGameCommonOptions):
     hint_reveals_in_pool: HintRevealsInPool
     coin_bundles_in_pool: CoinBundlesInPool
     cell_solves_in_pool: CellSolvesInPool
-    goal_puzzles: GoalPuzzles
+    grid_preset: GridPreset
+    puzzles_5x5: Puzzles5x5
+    puzzles_10x10: Puzzles10x10
+    puzzles_15x15: Puzzles15x15
+    puzzles_20x20: Puzzles20x20
     death_link: DeathLink
     auto_x: AutoX
     grey_completed_hints: GreyCompletedHints

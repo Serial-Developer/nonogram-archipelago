@@ -58,6 +58,33 @@ class NonogramWorld(World):
         item_data = item_table[name]
         return NonogramItem(name, item_data.classification, item_data.code, self.player)
 
+    # Effective puzzle counts per grid size, resolved from the preset/custom options.
+    grid_counts: Dict[str, int]
+
+    GRID_PRESETS: ClassVar[Dict[str, Dict[str, int]]] = {
+        "easy": {"5x5": 10, "10x10": 8, "15x15": 5, "20x20": 2},
+        "normal": {"5x5": 10, "10x10": 10, "15x15": 10, "20x20": 10},
+        "hard": {"5x5": 10, "10x10": 15, "15x15": 20, "20x20": 20},
+        "evil": {"5x5": 0, "10x10": 0, "15x15": 0, "20x20": 66},
+        "expedition_33": {"5x5": 0, "10x10": 33, "15x15": 33, "20x20": 33},
+    }
+
+    def generate_early(self) -> None:
+        """Resolve the effective per-size puzzle counts from the preset/custom options."""
+        preset = self.options.grid_preset
+        if preset.current_key == "custom":
+            self.grid_counts = {
+                "5x5": self.options.puzzles_5x5.value,
+                "10x10": self.options.puzzles_10x10.value,
+                "15x15": self.options.puzzles_15x15.value,
+                "20x20": self.options.puzzles_20x20.value,
+            }
+        else:
+            self.grid_counts = dict(self.GRID_PRESETS[preset.current_key])
+        # Safety: never allow an empty goal (would make the seed unwinnable).
+        if sum(self.grid_counts.values()) <= 0:
+            self.grid_counts["5x5"] = 1
+
     def create_regions(self) -> None:
         """Create and connect all regions for this world."""
         create_regions(self)
@@ -116,7 +143,11 @@ class NonogramWorld(World):
             "starting_coins": self.options.starting_coins.value,
             "starting_hints": self.options.starting_hints.value,
             "coins_per_bundle": self.options.coins_per_bundle.value,
-            "goal_puzzles": self.options.goal_puzzles.value,
+            "goal_puzzles": sum(self.grid_counts.values()),
+            "puzzles_5x5": self.grid_counts["5x5"],
+            "puzzles_10x10": self.grid_counts["10x10"],
+            "puzzles_15x15": self.grid_counts["15x15"],
+            "puzzles_20x20": self.grid_counts["20x20"],
             "starting_wallet_level": self.options.starting_wallet_level.value,
             "wallets_in_pool": self.options.wallets_in_pool.value,
             "auto_x": bool(self.options.auto_x.value),

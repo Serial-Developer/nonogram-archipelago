@@ -256,6 +256,15 @@ export function useArchipelago() {
         if (isNewSeed && !items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
           items.coins.value = items.coinCap.value;
         }
+        // Per-size puzzle counts (goal weighting): overwrite the dynamic PUZZLE_COUNTS.
+        if (typeof slotData.value.puzzles_5x5 === 'number') items.PUZZLE_COUNTS['5x5'] = slotData.value.puzzles_5x5;
+        if (typeof slotData.value.puzzles_10x10 === 'number') items.PUZZLE_COUNTS['10x10'] = slotData.value.puzzles_10x10;
+        if (typeof slotData.value.puzzles_15x15 === 'number') items.PUZZLE_COUNTS['15x15'] = slotData.value.puzzles_15x15;
+        if (typeof slotData.value.puzzles_20x20 === 'number') items.PUZZLE_COUNTS['20x20'] = slotData.value.puzzles_20x20;
+        // Start at the lowest size that actually has puzzles.
+        if (isNewSeed) {
+          items.currentDifficulty.value = items.firstActiveDifficulty();
+        }
         // Unlimited lives is fixed by the YAML; the client toggle is locked in AP mode.
         if (typeof slotData.value.unlimited_lives !== 'undefined') {
           items.unlimitedLives.value = !!slotData.value.unlimited_lives;

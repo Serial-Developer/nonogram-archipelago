@@ -162,6 +162,10 @@
   const simShowMistakes = ref(true);
   const simWalletLevel = ref(0);
   const simWalletsInPool = ref(0);
+  const simPuzzles5x5 = ref(3);
+  const simPuzzles10x10 = ref(3);
+  const simPuzzles15x15 = ref(3);
+  const simPuzzles20x20 = ref(3);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -199,6 +203,17 @@
     items.startingWalletLevel.value = simWalletLevel.value;
     items.walletLevel.value = simWalletLevel.value;
     items.walletsInPool.value = simWalletsInPool.value;
+    items.PUZZLE_COUNTS['5x5'] = simPuzzles5x5.value;
+    items.PUZZLE_COUNTS['10x10'] = simPuzzles10x10.value;
+    items.PUZZLE_COUNTS['15x15'] = simPuzzles15x15.value;
+    items.PUZZLE_COUNTS['20x20'] = simPuzzles20x20.value;
+    items.currentDifficulty.value = items.firstActiveDifficulty();
+    // Fresh progress so the difficulty gate can be tested cleanly from the sim.
+    items.puzzlesCompleted['5x5'] = 0;
+    items.puzzlesCompleted['10x10'] = 0;
+    items.puzzlesCompleted['15x15'] = 0;
+    items.puzzlesCompleted['20x20'] = 0;
+    randomize();
     if (!items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
       items.coins.value = items.coinCap.value;
     }
@@ -211,6 +226,11 @@
       show_mistakes: simUnlimitedLives.value ? simShowMistakes.value : true,
       starting_wallet_level: simWalletLevel.value,
       wallets_in_pool: simWalletsInPool.value,
+      puzzles_5x5: simPuzzles5x5.value,
+      puzzles_10x10: simPuzzles10x10.value,
+      puzzles_15x15: simPuzzles15x15.value,
+      puzzles_20x20: simPuzzles20x20.value,
+      goal_puzzles: simPuzzles5x5.value + simPuzzles10x10.value + simPuzzles15x15.value + simPuzzles20x20.value,
     };
   }
   function debugExitApSim() {
@@ -232,7 +252,22 @@
     () => items.puzzlesCompleted[apDifficultyKey.value] >= items.PUZZLE_COUNTS[apDifficultyKey.value],
   );
   // True at the highest tier, where there is nothing left to unlock.
-  const isMaxDifficulty = computed(() => items.currentDifficulty.value >= 20);
+  const isMaxDifficulty = computed(() => items.currentDifficulty.value >= items.maxActiveDifficulty());
+
+  // Next / previous grid size that actually has puzzles (skip-aware difficulty navigation).
+  const sizeKey = (d: number) => `${d}x${d}` as '5x5' | '10x10' | '15x15' | '20x20';
+  const nextActiveSize = computed<number | null>(() => {
+    const sizes = [5, 10, 15, 20];
+    const i = sizes.indexOf(items.currentDifficulty.value);
+    if (i < 0) return null;
+    return sizes.slice(i + 1).find((d) => items.PUZZLE_COUNTS[sizeKey(d)] > 0) ?? null;
+  });
+  const prevActiveSize = computed<number | null>(() => {
+    const sizes = [5, 10, 15, 20];
+    const i = sizes.indexOf(items.currentDifficulty.value);
+    if (i < 0) return null;
+    return sizes.slice(0, i).reverse().find((d) => items.PUZZLE_COUNTS[sizeKey(d)] > 0) ?? null;
+  });
 
   // The unlock location for the difficulty above the current one (null at the max tier).
   const nextUnlockLocId = computed<number | null>(() => {
@@ -1376,7 +1411,7 @@
 
                 <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
                 <button
-                  v-if="items.archipelagoMode.value && !isMaxDifficulty"
+                  v-if="items.archipelagoMode.value && (nextActiveSize !== null)"
                   class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
                   :class="
                     currentTierComplete && items.coins.value >= items.DIFFICULTY_INCREASE_COST.value
@@ -1390,22 +1425,22 @@
                     <span>📈 Increase Difficulty</span>
                     <div class="text-[10px] opacity-70">
                       {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
-                      {{ items.currentDifficulty.value + items.DIFFICULTY_STEP }}x{{ items.currentDifficulty.value + items.DIFFICULTY_STEP }}
+                      {{ nextActiveSize }}x{{ nextActiveSize }}
                     </div>
                   </div>
                   <span class="text-xs">🪙 {{ items.DIFFICULTY_INCREASE_COST.value }}</span>
                 </button>
                 <!-- Locked hint: finish every puzzle of the current tier first -->
                 <p
-                  v-if="items.archipelagoMode.value && !isMaxDifficulty && !currentTierComplete"
+                  v-if="items.archipelagoMode.value && (nextActiveSize !== null) && !currentTierComplete"
                   class="text-[11px] text-amber-400/80 -mt-1 px-1"
                 >
-                  🔒 Termine toutes les grilles {{ apDifficultyKey }} pour débloquer
+                  Termine toutes les grilles {{ apDifficultyKey }} pour débloquer la difficulté suivante
                   ({{ items.puzzlesCompleted[apDifficultyKey] }}/{{ items.PUZZLE_COUNTS[apDifficultyKey] }})
                 </p>
                 <!-- Decrease Difficulty (only shown once difficulty has been increased above the base 5x5) -->
                 <button
-                  v-if="items.archipelagoMode.value && items.currentDifficulty.value > 5"
+                  v-if="items.archipelagoMode.value && (prevActiveSize !== null)"
                   class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
                   @click="buyDifficultyDecrease()"
                 >
@@ -1413,7 +1448,7 @@
                     <span>📉 Decrease Difficulty</span>
                     <div class="text-[10px] opacity-70">
                       {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
-                      {{ items.currentDifficulty.value - items.DIFFICULTY_STEP }}x{{ items.currentDifficulty.value - items.DIFFICULTY_STEP }}
+                      {{ prevActiveSize }}x{{ prevActiveSize }}
                     </div>
                   </div>
                 </button>
@@ -1921,6 +1956,13 @@
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">wallets_in_pool</span>
                     <input type="number" min="0" max="4" v-model.number="simWalletsInPool" class="w-16 ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm" />
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-neutral-200">puzzles_5x5 / 10x10 / 15x15 / 20x20</span>
+                    <input type="number" min="0" max="100" v-model.number="simPuzzles5x5" class="w-14 ml-auto bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
+                    <input type="number" min="0" max="100" v-model.number="simPuzzles10x10" class="w-14 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
+                    <input type="number" min="0" max="100" v-model.number="simPuzzles15x15" class="w-14 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
+                    <input type="number" min="0" max="100" v-model.number="simPuzzles20x20" class="w-14 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
                   </div>
                   <div class="flex gap-2">
                     <button type="button" class="btn-secondary flex-1" @click="debugSimulateApOptions()">Apply as slot_data</button>

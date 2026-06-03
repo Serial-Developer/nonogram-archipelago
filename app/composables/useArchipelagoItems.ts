@@ -71,12 +71,12 @@ export const AP_LOCATIONS = {
 } as const;
 
 // Puzzle completion counts per difficulty
-export const PUZZLE_COUNTS = {
+export const PUZZLE_COUNTS: Record<'5x5' | '10x10' | '15x15' | '20x20', number> = reactive({
   '5x5': 26,
   '10x10': 15,
   '15x15': 10,
   '20x20': 5,
-} as const;
+});
 
 // Wallet (progressive coin capacity). Index = wallet level (level 0 always owned).
 export const WALLET_CAPS = [49, 99, 999, 4999, 9999] as const;
@@ -248,6 +248,21 @@ export function useArchipelagoItems() {
   const currentDifficulty = usePersistentRef('ap_currentDifficulty', 5); // Starting grid size (5x5)
   const DIFFICULTY_INCREASE_COST = usePersistentRef('ap_difficultyIncreaseCost', 30); // Cost to increase difficulty
   const DIFFICULTY_STEP = 5; // How much to increase per purchase
+
+  // Lowest / highest grid size that actually has puzzles (drives start tier + max tier).
+  // Plain functions reading the mutable PUZZLE_COUNTS (set once from slot_data on connect).
+  function firstActiveDifficulty(): number {
+    for (const d of [5, 10, 15, 20]) {
+      if (PUZZLE_COUNTS[`${d}x${d}` as '5x5' | '10x10' | '15x15' | '20x20'] > 0) return d;
+    }
+    return 5;
+  }
+  function maxActiveDifficulty(): number {
+    for (const d of [20, 15, 10, 5]) {
+      if (PUZZLE_COUNTS[`${d}x${d}` as '5x5' | '10x10' | '15x15' | '20x20'] > 0) return d;
+    }
+    return 20;
+  }
 
   // Check/Location tracking
   const completedChecks = usePersistentRef<Set<number>>('ap_completedChecks', new Set()); // Location IDs that have been sent
@@ -704,32 +719,36 @@ export function useArchipelagoItems() {
     return { success: true, checkId };
   }
 
-  // Buy difficulty increase
+  // Buy difficulty increase. Skips sizes with no puzzles (0 in slot_data), jumping
+  // straight to the next size that is actually played.
   function buyDifficultyIncrease(): { success: boolean; checks: number[]; reason?: string } {
     ensureCompletedChecksIsSet();
-    // Only allow increasing if all puzzles for current difficulty are completed
-    const difficulties = [5, 10, 15, 20];
-    const idx = difficulties.indexOf(currentDifficulty.value);
-    if (idx < 0 || idx === difficulties.length - 1) {
+    const sizes = [5, 10, 15, 20];
+    const keyOf = (d: number) => `${d}x${d}` as '5x5' | '10x10' | '15x15' | '20x20';
+    const idx = sizes.indexOf(currentDifficulty.value);
+    if (idx < 0) {
+      return { success: false, checks: [], reason: 'Unknown difficulty.' };
+    }
+    const nextSize = sizes.slice(idx + 1).find((d) => PUZZLE_COUNTS[keyOf(d)] > 0);
+    if (nextSize === undefined) {
       return { success: false, checks: [], reason: 'Already at max difficulty.' };
     }
-    const diffStr = `${currentDifficulty.value}x${currentDifficulty.value}`;
+    const diffStr = keyOf(currentDifficulty.value);
     if (puzzlesCompleted[diffStr] < PUZZLE_COUNTS[diffStr]) {
       return { success: false, checks: [], reason: `Complete all ${diffStr} puzzles first.` };
     }
     if (spendCoins(DIFFICULTY_INCREASE_COST.value)) {
-      currentDifficulty.value += DIFFICULTY_STEP;
+      currentDifficulty.value = nextSize;
       const newChecks: number[] = [];
       if (archipelagoMode.value) {
-        if (currentDifficulty.value === 10 && !completedChecks.value.has(AP_LOCATIONS.UNLOCK_10X10)) {
-          addCompletedCheck(AP_LOCATIONS.UNLOCK_10X10);
-          newChecks.push(AP_LOCATIONS.UNLOCK_10X10);
-        } else if (currentDifficulty.value === 15 && !completedChecks.value.has(AP_LOCATIONS.UNLOCK_15X15)) {
-          addCompletedCheck(AP_LOCATIONS.UNLOCK_15X15);
-          newChecks.push(AP_LOCATIONS.UNLOCK_15X15);
-        } else if (currentDifficulty.value === 20 && !completedChecks.value.has(AP_LOCATIONS.UNLOCK_20X20)) {
-          addCompletedCheck(AP_LOCATIONS.UNLOCK_20X20);
-          newChecks.push(AP_LOCATIONS.UNLOCK_20X20);
+        const unlockId = ({
+          10: AP_LOCATIONS.UNLOCK_10X10,
+          15: AP_LOCATIONS.UNLOCK_15X15,
+          20: AP_LOCATIONS.UNLOCK_20X20,
+        } as Record<number, number>)[nextSize];
+        if (unlockId !== undefined && !completedChecks.value.has(unlockId)) {
+          addCompletedCheck(unlockId);
+          newChecks.push(unlockId);
         }
       }
       return { success: true, checks: newChecks };
@@ -737,14 +756,17 @@ export function useArchipelagoItems() {
     return { success: false, checks: [], reason: 'Not enough coins.' };
   }
 
-  // Allow decreasing difficulty (shop)
+  // Allow decreasing difficulty (shop). Skips sizes with no puzzles.
   function buyDifficultyDecrease(): { success: boolean; reason?: string } {
-    const difficulties = [5, 10, 15, 20];
-    const idx = difficulties.indexOf(currentDifficulty.value);
-    if (idx <= 0) {
+    const sizes = [5, 10, 15, 20];
+    const keyOf = (d: number) => `${d}x${d}` as '5x5' | '10x10' | '15x15' | '20x20';
+    const idx = sizes.indexOf(currentDifficulty.value);
+    if (idx < 0) return { success: false, reason: 'Unknown difficulty.' };
+    const prevSize = sizes.slice(0, idx).reverse().find((d) => PUZZLE_COUNTS[keyOf(d)] > 0);
+    if (prevSize === undefined) {
       return { success: false, reason: 'Already at minimum difficulty.' };
     }
-    currentDifficulty.value -= DIFFICULTY_STEP;
+    currentDifficulty.value = prevSize;
     return { success: true };
   }
 
@@ -922,6 +944,8 @@ export function useArchipelagoItems() {
     currentDifficulty,
     DIFFICULTY_INCREASE_COST,
     DIFFICULTY_STEP,
+    firstActiveDifficulty,
+    maxActiveDifficulty,
 
     // Checks/Locations
     completedChecks,
