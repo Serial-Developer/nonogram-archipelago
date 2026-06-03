@@ -150,20 +150,6 @@
       else mode = 'fill';
     }
 
-    // Debug: log pointer/touch event and mode
-    console.log('[onPointerDown]', {
-      eventType: e.type,
-      isMobile: mobile,
-      r,
-      c,
-      mode,
-      dragPainting: props.dragPainting,
-      mobileCellMode: props.mobileCellMode,
-      showMistakes: props.showMistakes,
-      player: props.player[r]?.[c],
-      solution: props.solution ? props.solution[r]?.[c] : undefined,
-    });
-
     // Only start drag painting on pointerdown for desktop
     if (props.dragPainting && e.type === 'pointerdown' && !mobile) {
       isDragging.value = true;
@@ -210,15 +196,13 @@
 
     // Paint the current cell if we've moved to a different cell
     if (!dragStartCell.value || r !== dragStartCell.value.r || c !== dragStartCell.value.c) {
-      // Check if we should paint this cell
+      // Paint cells whose state differs from the target so you can re-drag over
+      // already-treated cells; skip cells already in the target state (avoid toggling them off).
       const currentCellState = props.player[r][c];
-      const shouldPaint = dragMode.value === 'erase' || currentCellState === 'empty';
+      const shouldPaint = dragMode.value === 'erase' || currentCellState !== dragMode.value;
 
       if (shouldPaint) {
-        console.log('Drag painting:', r, c, dragMode.value);
         emit('cell', r, c, dragMode.value);
-      } else {
-        console.log('Skipping filled cell:', r, c, 'current state:', currentCellState);
       }
 
       dragStartCell.value = { r, c };
