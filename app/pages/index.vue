@@ -350,9 +350,9 @@
     for (let r = 0; r < rows.value; r++) {
       if (completedRows.value.has(r)) continue;
 
-      // Check if row has any cells to fill (skip rows with all 0s)
+      // A row with no filled cells (clue all-0) is auto-X'd and "complete" from the start; we
+      // still process it to award the auto-X cell coins, but skip the line bonus / first-line.
       const rowHasFills = solution.value[r]?.some((cell) => cell === 1);
-      if (!rowHasFills) continue;
 
       let rowComplete = true;
       for (let c = 0; c < cols.value; c++) {
@@ -367,8 +367,8 @@
       if (rowComplete) {
         completedRows.value.add(r);
 
-        // Award coins for completing the row
-        let rowCoinChecks = items.addCoins(coinsPerLine.value);
+        // Line completion bonus only for rows that actually have filled cells.
+        let rowCoinChecks = rowHasFills ? items.addCoins(coinsPerLine.value) : [];
 
         // If auto-X is enabled, award coins for auto-X'd cells in this row
         if (effectiveAutoX.value) {
@@ -392,8 +392,8 @@
           checkLocations(rowCoinChecks);
         }
 
-        // Check for first line completion and send to AP
-        if (!hasCompletedFirstLineThisPuzzle.value) {
+        // Check for first line completion (skip trivial all-0 rows).
+        if (rowHasFills && !hasCompletedFirstLineThisPuzzle.value) {
           hasCompletedFirstLineThisPuzzle.value = true;
           const difficulty = getCurrentDifficulty();
           const locationId = items.markFirstLineCompleted(difficulty);
@@ -408,7 +408,8 @@
     for (let c = 0; c < cols.value; c++) {
       if (completedCols.value.has(c)) continue;
 
-      // Check if column has any cells to fill (skip columns with all 0s)
+      // A column with no filled cells is auto-X'd / "complete" from the start; process it for the
+      // auto-X cell coins but skip the line bonus / first-line.
       let colHasFills = false;
       for (let r = 0; r < rows.value; r++) {
         if (solution.value[r]?.[c] === 1) {
@@ -416,7 +417,6 @@
           break;
         }
       }
-      if (!colHasFills) continue;
 
       let colComplete = true;
       for (let r = 0; r < rows.value; r++) {
@@ -431,8 +431,8 @@
       if (colComplete) {
         completedCols.value.add(c);
 
-        // Award coins for completing the column
-        let colCoinChecks = items.addCoins(coinsPerLine.value);
+        // Line completion bonus only for columns that actually have filled cells.
+        let colCoinChecks = colHasFills ? items.addCoins(coinsPerLine.value) : [];
 
         // If auto-X is enabled, award coins for auto-X'd cells in this column
         if (effectiveAutoX.value) {
@@ -456,8 +456,8 @@
           checkLocations(colCoinChecks);
         }
 
-        // Check for first line completion and send to AP
-        if (!hasCompletedFirstLineThisPuzzle.value) {
+        // Check for first line completion (skip trivial all-0 columns).
+        if (colHasFills && !hasCompletedFirstLineThisPuzzle.value) {
           hasCompletedFirstLineThisPuzzle.value = true;
           const difficulty = getCurrentDifficulty();
           const locationId = items.markFirstLineCompleted(difficulty);
@@ -874,6 +874,10 @@
     completedRows.value = new Set();
     completedCols.value = new Set();
     hasCompletedFirstLineThisPuzzle.value = false;
+    // Auto-X'd empty lines (clue all-0) are "complete" from the start: award their cell coins now
+    // so the player doesn't have to manually re-cross them. Run before the baseline so these
+    // automatic checks aren't flagged as "earned this puzzle" in the solved banner.
+    checkLineCompletions();
     // Baseline the checks already unlocked, so the solved banner only shows checks earned in this puzzle
     snapshotChecksBaseline();
     solvedItems.value = [];
