@@ -195,6 +195,54 @@ class DifficultyCost(Choice):
     default = 1
 
 
+class LifeRestoreOnClear(Choice):
+    """How many lives are restored when you clear a puzzle (applied on the next puzzle).
+    none=0, one=+1, full=refill to your maximum (default), custom=+life_restore_custom.
+    Ignored when Unlimited Lives is on. Failing a puzzle always refills fully."""
+    display_name = "Life Restore on Clear"
+    option_none = 0
+    option_one = 1
+    option_full = 2
+    option_custom = 3
+    default = 2
+
+
+class LifeRestoreCustom(Range):
+    """Lives restored on clear when life_restore_on_clear is 'custom'."""
+    display_name = "Life Restore Amount (custom)"
+    range_start = 0
+    range_end = 20
+    default = 3
+
+
+class ShopHealing(Toggle):
+    """Offer a 'heal one life' purchase in the shop (up to your maximum).
+    Ignored when Unlimited Lives is on."""
+    display_name = "Offer Healing in Shop"
+
+
+class HealingCost(Choice):
+    """Coin cost of one heal in the shop (only when shop_healing is on).
+    free=0, low=10, normal=30 (default), high=100,
+    progressive (10, +10 per heal already bought, capped at 9999), custom=healing_cost_custom."""
+    display_name = "Healing Cost"
+    option_free = 0
+    option_low = 1
+    option_normal = 2
+    option_high = 3
+    option_progressive = 4
+    option_custom = 5
+    default = 2
+
+
+class HealingCostCustom(Range):
+    """Flat coin cost of one heal when healing_cost is 'custom'."""
+    display_name = "Healing Cost (custom)"
+    range_start = 0
+    range_end = 9999
+    default = 30
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -220,3 +268,8 @@ class NonogramOptions(PerGameCommonOptions):
     wallets_in_pool: WalletsInPool
     require_tier_completion: RequireTierCompletion
     difficulty_cost: DifficultyCost
+    life_restore_on_clear: LifeRestoreOnClear
+    life_restore_custom: LifeRestoreCustom
+    shop_healing: ShopHealing
+    healing_cost: HealingCost
+    healing_cost_custom: HealingCostCustom

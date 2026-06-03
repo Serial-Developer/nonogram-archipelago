@@ -224,6 +224,13 @@ export function useArchipelagoItems() {
   const currentLives = usePersistentRef('ap_currentLives', 3); // Current lives for the puzzle
   const maxLives = computed(() => baseLives.value + extraLives.value);
   const unlimitedLives = usePersistentRef('ap_unlimitedLives', false); // Setting for unlimited lives (independent of AP mode)
+  // Life restoration on clear + shop healing (feature 4a)
+  const lifeRestoreMode = usePersistentRef('ap_lifeRestoreMode', 'full'); // none|one|full|custom
+  const lifeRestoreCustom = usePersistentRef('ap_lifeRestoreCustom', 3);
+  const shopHealing = usePersistentRef('ap_shopHealing', false);
+  const healingCostMode = usePersistentRef('ap_healingCostMode', 'normal'); // free|low|normal|high|progressive|custom
+  const healingCostCustom = usePersistentRef('ap_healingCostCustom', 30);
+  const livesBought = usePersistentRef('ap_livesBought', 0); // count for progressive healing cost (per seed)
 
   // Coins system
   const startingCoins = usePersistentRef('ap_startingCoins', 5); // Starting coins (configurable)
@@ -462,6 +469,7 @@ export function useArchipelagoItems() {
     archipelagoMode.value = true;
     receivedItems.value = [];
     extraLives.value = 0;
+    livesBought.value = 0;
     currentLives.value = baseLives.value;
     coins.value = startingCoins.value;
     walletLevel.value = startingWalletLevel.value;
@@ -503,9 +511,27 @@ export function useArchipelagoItems() {
     coins.value = startingCoins.value;
   }
 
-  // Reset lives for a new puzzle (keeps extra lives from AP)
-  function resetLivesForNewPuzzle() {
-    currentLives.value = maxLives.value;
+  // Lives for a new puzzle. After clearing a puzzle, apply life_restore_on_clear; otherwise
+  // (first puzzle, difficulty change, retry after Game Over) refill fully to avoid soft-locks.
+  function resetLivesForNewPuzzle(afterClear = false) {
+    if (!afterClear) {
+      currentLives.value = maxLives.value;
+      return;
+    }
+    switch (lifeRestoreMode.value) {
+      case 'none':
+        break; // carry remaining lives over
+      case 'one':
+        currentLives.value = Math.min(maxLives.value, currentLives.value + 1);
+        break;
+      case 'custom':
+        currentLives.value = Math.min(maxLives.value, currentLives.value + lifeRestoreCustom.value);
+        break;
+      case 'full':
+      default:
+        currentLives.value = maxLives.value;
+        break;
+    }
   }
 
   // Lose a life (returns true if still alive, false if game over)
@@ -515,6 +541,39 @@ export function useArchipelagoItems() {
       currentLives.value -= 1;
     }
     return currentLives.value > 0;
+  }
+
+  // Coin cost of the next shop heal, per healing_cost mode.
+  function healingCostValue(): number {
+    switch (healingCostMode.value) {
+      case 'free': return 0;
+      case 'low': return 10;
+      case 'high': return 100;
+      case 'progressive': return Math.min(9999, 10 * (livesBought.value + 1));
+      case 'custom': return healingCostCustom.value;
+      case 'normal':
+      default: return 30;
+    }
+  }
+  const nextHealingCost = computed(() => healingCostValue());
+  const canHeal = computed(
+    () =>
+      shopHealing.value &&
+      !unlimitedLives.value &&
+      currentLives.value > 0 &&
+      currentLives.value < maxLives.value &&
+      coins.value >= nextHealingCost.value,
+  );
+  // Buy one heal: +1 current life up to max, spend coins, bump the progressive counter.
+  function buyHealing(): { success: boolean; reason?: string } {
+    if (!shopHealing.value) return { success: false, reason: 'Healing is not available.' };
+    if (unlimitedLives.value) return { success: false, reason: 'Unlimited lives is on.' };
+    if (currentLives.value <= 0) return { success: false, reason: 'Puzzle already lost - heal on the next puzzle.' };
+    if (currentLives.value >= maxLives.value) return { success: false, reason: 'Lives already full.' };
+    if (!spendCoins(nextHealingCost.value)) return { success: false, reason: 'Not enough coins.' };
+    currentLives.value = Math.min(maxLives.value, currentLives.value + 1);
+    livesBought.value += 1;
+    return { success: true };
   }
 
   // Add coins (for completing rows/columns)
@@ -931,6 +990,15 @@ export function useArchipelagoItems() {
     extraLives,
     baseLives,
     unlimitedLives,
+    lifeRestoreMode,
+    lifeRestoreCustom,
+    shopHealing,
+    healingCostMode,
+    healingCostCustom,
+    livesBought,
+    nextHealingCost,
+    canHeal,
+    buyHealing,
 
     // Coins
     coins,

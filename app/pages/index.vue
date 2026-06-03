@@ -168,6 +168,11 @@
   const simPuzzles20x20 = ref(3);
   const simRequireTierCompletion = ref(true);
   const simDifficultyCost = ref('low');
+  const simLifeRestoreMode = ref('full');
+  const simLifeRestoreCustom = ref(3);
+  const simShopHealing = ref(false);
+  const simHealingCost = ref('normal');
+  const simHealingCostCustom = ref(30);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -207,6 +212,12 @@
     items.walletsInPool.value = simWalletsInPool.value;
     items.requireTierCompletion.value = simRequireTierCompletion.value;
     items.difficultyCostMode.value = simDifficultyCost.value;
+    items.lifeRestoreMode.value = simLifeRestoreMode.value;
+    items.lifeRestoreCustom.value = simLifeRestoreCustom.value;
+    items.shopHealing.value = simShopHealing.value;
+    items.healingCostMode.value = simHealingCost.value;
+    items.healingCostCustom.value = simHealingCostCustom.value;
+    items.livesBought.value = 0;
     items.PUZZLE_COUNTS['5x5'] = simPuzzles5x5.value;
     items.PUZZLE_COUNTS['10x10'] = simPuzzles10x10.value;
     items.PUZZLE_COUNTS['15x15'] = simPuzzles15x15.value;
@@ -232,6 +243,11 @@
       wallets_in_pool: simWalletsInPool.value,
       require_tier_completion: simRequireTierCompletion.value,
       difficulty_cost: simDifficultyCost.value,
+      life_restore_on_clear: simLifeRestoreMode.value,
+      life_restore_custom: simLifeRestoreCustom.value,
+      shop_healing: simShopHealing.value,
+      healing_cost: simHealingCost.value,
+      healing_cost_custom: simHealingCostCustom.value,
       puzzles_5x5: simPuzzles5x5.value,
       puzzles_10x10: simPuzzles10x10.value,
       puzzles_15x15: simPuzzles15x15.value,
@@ -718,6 +734,11 @@
     const result = items.buyWalletUpgrade();
     if (!result.success && result.reason) alert(result.reason);
   }
+  // Shop: buy one heal (+1 life up to max).
+  function buyHealing() {
+    const result = items.buyHealing();
+    if (!result.success && result.reason) alert(result.reason);
+  }
   function claimWalletShopCheck(level: number) {
     const result = items.claimWalletShopCheck(level);
     if (result.success && result.checkId != null) {
@@ -903,7 +924,7 @@
     }
   });
 
-  function randomize() {
+  function randomize(afterClear = false) {
     // In archipelago mode, use the current difficulty setting
     const size = items.archipelagoMode.value ? items.currentDifficulty.value : rows.value;
     // When locked, ensure square randomize
@@ -914,8 +935,8 @@
       rows.value = size;
       cols.value = size;
     }
-    // Reset lives for new puzzle
-    items.resetLivesForNewPuzzle();
+    // Lives for the new puzzle (restore-on-clear only when following a solved puzzle).
+    items.resetLivesForNewPuzzle(afterClear);
     // Reset temporary hints
     items.resetTempHintsForNewPuzzle();
     // Reset completed line tracking
@@ -1191,7 +1212,7 @@
                   </div>
                 </div>
               </div>
-              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">Next Puzzle</button>
+              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize(true)">Next Puzzle</button>
             </div>
           </div>
 
@@ -1341,14 +1362,13 @@
           <div class="space-y-6">
             <div class="flex items-center gap-3">
               <div>
-                <h2 class="font-semibold text-neutral-100">Shop & Items</h2>
-                <p class="text-xs text-neutral-400">Spend coins to unlock & boost</p>
+                <h2 class="font-semibold text-neutral-100">Shop</h2>
+                <p class="text-xs text-neutral-400">Spend coins on boosts & upgrades</p>
               </div>
             </div>
 
             <!-- Shop -->
             <section class="space-y-3">
-              <h3 class="section-heading">Shop</h3>
               <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
                 <!-- Random Cell Solve -->
                 <button
@@ -1421,6 +1441,25 @@
                     <span class="text-xs">🪙 {{ items.nextWalletAction.value.price }}</span>
                   </button>
                 </template>
+
+                <!-- Buy Healing (AP mode, shop healing on, finite lives) -->
+                <button
+                  v-if="items.archipelagoMode.value && items.shopHealing.value && !items.unlimitedLives.value"
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                  :class="
+                    items.canHeal.value
+                      ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="!items.canHeal.value"
+                  @click="buyHealing()"
+                >
+                  <div class="text-left">
+                    <span>Heal +1 Life</span>
+                    <div class="text-[10px] opacity-70">{{ items.currentLives.value }}/{{ items.maxLives.value }} lives</div>
+                  </div>
+                  <span class="text-xs">{{ items.nextHealingCost.value }}</span>
+                </button>
 
                 <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
                 <button
@@ -1971,6 +2010,32 @@
                       <option value="high">high</option>
                       <option value="progressive">progressive</option>
                     </select>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-neutral-200">life_restore_on_clear</span>
+                    <select v-model="simLifeRestoreMode" class="ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm">
+                      <option value="none">none</option>
+                      <option value="one">one</option>
+                      <option value="full">full</option>
+                      <option value="custom">custom</option>
+                    </select>
+                    <input type="number" min="0" max="20" v-model.number="simLifeRestoreCustom" class="w-14 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
+                  </div>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simShopHealing" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">shop_healing</span>
+                  </label>
+                  <div class="flex items-center gap-3" :class="{ 'opacity-50': !simShopHealing }">
+                    <span class="text-sm text-neutral-200">healing_cost</span>
+                    <select v-model="simHealingCost" :disabled="!simShopHealing" class="ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm">
+                      <option value="free">free</option>
+                      <option value="low">low</option>
+                      <option value="normal">normal</option>
+                      <option value="high">high</option>
+                      <option value="progressive">progressive</option>
+                      <option value="custom">custom</option>
+                    </select>
+                    <input type="number" min="0" max="9999" v-model.number="simHealingCostCustom" :disabled="!simShopHealing" class="w-16 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
                   </div>
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">puzzles_5x5 / 10x10 / 15x15 / 20x20</span>

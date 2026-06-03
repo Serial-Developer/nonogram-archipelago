@@ -258,6 +258,24 @@ export function useArchipelago() {
         if (typeof slotData.value.difficulty_cost === 'string') {
           items.difficultyCostMode.value = slotData.value.difficulty_cost;
         }
+        if (typeof slotData.value.life_restore_on_clear === 'string') {
+          items.lifeRestoreMode.value = slotData.value.life_restore_on_clear;
+        }
+        if (typeof slotData.value.life_restore_custom === 'number') {
+          items.lifeRestoreCustom.value = slotData.value.life_restore_custom;
+        }
+        if (typeof slotData.value.shop_healing !== 'undefined') {
+          items.shopHealing.value = !!slotData.value.shop_healing;
+        }
+        if (typeof slotData.value.healing_cost === 'string') {
+          items.healingCostMode.value = slotData.value.healing_cost;
+        }
+        if (typeof slotData.value.healing_cost_custom === 'number') {
+          items.healingCostCustom.value = slotData.value.healing_cost_custom;
+        }
+        if (isNewSeed) {
+          items.livesBought.value = 0;
+        }
         // Clamp held coins to the wallet capacity (e.g. starting_coins above the cap).
         if (isNewSeed && !items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
           items.coins.value = items.coinCap.value;
