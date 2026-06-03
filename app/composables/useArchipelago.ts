@@ -243,6 +243,19 @@ export function useArchipelago() {
         if (typeof slotData.value.coins_per_bundle === 'number') {
           items.coinsPerBundle.value = slotData.value.coins_per_bundle;
         }
+        if (typeof slotData.value.starting_wallet_level === 'number') {
+          items.startingWalletLevel.value = slotData.value.starting_wallet_level;
+          if (isNewSeed) {
+            items.walletLevel.value = slotData.value.starting_wallet_level;
+          }
+        }
+        if (typeof slotData.value.wallets_in_pool === 'number') {
+          items.walletsInPool.value = slotData.value.wallets_in_pool;
+        }
+        // Clamp held coins to the wallet capacity (e.g. starting_coins above the cap).
+        if (isNewSeed && !items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
+          items.coins.value = items.coinCap.value;
+        }
         // Unlimited lives is fixed by the YAML; the client toggle is locked in AP mode.
         if (typeof slotData.value.unlimited_lives !== 'undefined') {
           items.unlimitedLives.value = !!slotData.value.unlimited_lives;

@@ -103,6 +103,15 @@ for i in range(1, 6):
         region="Puzzle Area"
     )
 
+# Shop check locations (active only when the matching item is placed in the pool).
+# Wallet levels 1-4 -> 9006001-9006004
+WALLET_SHOP_LOCATION_NAMES = [f"Shop: Wallet Level {k}" for k in range(1, 5)]
+for _k in range(1, 5):
+    location_table[f"Shop: Wallet Level {_k}"] = NonogramLocationData(
+        code=9006000 + _k,
+        region="Puzzle Area"
+    )
+
 # Add Victory event (no code)
 location_table["Goal"] = NonogramLocationData(
     code=None,

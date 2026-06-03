@@ -33,6 +33,9 @@ export const AP_ITEMS = {
 
   // Consumables (8004xxx range)
   SOLVE_RANDOM_CELL: 8004001, // Solves a random unsolved cell
+
+  // Wallet (8005xxx range) - progressive coin capacity
+  WALLET_UPGRADE: 8005001,
 } as const;
 
 // ============================================
@@ -59,6 +62,12 @@ export const AP_LOCATIONS = {
   PUZZLE_10X10_BASE: 9002000, // 9002001-9002015
   PUZZLE_15X15_BASE: 9003000, // 9003001-9003010
   PUZZLE_20X20_BASE: 9004000, // 9004001-9004005
+
+  // Shop wallet check locations (active when wallets are in the pool)
+  SHOP_WALLET_1: 9006001,
+  SHOP_WALLET_2: 9006002,
+  SHOP_WALLET_3: 9006003,
+  SHOP_WALLET_4: 9006004,
 } as const;
 
 // Puzzle completion counts per difficulty
@@ -68,6 +77,11 @@ export const PUZZLE_COUNTS = {
   '15x15': 10,
   '20x20': 5,
 } as const;
+
+// Wallet (progressive coin capacity). Index = wallet level (level 0 always owned).
+export const WALLET_CAPS = [49, 99, 999, 4999, 9999] as const;
+// Shop price to obtain each wallet level (index = level; index 0 unused).
+export const WALLET_PRICES = [0, 30, 90, 900, 3333] as const;
 
 // Helper to get location ID for puzzle completions by difficulty
 export function getPuzzleLocationId(difficulty: '5x5' | '10x10' | '15x15' | '20x20', count: number): number {
@@ -174,6 +188,12 @@ export const ITEM_REGISTRY: ItemDefinition[] = [
     description: 'Automatically solves one random unsolved cell',
     category: 'consumable',
   },
+  {
+    id: AP_ITEMS.WALLET_UPGRADE,
+    name: 'Wallet Upgrade',
+    description: 'Progressively increases your maximum coin capacity',
+    category: 'progression',
+  },
 ];
 
 // ============================================
@@ -210,6 +230,12 @@ export function useArchipelagoItems() {
   const coins = usePersistentRef('ap_coins', 0); // Current coins
   const coinsPerBundle = usePersistentRef('ap_coinsPerBundle', 5); // Coins received from AP bundle (configurable)
   const unlimitedCoins = usePersistentRef('ap_unlimitedCoins', false); // Setting for unlimited coins (independent of AP mode)
+
+  // Wallet system (progressive coin capacity). Level 0 is always owned.
+  const startingWalletLevel = usePersistentRef('ap_startingWalletLevel', 0); // Wallet level granted at seed start (YAML)
+  const walletLevel = usePersistentRef('ap_walletLevel', 0); // Current wallet level (0-4)
+  const walletsInPool = usePersistentRef('ap_walletsInPool', 0); // Wallet levels coming from the multiworld pool
+  const coinCap = computed(() => WALLET_CAPS[Math.min(Math.max(walletLevel.value, 0), 4)]);
 
   // Random cell solve tokens
   const randomCellSolves = usePersistentRef('ap_randomCellSolves', 0); // Number of random cell solves available
@@ -355,7 +381,7 @@ export function useArchipelagoItems() {
   function receiveItem(itemId: number): { itemName: string | null; checks: number[] } {
     // Don't process duplicates (except for stackable items)
     const isStackable =
-      itemId === AP_ITEMS.EXTRA_LIFE || itemId === AP_ITEMS.UNLOCK_HINTS || itemId === AP_ITEMS.COINS_BUNDLE || itemId === AP_ITEMS.SOLVE_RANDOM_CELL;
+      itemId === AP_ITEMS.EXTRA_LIFE || itemId === AP_ITEMS.UNLOCK_HINTS || itemId === AP_ITEMS.COINS_BUNDLE || itemId === AP_ITEMS.SOLVE_RANDOM_CELL || itemId === AP_ITEMS.WALLET_UPGRADE;
     if (!isStackable && receivedItems.value.includes(itemId)) {
       return { itemName: null, checks: [] };
     }
@@ -381,6 +407,9 @@ export function useArchipelagoItems() {
       case AP_ITEMS.SOLVE_RANDOM_CELL:
         randomCellSolves.value += 1;
         break;
+      case AP_ITEMS.WALLET_UPGRADE:
+        walletLevel.value = Math.min(walletLevel.value + 1, 4);
+        break;
       default:
         console.warn(`Unknown item received: ${itemId}`);
         return { itemName: null, checks: [] };
@@ -397,6 +426,10 @@ export function useArchipelagoItems() {
     extraLives.value = 0;
     currentLives.value = baseLives.value;
     coins.value = startingCoins.value;
+    walletLevel.value = startingWalletLevel.value;
+    if (!unlimitedCoins.value && coins.value > coinCap.value) {
+      coins.value = coinCap.value;
+    }
     hintReveals.value = 0; // Reset bonus hints, startingHintReveals will be used as base
     revealedRows.value = new Set();
     revealedCols.value = new Set();
@@ -450,6 +483,11 @@ export function useArchipelagoItems() {
   function addCoins(amount: number): number[] {
     coins.value += amount;
     totalCoinsEarned.value += amount;
+    // Clamp held coins to the wallet capacity; total earned stays uncapped so coin
+    // milestones still fire even at a low cap.
+    if (!unlimitedCoins.value && coins.value > coinCap.value) {
+      coins.value = coinCap.value;
+    }
 
     console.log('[DEBUG addCoins] amount:', amount, 'totalCoinsEarned:', totalCoinsEarned.value, 'archipelagoMode:', archipelagoMode.value);
 
@@ -618,6 +656,52 @@ export function useArchipelagoItems() {
   // Reset temporary hints for new puzzle
   function resetTempHintsForNewPuzzle() {
     tempHintReveals.value = 0;
+  }
+
+  // === Wallet (progressive coin capacity) ===
+  // One wallet step is shown at a time. Pooled levels (1..walletsInPool) are multiworld
+  // check slots (paying sends the check; the cap arrives as the Wallet Upgrade item).
+  // Non-pooled levels are direct coin purchases.
+  const nextWalletAction = computed(() => {
+    if (!archipelagoMode.value) return null;
+    const n = walletsInPool.value;
+    for (let k = 1; k <= n && k <= 4; k++) {
+      const checkId = AP_LOCATIONS.SHOP_WALLET_1 + (k - 1);
+      if (!completedChecks.value.has(checkId)) {
+        return { level: k, kind: 'check' as const, price: WALLET_PRICES[k], checkId };
+      }
+    }
+    const next = walletLevel.value + 1;
+    if (next > n && next <= 4) {
+      return { level: next, kind: 'purchase' as const, price: WALLET_PRICES[next] };
+    }
+    return null;
+  });
+
+  // Buy the next non-pooled wallet level directly with coins.
+  function buyWalletUpgrade(): { success: boolean; reason?: string } {
+    const next = walletLevel.value + 1;
+    if (next > 4) return { success: false, reason: 'Wallet already at maximum.' };
+    if (next <= walletsInPool.value) {
+      return { success: false, reason: 'This wallet level comes from the multiworld pool.' };
+    }
+    if (!spendCoins(WALLET_PRICES[next])) return { success: false, reason: 'Not enough coins.' };
+    walletLevel.value = next;
+    return { success: true };
+  }
+
+  // Claim a pooled wallet level's shop slot (a multiworld check). Pays the price and
+  // sends the check; the capacity increase itself arrives as the Wallet Upgrade item.
+  function claimWalletShopCheck(level: number): { success: boolean; checkId?: number; reason?: string } {
+    if (level < 1 || level > walletsInPool.value || level > 4) {
+      return { success: false, reason: 'Not a pooled wallet level.' };
+    }
+    ensureCompletedChecksIsSet();
+    const checkId = AP_LOCATIONS.SHOP_WALLET_1 + (level - 1);
+    if (completedChecks.value.has(checkId)) return { success: false, reason: 'Already claimed.' };
+    if (!spendCoins(WALLET_PRICES[level])) return { success: false, reason: 'Not enough coins.' };
+    addCompletedCheck(checkId);
+    return { success: true, checkId };
   }
 
   // Buy difficulty increase
@@ -811,6 +895,15 @@ export function useArchipelagoItems() {
     totalCoinsEarned,
     coinMilestones,
 
+    // Wallet
+    walletLevel,
+    startingWalletLevel,
+    walletsInPool,
+    coinCap,
+    WALLET_CAPS,
+    WALLET_PRICES,
+    nextWalletAction,
+
     // Hints
     startingHintReveals,
     hintReveals,
@@ -864,6 +957,8 @@ export function useArchipelagoItems() {
     useRandomCellSolve,
     buyRandomCellSolve,
     buyTempHintReveal,
+    buyWalletUpgrade,
+    claimWalletShopCheck,
     buyDifficultyIncrease,
     buyDifficultyDecrease,
     markFirstLineCompleted,

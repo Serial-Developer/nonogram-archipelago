@@ -53,6 +53,12 @@ item_table: Dict[str, NonogramItemData] = {
         classification=ItemClassification.useful
     ),
 
+    # === Wallet (Useful - progressive coin capacity) ===
+    "Wallet Upgrade": NonogramItemData(
+        code=8005001,
+        classification=ItemClassification.useful
+    ),
+
     # === Event Items (no code, used for logic) ===
     "Victory": NonogramItemData(
         code=None,

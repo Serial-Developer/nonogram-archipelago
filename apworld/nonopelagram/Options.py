@@ -117,6 +117,25 @@ class ShowMistakes(DefaultOnToggle):
     display_name = "Show Mistakes in Real-Time"
 
 
+class StartingWalletLevel(Range):
+    """Wallet level you start with (coin capacity). 0 = 49 max coins, 1 = 99,
+    2 = 999, 3 = 4999, 4 = 9999. Set to 4 to effectively play without a coin cap."""
+    display_name = "Starting Wallet Level"
+    range_start = 0
+    range_end = 4
+    default = 0
+
+
+class WalletsInPool(Range):
+    """Number of progressive Wallet Upgrade items placed in the multiworld pool (0-4).
+    Levels added to the pool are received as multiworld items; their shop slots become
+    multiworld location checks instead of coin purchases."""
+    display_name = "Wallets in Pool"
+    range_start = 0
+    range_end = 4
+    default = 0
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -134,3 +153,5 @@ class NonogramOptions(PerGameCommonOptions):
     grey_completed_hints: GreyCompletedHints
     unlimited_lives: UnlimitedLives
     show_mistakes: ShowMistakes
+    starting_wallet_level: StartingWalletLevel
+    wallets_in_pool: WalletsInPool

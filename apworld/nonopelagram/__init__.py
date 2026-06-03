@@ -78,6 +78,8 @@ class NonogramWorld(World):
                     count = self.options.coin_bundles_in_pool.value
                 elif item_name == "Random Cell Solve":
                     count = self.options.cell_solves_in_pool.value
+                elif item_name == "Wallet Upgrade":
+                    count = self.options.wallets_in_pool.value
                 else:
                     count = 1
 
@@ -85,8 +87,13 @@ class NonogramWorld(World):
                     self.multiworld.itempool.append(self.create_item(item_name))
                     item_count += 1
 
-        # Calculate how many locations we have (excluding Victory event)
-        location_count = len([loc for loc in location_table.values() if loc.code is not None])
+        # Count real locations for this player (excluding events). Counted from the
+        # created regions, because some locations are added conditionally (shop checks),
+        # so the static table would over-count.
+        location_count = len([
+            loc for loc in self.multiworld.get_locations(self.player)
+            if loc.address is not None
+        ])
 
         # Fill remaining locations with Coin Bundle (filler)
         filler_count = location_count - item_count
@@ -110,6 +117,8 @@ class NonogramWorld(World):
             "starting_hints": self.options.starting_hints.value,
             "coins_per_bundle": self.options.coins_per_bundle.value,
             "goal_puzzles": self.options.goal_puzzles.value,
+            "starting_wallet_level": self.options.starting_wallet_level.value,
+            "wallets_in_pool": self.options.wallets_in_pool.value,
             "auto_x": bool(self.options.auto_x.value),
             "grey_completed_hints": bool(self.options.grey_completed_hints.value),
             "unlimited_lives": unlimited_lives,

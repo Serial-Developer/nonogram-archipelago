@@ -160,6 +160,8 @@
   const simGreyHints = ref(true);
   const simUnlimitedLives = ref(false);
   const simShowMistakes = ref(true);
+  const simWalletLevel = ref(0);
+  const simWalletsInPool = ref(0);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -194,6 +196,12 @@
   function debugSimulateApOptions() {
     items.enableArchipelagoModeForConnection(); // AP mode on, no state reset
     items.unlimitedLives.value = simUnlimitedLives.value;
+    items.startingWalletLevel.value = simWalletLevel.value;
+    items.walletLevel.value = simWalletLevel.value;
+    items.walletsInPool.value = simWalletsInPool.value;
+    if (!items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
+      items.coins.value = items.coinCap.value;
+    }
     slotData.value = {
       ...slotData.value,
       auto_x: simAutoX.value,
@@ -201,6 +209,8 @@
       unlimited_lives: simUnlimitedLives.value,
       // mirror fill_slot_data: with finite lives, show_mistakes is forced on
       show_mistakes: simUnlimitedLives.value ? simShowMistakes.value : true,
+      starting_wallet_level: simWalletLevel.value,
+      wallets_in_pool: simWalletsInPool.value,
     };
   }
   function debugExitApSim() {
@@ -655,6 +665,20 @@
     }
   }
 
+  // Wallet: buy the next non-pooled level, or claim a pooled level's shop check.
+  function buyWalletUpgrade() {
+    const result = items.buyWalletUpgrade();
+    if (!result.success && result.reason) alert(result.reason);
+  }
+  function claimWalletShopCheck(level: number) {
+    const result = items.claimWalletShopCheck(level);
+    if (result.success && result.checkId != null) {
+      checkLocations([result.checkId]);
+    } else if (result.reason) {
+      alert(result.reason);
+    }
+  }
+
   function checkAll() {
     // Ability is always available
     // if (!items.unlocks.checkMistakes) return;
@@ -1007,7 +1031,7 @@
               <!-- Coins Display -->
               <div class="flex items-center gap-1 sm:gap-2">
                 <span class="text-xs sm:text-sm text-neutral-400">Coins:</span>
-                <span class="text-base sm:text-lg font-bold text-amber-400">🪙 {{ items.coins.value }}</span>
+                <span class="text-base sm:text-lg font-bold text-amber-400">🪙 {{ items.coins.value }}<span v-if="items.archipelagoMode.value && !items.unlimitedCoins.value" class="text-[11px] font-normal text-amber-400/60"> / {{ items.coinCap.value }}</span></span>
                 <span v-if="items.unlimitedCoins.value" class="text-xs text-neutral-500">(∞)</span>
                 <!-- Mobile fill/X toggle -->
                 <div v-if="isMobile" class="ml-2 flex items-center gap-1">
@@ -1307,6 +1331,44 @@
                   </div>
                   <span class="text-xs">🪙 {{ items.TEMP_HINT_COST.value }}</span>
                 </button>
+
+                <!-- Wallet (progressive coin capacity), only in AP mode -->
+                <template v-if="items.archipelagoMode.value && items.nextWalletAction.value">
+                  <button
+                    v-if="items.nextWalletAction.value.kind === 'check'"
+                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                    :class="
+                      items.coins.value >= items.nextWalletAction.value.price
+                        ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                    "
+                    :disabled="items.coins.value < items.nextWalletAction.value.price"
+                    @click="claimWalletShopCheck(items.nextWalletAction.value.level)"
+                  >
+                    <div class="text-left">
+                      <span>Wallet Level {{ items.nextWalletAction.value.level }} (multiworld check)</span>
+                      <div class="text-[10px] opacity-70">Sends a check &middot; cap becomes {{ items.WALLET_CAPS[items.nextWalletAction.value.level] }}</div>
+                    </div>
+                    <span class="text-xs">🪙 {{ items.nextWalletAction.value.price }}</span>
+                  </button>
+                  <button
+                    v-else
+                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                    :class="
+                      items.coins.value >= items.nextWalletAction.value.price
+                        ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                    "
+                    :disabled="items.coins.value < items.nextWalletAction.value.price"
+                    @click="buyWalletUpgrade()"
+                  >
+                    <div class="text-left">
+                      <span>Wallet Upgrade &rarr; Level {{ items.nextWalletAction.value.level }}</span>
+                      <div class="text-[10px] opacity-70">Max coins {{ items.coinCap.value }} &rarr; {{ items.WALLET_CAPS[items.nextWalletAction.value.level] }}</div>
+                    </div>
+                    <span class="text-xs">🪙 {{ items.nextWalletAction.value.price }}</span>
+                  </button>
+                </template>
 
                 <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
                 <button
@@ -1848,6 +1910,14 @@
                     <input type="checkbox" v-model="simShowMistakes" class="checkbox-field" :disabled="!simUnlimitedLives" />
                     <span class="text-sm text-neutral-200">show_mistakes <span class="text-2xs text-neutral-500">(forcé ON si vies finies)</span></span>
                   </label>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-neutral-200">starting_wallet_level</span>
+                    <input type="number" min="0" max="4" v-model.number="simWalletLevel" class="w-16 ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm" />
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-neutral-200">wallets_in_pool</span>
+                    <input type="number" min="0" max="4" v-model.number="simWalletsInPool" class="w-16 ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm" />
+                  </div>
                   <div class="flex gap-2">
                     <button type="button" class="btn-secondary flex-1" @click="debugSimulateApOptions()">Apply as slot_data</button>
                     <button type="button" class="btn-secondary flex-1" @click="debugExitApSim()">Exit AP sim</button>

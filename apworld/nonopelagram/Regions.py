@@ -7,7 +7,7 @@ Nonopelagram is simple - just one main region with all locations.
 
 from typing import TYPE_CHECKING
 from BaseClasses import Region
-from .Locations import NonogramLocation, location_table
+from .Locations import NonogramLocation, location_table, WALLET_SHOP_LOCATION_NAMES
 
 if TYPE_CHECKING:
     from . import NonogramWorld
@@ -30,8 +30,11 @@ def create_regions(world: "NonogramWorld") -> None:
     # Connect Menu to Puzzle Area (no requirements)
     menu_region.connect(puzzle_region)
 
-    # Add all locations to the puzzle region
+    # Add all locations to the puzzle region. Shop check locations are handled
+    # conditionally below (based on how many wallet upgrades are in the pool).
     for location_name, location_data in location_table.items():
+        if location_name in WALLET_SHOP_LOCATION_NAMES:
+            continue
         if location_data.code is not None:  # Skip event locations for now
             location = NonogramLocation(
                 player,
@@ -40,6 +43,18 @@ def create_regions(world: "NonogramWorld") -> None:
                 puzzle_region
             )
             puzzle_region.locations.append(location)
+
+    # Conditionally add wallet shop check locations (first N levels, N = wallets_in_pool).
+    wallets_in_pool = world.options.wallets_in_pool.value
+    for location_name in WALLET_SHOP_LOCATION_NAMES[:wallets_in_pool]:
+        location_data = location_table[location_name]
+        location = NonogramLocation(
+            player,
+            location_name,
+            location_data.code,
+            puzzle_region
+        )
+        puzzle_region.locations.append(location)
 
     # Add victory event location
     victory_location = NonogramLocation(
