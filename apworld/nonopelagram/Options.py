@@ -175,6 +175,26 @@ class WalletsInPool(Range):
     default = 0
 
 
+class RequireTierCompletion(DefaultOnToggle):
+    """Require completing every puzzle of your current grid size before you can buy the
+    next difficulty in the shop. When disabled, difficulty can be bought with coins alone."""
+    display_name = "Require Tier Completion to Advance"
+
+
+class DifficultyCost(Choice):
+    """Coin cost to increase difficulty in the shop, indexed on the size you reach.
+    free=0; low=30; normal=250; high=500 (flat per step);
+    progressive=99/999/1999 to reach 10x10/15x15/20x20. Held coins are capped by your wallet,
+    so expensive modes require wallet upgrades or generation rejects an unbeatable seed."""
+    display_name = "Difficulty Increase Cost"
+    option_free = 0
+    option_low = 1
+    option_normal = 2
+    option_high = 3
+    option_progressive = 4
+    default = 1
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -198,3 +218,5 @@ class NonogramOptions(PerGameCommonOptions):
     show_mistakes: ShowMistakes
     starting_wallet_level: StartingWalletLevel
     wallets_in_pool: WalletsInPool
+    require_tier_completion: RequireTierCompletion
+    difficulty_cost: DifficultyCost

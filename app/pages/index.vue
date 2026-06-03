@@ -166,6 +166,8 @@
   const simPuzzles10x10 = ref(3);
   const simPuzzles15x15 = ref(3);
   const simPuzzles20x20 = ref(3);
+  const simRequireTierCompletion = ref(true);
+  const simDifficultyCost = ref('low');
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -203,6 +205,8 @@
     items.startingWalletLevel.value = simWalletLevel.value;
     items.walletLevel.value = simWalletLevel.value;
     items.walletsInPool.value = simWalletsInPool.value;
+    items.requireTierCompletion.value = simRequireTierCompletion.value;
+    items.difficultyCostMode.value = simDifficultyCost.value;
     items.PUZZLE_COUNTS['5x5'] = simPuzzles5x5.value;
     items.PUZZLE_COUNTS['10x10'] = simPuzzles10x10.value;
     items.PUZZLE_COUNTS['15x15'] = simPuzzles15x15.value;
@@ -226,6 +230,8 @@
       show_mistakes: simUnlimitedLives.value ? simShowMistakes.value : true,
       starting_wallet_level: simWalletLevel.value,
       wallets_in_pool: simWalletsInPool.value,
+      require_tier_completion: simRequireTierCompletion.value,
+      difficulty_cost: simDifficultyCost.value,
       puzzles_5x5: simPuzzles5x5.value,
       puzzles_10x10: simPuzzles10x10.value,
       puzzles_15x15: simPuzzles15x15.value,
@@ -268,6 +274,13 @@
     if (i < 0) return null;
     return sizes.slice(0, i).reverse().find((d) => items.PUZZLE_COUNTS[sizeKey(d)] > 0) ?? null;
   });
+
+  // Whether the next difficulty can be bought now (tier rule + affordability).
+  const canBuyDifficulty = computed(
+    () =>
+      (!items.requireTierCompletion.value || currentTierComplete.value) &&
+      items.coins.value >= items.nextDifficultyCost.value,
+  );
 
   // The unlock location for the difficulty above the current one (null at the max tier).
   const nextUnlockLocId = computed<number | null>(() => {
@@ -1414,11 +1427,11 @@
                   v-if="items.archipelagoMode.value && (nextActiveSize !== null)"
                   class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
                   :class="
-                    currentTierComplete && items.coins.value >= items.DIFFICULTY_INCREASE_COST.value
+                    canBuyDifficulty
                       ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
                       : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
                   "
-                  :disabled="!currentTierComplete || items.coins.value < items.DIFFICULTY_INCREASE_COST.value"
+                  :disabled="!canBuyDifficulty"
                   @click="buyDifficultyIncrease()"
                 >
                   <div class="text-left">
@@ -1428,11 +1441,11 @@
                       {{ nextActiveSize }}x{{ nextActiveSize }}
                     </div>
                   </div>
-                  <span class="text-xs">🪙 {{ items.DIFFICULTY_INCREASE_COST.value }}</span>
+                  <span class="text-xs">🪙 {{ items.nextDifficultyCost.value }}</span>
                 </button>
                 <!-- Locked hint: finish every puzzle of the current tier first -->
                 <p
-                  v-if="items.archipelagoMode.value && (nextActiveSize !== null) && !currentTierComplete"
+                  v-if="items.archipelagoMode.value && (nextActiveSize !== null) && items.requireTierCompletion.value && !currentTierComplete"
                   class="text-[11px] text-amber-400/80 -mt-1 px-1"
                 >
                   Termine toutes les grilles {{ apDifficultyKey }} pour débloquer la difficulté suivante
@@ -1639,18 +1652,6 @@
                       max="50"
                       class="input-field w-20 text-center text-sm"
                       v-model.number="items.TEMP_HINT_COST.value"
-                      :disabled="items.archipelagoMode.value"
-                    />
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <label for="difficulty-increase-cost" class="text-sm text-neutral-300">Difficulty Increase Cost</label>
-                    <input
-                      id="difficulty-increase-cost"
-                      type="number"
-                      min="1"
-                      max="100"
-                      class="input-field w-20 text-center text-sm"
-                      v-model.number="items.DIFFICULTY_INCREASE_COST.value"
                       :disabled="items.archipelagoMode.value"
                     />
                   </div>
@@ -1956,6 +1957,20 @@
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">wallets_in_pool</span>
                     <input type="number" min="0" max="4" v-model.number="simWalletsInPool" class="w-16 ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm" />
+                  </div>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simRequireTierCompletion" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">require_tier_completion</span>
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-neutral-200">difficulty_cost</span>
+                    <select v-model="simDifficultyCost" class="ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm">
+                      <option value="free">free</option>
+                      <option value="low">low</option>
+                      <option value="normal">normal</option>
+                      <option value="high">high</option>
+                      <option value="progressive">progressive</option>
+                    </select>
                   </div>
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">puzzles_5x5 / 10x10 / 15x15 / 20x20</span>

@@ -252,6 +252,12 @@ export function useArchipelago() {
         if (typeof slotData.value.wallets_in_pool === 'number') {
           items.walletsInPool.value = slotData.value.wallets_in_pool;
         }
+        if (typeof slotData.value.require_tier_completion !== 'undefined') {
+          items.requireTierCompletion.value = !!slotData.value.require_tier_completion;
+        }
+        if (typeof slotData.value.difficulty_cost === 'string') {
+          items.difficultyCostMode.value = slotData.value.difficulty_cost;
+        }
         // Clamp held coins to the wallet capacity (e.g. starting_coins above the cap).
         if (isNewSeed && !items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
           items.coins.value = items.coinCap.value;

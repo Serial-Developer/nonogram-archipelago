@@ -246,8 +246,31 @@ export function useArchipelagoItems() {
 
   // Difficulty system
   const currentDifficulty = usePersistentRef('ap_currentDifficulty', 5); // Starting grid size (5x5)
-  const DIFFICULTY_INCREASE_COST = usePersistentRef('ap_difficultyIncreaseCost', 30); // Cost to increase difficulty
-  const DIFFICULTY_STEP = 5; // How much to increase per purchase
+  const difficultyCostMode = usePersistentRef('ap_difficultyCostMode', 'low'); // free|low|normal|high|progressive
+  const requireTierCompletion = usePersistentRef('ap_requireTierCompletion', true); // finish current tier before advancing
+
+  // Skip-aware next active grid size above a difficulty (null at the top).
+  function nextActiveSizeFrom(d: number): number | null {
+    const order = [5, 10, 15, 20];
+    const i = order.indexOf(d);
+    if (i < 0) return null;
+    const k = (s: number) => `${s}x${s}` as '5x5' | '10x10' | '15x15' | '20x20';
+    return order.slice(i + 1).find((s) => PUZZLE_COUNTS[k(s)] > 0) ?? null;
+  }
+  // Coin cost to reach a given grid size, per the difficulty_cost mode.
+  function difficultyCostFor(target: number): number {
+    switch (difficultyCostMode.value) {
+      case 'free': return 0;
+      case 'normal': return 250;
+      case 'high': return 500;
+      case 'progressive': return ({ 10: 99, 15: 999, 20: 1999 } as Record<number, number>)[target] ?? 0;
+      default: return 30; // low
+    }
+  }
+  const nextDifficultyCost = computed(() => {
+    const t = nextActiveSizeFrom(currentDifficulty.value);
+    return t === null ? 0 : difficultyCostFor(t);
+  });
 
   // Lowest / highest grid size that actually has puzzles (drives start tier + max tier).
   // Plain functions reading the mutable PUZZLE_COUNTS (set once from slot_data on connect).
@@ -734,10 +757,10 @@ export function useArchipelagoItems() {
       return { success: false, checks: [], reason: 'Already at max difficulty.' };
     }
     const diffStr = keyOf(currentDifficulty.value);
-    if (puzzlesCompleted[diffStr] < PUZZLE_COUNTS[diffStr]) {
+    if (requireTierCompletion.value && puzzlesCompleted[diffStr] < PUZZLE_COUNTS[diffStr]) {
       return { success: false, checks: [], reason: `Complete all ${diffStr} puzzles first.` };
     }
-    if (spendCoins(DIFFICULTY_INCREASE_COST.value)) {
+    if (spendCoins(difficultyCostFor(nextSize))) {
       currentDifficulty.value = nextSize;
       const newChecks: number[] = [];
       if (archipelagoMode.value) {
@@ -942,8 +965,9 @@ export function useArchipelagoItems() {
 
     // Difficulty
     currentDifficulty,
-    DIFFICULTY_INCREASE_COST,
-    DIFFICULTY_STEP,
+    difficultyCostMode,
+    requireTierCompletion,
+    nextDifficultyCost,
     firstActiveDifficulty,
     maxActiveDifficulty,
 

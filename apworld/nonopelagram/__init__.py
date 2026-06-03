@@ -69,6 +69,19 @@ class NonogramWorld(World):
         "expedition_33": {"5x5": 0, "10x10": 33, "15x15": 33, "20x20": 33},
     }
 
+    @staticmethod
+    def _difficulty_step_cost(mode: str, target: int) -> int:
+        """Coin cost to reach `target` grid size under a difficulty_cost mode (mirror of client)."""
+        if mode == "free":
+            return 0
+        if mode == "normal":
+            return 250
+        if mode == "high":
+            return 500
+        if mode == "progressive":
+            return {10: 99, 15: 999, 20: 1999}.get(target, 0)
+        return 30  # low (default)
+
     def generate_early(self) -> None:
         """Resolve the effective per-size puzzle counts from the preset/custom options."""
         preset = self.options.grid_preset
@@ -84,6 +97,24 @@ class NonogramWorld(World):
         # Safety: never allow an empty goal (would make the seed unwinnable).
         if sum(self.grid_counts.values()) <= 0:
             self.grid_counts["5x5"] = 1
+
+        # Beatability guard: held coins are capped by the wallet, so a difficulty step costing
+        # more than the highest reachable cap can never be bought, making higher tiers (and the
+        # goal) unreachable. Reject such seeds.
+        wallet_caps = [49, 99, 999, 4999, 9999]
+        max_level = min(4, self.options.starting_wallet_level.value + self.options.wallets_in_pool.value)
+        max_cap = wallet_caps[max_level]
+        cost_mode = self.options.difficulty_cost.current_key
+        active = [s for s in (5, 10, 15, 20) if self.grid_counts[f"{s}x{s}"] > 0]
+        for target in active[1:]:
+            cost = self._difficulty_step_cost(cost_mode, target)
+            if cost > max_cap:
+                raise ValueError(
+                    f"Nonopelagram: difficulty_cost '{cost_mode}' makes the {target}x{target} tier "
+                    f"unreachable (step costs {cost} but the highest wallet capacity you can reach "
+                    f"is {max_cap}). Increase starting_wallet_level / wallets_in_pool or choose a "
+                    f"cheaper difficulty_cost."
+                )
 
     def create_regions(self) -> None:
         """Create and connect all regions for this world."""
@@ -150,6 +181,8 @@ class NonogramWorld(World):
             "puzzles_20x20": self.grid_counts["20x20"],
             "starting_wallet_level": self.options.starting_wallet_level.value,
             "wallets_in_pool": self.options.wallets_in_pool.value,
+            "require_tier_completion": bool(self.options.require_tier_completion.value),
+            "difficulty_cost": self.options.difficulty_cost.current_key,
             "auto_x": bool(self.options.auto_x.value),
             "grey_completed_hints": bool(self.options.grey_completed_hints.value),
             "unlimited_lives": unlimited_lives,
