@@ -404,6 +404,51 @@
   };
   const solvedItems = ref<ScoutedItem[]>([]);
 
+  // --- Shop check scouting: show which AP item lives in each pooled wallet/heart shop slot ---
+  const scoutedShop = ref<Record<number, ScoutedItem>>({});
+  async function refreshShopScout() {
+    const ids: number[] = [];
+    const w = items.nextWalletAction.value;
+    if (w && w.kind === 'check' && w.checkId != null && !(w.checkId in scoutedShop.value)) ids.push(w.checkId);
+    const h = items.nextHeartAction.value;
+    if (h && h.kind === 'check' && h.checkId != null && !(h.checkId in scoutedShop.value)) ids.push(h.checkId);
+    if (ids.length === 0) return;
+    const scouted = await scoutChecks(ids);
+    if (scouted.length === 0) return;
+    const map: Record<number, ScoutedItem> = { ...scoutedShop.value };
+    for (const it of scouted) map[it.locationId] = it;
+    scoutedShop.value = map;
+  }
+  watch(
+    () => [items.nextWalletAction.value?.checkId, items.nextHeartAction.value?.checkId],
+    () => {
+      void refreshShopScout();
+    },
+    { immediate: true },
+  );
+  const walletScout = computed(() => {
+    const w = items.nextWalletAction.value;
+    return w && w.kind === 'check' && w.checkId != null ? scoutedShop.value[w.checkId] ?? null : null;
+  });
+  const heartScout = computed(() => {
+    const h = items.nextHeartAction.value;
+    return h && h.kind === 'check' && h.checkId != null ? scoutedShop.value[h.checkId] ?? null : null;
+  });
+
+  // --- Shop purchase/claim notice (transient toast) ---
+  const shopNotice = ref<{ icon: string; title: string; detail: string } | null>(null);
+  let shopNoticeTimer: any = null;
+  function showShopNotice(icon: string, title: string, detail: string) {
+    shopNotice.value = { icon, title, detail };
+    if (shopNoticeTimer) clearTimeout(shopNoticeTimer);
+    shopNoticeTimer = setTimeout(() => {
+      shopNotice.value = null;
+    }, 4000);
+  }
+  function shopReceiverLabel(it: ScoutedItem): string {
+    return it.receiver === slot.value ? 'toi' : it.receiver;
+  }
+
   const AP_IT = items.AP_ITEMS;
   function itemIconFor(it: ScoutedItem): string {
     if (it.itemGame === 'Nonopelagram') {
@@ -765,23 +810,30 @@
 
   // Wallet: buy the next non-pooled level, or claim a pooled level's shop check.
   function buyWalletUpgrade() {
+    const lvl = items.nextWalletAction.value?.level;
     const result = items.buyWalletUpgrade();
     if (!result.success && result.reason) alert(result.reason);
+    else if (result.success) showShopNotice('', 'Achat !', 'Wallet niveau ' + (lvl ?? ''));
   }
   // Shop: buy one heal (+1 life up to max).
   function buyHealing() {
     const result = items.buyHealing();
     if (!result.success && result.reason) alert(result.reason);
+    else if (result.success) showShopNotice('♥', 'Soin !', '+1 vie');
   }
   // Shop: buy a heart container (whole, or a quarter in Zelda mode).
   function buyHeart() {
     const result = items.buyHeart();
     if (!result.success && result.reason) alert(result.reason);
+    else if (result.success) showShopNotice('♥', 'Achat !', 'Conteneur de cœur');
   }
   function claimWalletShopCheck(level: number) {
     const result = items.claimWalletShopCheck(level);
     if (result.success && result.checkId != null) {
       checkLocations([result.checkId]);
+      const it = scoutedShop.value[result.checkId];
+      if (it) showShopNotice(itemIconFor(it), 'Check débloqué !', it.itemName + ' → ' + shopReceiverLabel(it));
+      else showShopNotice('', 'Check débloqué !', 'Wallet niveau ' + level);
     } else if (result.reason) {
       alert(result.reason);
     }
@@ -790,6 +842,9 @@
     const result = items.claimHeartShopCheck(index);
     if (result.success && result.checkId != null) {
       checkLocations([result.checkId]);
+      const it = scoutedShop.value[result.checkId];
+      if (it) showShopNotice(itemIconFor(it), 'Check débloqué !', it.itemName + ' → ' + shopReceiverLabel(it));
+      else showShopNotice('♥', 'Check débloqué !', 'Heart Container ' + index);
     } else if (result.reason) {
       alert(result.reason);
     }
@@ -1101,6 +1156,17 @@
 </script>
 
 <template>
+  <!-- Shop purchase/claim notice (transient toast) -->
+  <div
+    v-if="shopNotice"
+    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-neutral-900/95 px-4 py-2 shadow-xl"
+  >
+    <span v-if="shopNotice.icon" class="text-lg">{{ shopNotice.icon }}</span>
+    <div class="text-left">
+      <div class="text-xs font-semibold text-emerald-300">{{ shopNotice.title }}</div>
+      <div class="text-[11px] text-neutral-300">{{ shopNotice.detail }}</div>
+    </div>
+  </div>
   <!-- Loading Screen with inline styles for SSR -->
   <div
     v-if="isLoading"
@@ -1505,6 +1571,12 @@
                     <div class="text-left">
                       <span>Wallet Level {{ items.nextWalletAction.value.level }} (multiworld check)</span>
                       <div class="text-[10px] opacity-70">Sends a check &middot; cap becomes {{ items.WALLET_CAPS[items.nextWalletAction.value.level] }}</div>
+                      <div v-if="walletScout" class="text-[10px] text-accent-200/90 flex items-center gap-1">
+                        <span>{{ itemIconFor(walletScout) }}</span>
+                        <span class="truncate">{{ walletScout.itemName }}</span>
+                        <span v-if="itemClassBadge(walletScout)">{{ itemClassBadge(walletScout) }}</span>
+                        <span class="opacity-70">&rarr; {{ walletScout.receiver === slot ? 'toi' : walletScout.receiver }}</span>
+                      </div>
                     </div>
                     <span class="text-xs">🪙 {{ items.nextWalletAction.value.price }}</span>
                   </button>
@@ -1562,6 +1634,12 @@
                     <div class="text-left">
                       <span>Heart Container {{ items.nextHeartAction.value.index }} (multiworld check)</span>
                       <div class="text-[10px] opacity-70">Sends a check &middot; {{ items.maxLives.value }}/10 max hearts</div>
+                      <div v-if="heartScout" class="text-[10px] text-accent-200/90 flex items-center gap-1">
+                        <span>{{ itemIconFor(heartScout) }}</span>
+                        <span class="truncate">{{ heartScout.itemName }}</span>
+                        <span v-if="itemClassBadge(heartScout)">{{ itemClassBadge(heartScout) }}</span>
+                        <span class="opacity-70">&rarr; {{ heartScout.receiver === slot ? 'toi' : heartScout.receiver }}</span>
+                      </div>
                     </div>
                     <span class="text-xs">{{ items.nextHeartAction.value.price }}</span>
                   </button>
