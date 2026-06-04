@@ -1115,6 +1115,57 @@ export function useArchipelagoItems() {
     return ITEM_REGISTRY.filter((item) => receivedItems.value.includes(item.id));
   });
 
+  // Grouped checks for the Checks tab: one collapsible section per played grid size, a wallet
+  // section (pooled levels are real location checks), and a misc section. Each section reports
+  // how many of its checks are completed vs total.
+  const checkSections = computed(() => {
+    ensureCompletedChecksIsSet();
+    const isDone = (id: number) => completedChecks.value.has(id);
+    type CItem = { id: number; name: string; completed: boolean };
+    type CSection = { key: string; label: string; items: CItem[]; done: number; total: number };
+    const mk = (id: number, name: string): CItem => ({ id, name, completed: isDone(id) });
+    const finish = (key: string, label: string, items: CItem[]): CSection => ({
+      key, label, items, done: items.filter((x) => x.completed).length, total: items.length,
+    });
+    const sizeDefs = [
+      { key: "5x5", label: "Grille 5x5", unlock: 0, first: AP_LOCATIONS.FIRST_LINE_5X5, base: AP_LOCATIONS.PUZZLE_5X5_BASE, flawless: AP_LOCATIONS.FLAWLESS_5X5 },
+      { key: "10x10", label: "Grille 10x10", unlock: AP_LOCATIONS.UNLOCK_10X10, first: AP_LOCATIONS.FIRST_LINE_10X10, base: AP_LOCATIONS.PUZZLE_10X10_BASE, flawless: AP_LOCATIONS.FLAWLESS_10X10 },
+      { key: "15x15", label: "Grille 15x15", unlock: AP_LOCATIONS.UNLOCK_15X15, first: AP_LOCATIONS.FIRST_LINE_15X15, base: AP_LOCATIONS.PUZZLE_15X15_BASE, flawless: AP_LOCATIONS.FLAWLESS_15X15 },
+      { key: "20x20", label: "Grille 20x20", unlock: AP_LOCATIONS.UNLOCK_20X20, first: AP_LOCATIONS.FIRST_LINE_20X20, base: AP_LOCATIONS.PUZZLE_20X20_BASE, flawless: AP_LOCATIONS.FLAWLESS_20X20 },
+    ];
+    const sections: CSection[] = [];
+    for (const sd of sizeDefs) {
+      const count = PUZZLE_COUNTS[sd.key as "5x5" | "10x10" | "15x15" | "20x20"];
+      if (count <= 0) continue;
+      const its: CItem[] = [];
+      if (sd.unlock) its.push(mk(sd.unlock, `Unlock ${sd.key}`));
+      its.push(mk(sd.first, `First Line (${sd.key})`));
+      for (let i = 1; i <= count; i++) its.push(mk(sd.base + i, `Complete ${i} ${sd.key} Puzzle${i > 1 ? "s" : ""}`));
+      if (flawlessChecks.value) its.push(mk(sd.flawless, `Flawless ${sd.key}`));
+      sections.push(finish(sd.key, sd.label, its));
+    }
+    const wallets: CItem[] = [];
+    for (let k = 1; k <= Math.min(walletsInPool.value, 4); k++) {
+      wallets.push(mk(AP_LOCATIONS.SHOP_WALLET_1 + (k - 1), `Wallet Upgrade ${k}`));
+    }
+    if (wallets.length) sections.push(finish("wallets", "Bourses", wallets));
+    const misc: CItem[] = [
+      mk(AP_LOCATIONS.OBTAIN_50_COINS, "Obtain 50 Coins"),
+      mk(AP_LOCATIONS.OBTAIN_100_COINS, "Obtain 100 Coins"),
+    ];
+    const totalPuzzles = PUZZLE_COUNTS["5x5"] + PUZZLE_COUNTS["10x10"] + PUZZLE_COUNTS["15x15"] + PUZZLE_COUNTS["20x20"];
+    if (flawlessChecks.value && totalPuzzles >= 5) misc.push(mk(AP_LOCATIONS.FLAWLESS_STREAK_5, "Flawless Streak (5)"));
+    if (flawlessChecks.value && totalPuzzles >= 10) misc.push(mk(AP_LOCATIONS.FLAWLESS_TOTAL_10, "Flawless Total (10)"));
+    sections.push(finish("misc", "Divers", misc));
+    return sections;
+  });
+  const goalTarget = computed(
+    () => PUZZLE_COUNTS["5x5"] + PUZZLE_COUNTS["10x10"] + PUZZLE_COUNTS["15x15"] + PUZZLE_COUNTS["20x20"],
+  );
+  const goalProgress = computed(
+    () => puzzlesCompleted["5x5"] + puzzlesCompleted["10x10"] + puzzlesCompleted["15x15"] + puzzlesCompleted["20x20"],
+  );
+
   // Start in free play mode by default (only if not already in archipelago mode)
   if (!archipelagoMode.value) {
     disableArchipelagoMode();
@@ -1207,6 +1258,9 @@ export function useArchipelagoItems() {
     getItemDefinition,
     getLocationDefinition,
     isLocationCompleted,
+    checkSections,
+    goalTarget,
+    goalProgress,
     reconcileCheckedLocations,
     enableArchipelagoMode,
     enableArchipelagoModeForConnection,

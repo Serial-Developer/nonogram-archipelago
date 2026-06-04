@@ -1631,7 +1631,7 @@
                 :class="{ active: activeTab === 'goals' }"
                 @click="activeTab = 'goals'"
               >
-                Goals
+                Checks
               </button>
             </div>
 
@@ -1980,20 +1980,42 @@
             <!-- GOALS (location checks) -->
             <div v-else-if="isTabVisible('goals')" class="space-y-3">
               <div>
-                <h2 class="font-semibold text-neutral-100">Goals</h2>
+                <h2 class="font-semibold text-neutral-100">Checks</h2>
                 <p class="text-xs text-neutral-400">Location checks for this world</p>
               </div>
-              <div class="space-y-1">
-                <div
-                  v-for="loc in items.LOCATION_REGISTRY"
-                  :key="loc.id"
-                  class="flex items-center gap-1.5 text-xs"
-                  :class="items.isLocationCompleted(loc.id) ? 'text-lime-400' : 'text-white/70'"
-                >
-                  <span>{{ items.isLocationCompleted(loc.id) ? '✓' : '○' }}</span>
-                  <span>{{ loc.name }}</span>
+
+              <!-- Goal panel -->
+              <div class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+                <div class="text-[11px] uppercase tracking-wider text-amber-300/70">Goal</div>
+                <div class="mt-0.5 flex items-center gap-2 text-sm text-amber-200">
+                  <span>&#127919;</span>
+                  <span>Compl&eacute;ter <span class="font-semibold">{{ items.goalTarget.value }}</span> grilles</span>
+                  <span class="ml-auto text-xs" :class="goalCompleted ? 'text-lime-400' : 'text-amber-300/80'">{{ goalCompleted ? '&#10003; Atteint' : items.goalProgress.value + ' / ' + items.goalTarget.value }}</span>
                 </div>
               </div>
+
+              <!-- Collapsible sections: one per played grid size, plus wallets + misc -->
+              <details
+                v-for="sec in items.checkSections.value"
+                :key="sec.key"
+                class="rounded-sm border border-neutral-700/50 bg-neutral-900/30"
+              >
+                <summary class="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs font-semibold text-neutral-200">
+                  <span>{{ sec.label }}</span>
+                  <span :class="sec.done === sec.total ? 'text-lime-400' : 'text-neutral-400'">termin&eacute;s ({{ sec.done }}/{{ sec.total }})</span>
+                </summary>
+                <div class="space-y-1 px-2 pb-2">
+                  <div
+                    v-for="c in sec.items"
+                    :key="c.id"
+                    class="flex items-center gap-1.5 text-xs"
+                    :class="c.completed ? 'text-lime-400' : 'text-white/70'"
+                  >
+                    <span>{{ c.completed ? '&#10003;' : '&#9633;' }}</span>
+                    <span>{{ c.name }}</span>
+                  </div>
+                </div>
+              </details>
             </div>
 
           </div>
