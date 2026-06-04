@@ -48,16 +48,28 @@ export function useArchipelago() {
   // Get items composable
   const items = useArchipelagoItems();
 
-  // Persist the flawless streak/total to the server's data storage so they survive reconnects and
-  // follow the player across devices. localStorage stays as the offline fallback; on connect the
-  // server value wins (see connect()). Best-effort: write failures are swallowed.
+  // Persist the local economy state (purchase counters + flawless progress) to the server's data
+  // storage so it survives reconnects and follows the player across devices. localStorage stays as
+  // the offline fallback; on connect the server value wins (see connect()). Best-effort: writes are
+  // swallowed on failure. NOTE: item-fed values (coins, extraLives, walletLevel, randomCellSolves)
+  // are NOT here yet -- they require item-replay coordination (step 2b).
   watch(
-    () => [items.flawlessStreak.value, items.flawlessTotal.value] as [number, number],
-    ([streak, total]) => {
+    () => [
+      items.flawlessStreak.value,
+      items.flawlessTotal.value,
+      items.livesBought.value,
+      items.heartsBought.value,
+      items.heartQuarters.value,
+    ] as [number, number, number, number, number],
+    ([flawlessStreak, flawlessTotal, livesBought, heartsBought, heartQuarters]) => {
       if (status.value !== 'connected') return;
       try {
-        const flawlessKey = `Nonopelagram:flawless:${slot.value}`;
-        client.storage.prepare(flawlessKey, {}).replace({ streak, total }).commit(false).catch(() => {});
+        const economyKey = `Nonopelagram:economy:${slot.value}`;
+        client.storage
+          .prepare(economyKey, {})
+          .replace({ flawlessStreak, flawlessTotal, livesBought, heartsBought, heartQuarters })
+          .commit(false)
+          .catch(() => {});
       } catch {
         /* best-effort */
       }
@@ -339,23 +351,30 @@ export function useArchipelago() {
       // Reconcile local check state with the server's authoritative checked locations (#3).
       items.reconcileCheckedLocations(client.room.checkedLocations ?? []);
 
-      // Restore the flawless streak/total from the server's data storage (survives reconnects and
-      // follows the player across devices). The server value wins over the local cache; a brand-new
-      // room simply has no value yet. Best-effort: storage failures fall back to localStorage.
+      // Restore the local economy state (purchase counters + flawless progress) from the server's
+      // data storage (survives reconnects, follows the player across devices). The server value wins
+      // over the local cache; a brand-new room has no value yet. Best-effort: falls back to
+      // localStorage on failure. Item-fed values are restored separately via item replay (step 2b).
       try {
-        const flawlessKey = `Nonopelagram:flawless:${slot.value}`;
-        const stored = await client.storage.notify([flawlessKey], (_k, value) => {
-          if (value && typeof value === 'object') {
-            const v = value as { streak?: number; total?: number };
-            if (typeof v.streak === 'number') items.flawlessStreak.value = v.streak;
-            if (typeof v.total === 'number') items.flawlessTotal.value = v.total;
-          }
-        });
-        const cur = stored?.[flawlessKey] as { streak?: number; total?: number } | undefined;
-        if (cur && typeof cur === 'object') {
-          if (typeof cur.streak === 'number') items.flawlessStreak.value = cur.streak;
-          if (typeof cur.total === 'number') items.flawlessTotal.value = cur.total;
-        }
+        const economyKey = `Nonopelagram:economy:${slot.value}`;
+        type EconomyBlob = {
+          flawlessStreak?: number;
+          flawlessTotal?: number;
+          livesBought?: number;
+          heartsBought?: number;
+          heartQuarters?: number;
+        };
+        const applyEconomy = (value: unknown) => {
+          if (!value || typeof value !== 'object') return;
+          const v = value as EconomyBlob;
+          if (typeof v.flawlessStreak === 'number') items.flawlessStreak.value = v.flawlessStreak;
+          if (typeof v.flawlessTotal === 'number') items.flawlessTotal.value = v.flawlessTotal;
+          if (typeof v.livesBought === 'number') items.livesBought.value = v.livesBought;
+          if (typeof v.heartsBought === 'number') items.heartsBought.value = v.heartsBought;
+          if (typeof v.heartQuarters === 'number') items.heartQuarters.value = v.heartQuarters;
+        };
+        const stored = await client.storage.notify([economyKey], (_k, value) => applyEconomy(value));
+        applyEconomy(stored?.[economyKey]);
       } catch {
         /* data storage is best-effort; localStorage remains the fallback */
       }
