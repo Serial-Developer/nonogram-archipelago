@@ -173,6 +173,10 @@
   const simShopHealing = ref(false);
   const simHealingCost = ref('normal');
   const simHealingCostCustom = ref(30);
+  const simZeldaHeartMode = ref(false);
+  const simShopHearts = ref(false);
+  const simHeartCost = ref('normal');
+  const simHeartCostCustom = ref(100);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -218,6 +222,12 @@
     items.healingCostMode.value = simHealingCost.value;
     items.healingCostCustom.value = simHealingCostCustom.value;
     items.livesBought.value = 0;
+    items.zeldaHeartMode.value = simZeldaHeartMode.value;
+    items.shopHearts.value = simShopHearts.value;
+    items.heartCostMode.value = simHeartCost.value;
+    items.heartCostCustom.value = simHeartCostCustom.value;
+    items.heartQuarters.value = 0;
+    items.heartsBought.value = 0;
     items.PUZZLE_COUNTS['5x5'] = simPuzzles5x5.value;
     items.PUZZLE_COUNTS['10x10'] = simPuzzles10x10.value;
     items.PUZZLE_COUNTS['15x15'] = simPuzzles15x15.value;
@@ -248,6 +258,10 @@
       shop_healing: simShopHealing.value,
       healing_cost: simHealingCost.value,
       healing_cost_custom: simHealingCostCustom.value,
+      zelda_heart_mode: simZeldaHeartMode.value,
+      shop_hearts: simShopHearts.value,
+      heart_cost: simHeartCost.value,
+      heart_cost_custom: simHeartCostCustom.value,
       puzzles_5x5: simPuzzles5x5.value,
       puzzles_10x10: simPuzzles10x10.value,
       puzzles_15x15: simPuzzles15x15.value,
@@ -739,6 +753,11 @@
     const result = items.buyHealing();
     if (!result.success && result.reason) alert(result.reason);
   }
+  // Shop: buy a heart container (whole, or a quarter in Zelda mode).
+  function buyHeart() {
+    const result = items.buyHeart();
+    if (!result.success && result.reason) alert(result.reason);
+  }
   function claimWalletShopCheck(level: number) {
     const result = items.claimWalletShopCheck(level);
     if (result.success && result.checkId != null) {
@@ -1099,6 +1118,11 @@
                     ♥
                   </span>
                   <span v-if="items.unlimitedLives.value" class="text-xs text-neutral-500 ml-1">(∞)</span>
+                  <span
+                    v-if="items.archipelagoMode.value && items.zeldaHeartMode.value && !items.unlimitedLives.value && items.maxLives.value < 10"
+                    class="text-xs text-rose-300/80 ml-1"
+                    title="Quarts vers le prochain coeur"
+                  >{{ items.heartQuarters.value }}/4&#9829;</span>
                 </div>
               </div>
               <!-- Coins Display -->
@@ -1459,6 +1483,28 @@
                     <div class="text-[10px] opacity-70">{{ items.currentLives.value }}/{{ items.maxLives.value }} lives</div>
                   </div>
                   <span class="text-xs">{{ items.nextHealingCost.value }}</span>
+                </button>
+
+                <!-- Buy Heart container (AP mode, shop hearts on, finite lives) -->
+                <button
+                  v-if="items.archipelagoMode.value && items.shopHearts.value && !items.unlimitedLives.value"
+                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                  :class="
+                    items.canBuyHeart.value
+                      ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                  "
+                  :disabled="!items.canBuyHeart.value"
+                  @click="buyHeart()"
+                >
+                  <div class="text-left">
+                    <span>{{ items.zeldaHeartMode.value ? 'Buy Quarter Heart' : 'Buy Heart' }}</span>
+                    <div class="text-[10px] opacity-70">
+                      <template v-if="items.zeldaHeartMode.value">{{ items.heartQuarters.value }}/4 &#9829; - {{ items.maxLives.value }}/10 max</template>
+                      <template v-else>{{ items.maxLives.value }}/10 max hearts</template>
+                    </div>
+                  </div>
+                  <span class="text-xs">{{ items.nextHeartCost.value }}</span>
                 </button>
 
                 <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
@@ -2036,6 +2082,26 @@
                       <option value="custom">custom</option>
                     </select>
                     <input type="number" min="0" max="9999" v-model.number="simHealingCostCustom" :disabled="!simShopHealing" class="w-16 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
+                  </div>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simZeldaHeartMode" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">zelda_heart_mode</span>
+                  </label>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simShopHearts" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">shop_hearts</span>
+                  </label>
+                  <div class="flex items-center gap-3" :class="{ 'opacity-50': !simShopHearts }">
+                    <span class="text-sm text-neutral-200">heart_cost</span>
+                    <select v-model="simHeartCost" :disabled="!simShopHearts" class="ml-auto bg-neutral-700 text-neutral-100 rounded px-2 py-1 text-sm">
+                      <option value="free">free</option>
+                      <option value="low">low</option>
+                      <option value="normal">normal</option>
+                      <option value="high">high</option>
+                      <option value="progressive">progressive</option>
+                      <option value="custom">custom</option>
+                    </select>
+                    <input type="number" min="0" max="9999" v-model.number="simHeartCostCustom" :disabled="!simShopHearts" class="w-16 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
                   </div>
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">puzzles_5x5 / 10x10 / 15x15 / 20x20</span>

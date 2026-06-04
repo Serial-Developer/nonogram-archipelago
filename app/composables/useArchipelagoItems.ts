@@ -231,6 +231,13 @@ export function useArchipelagoItems() {
   const healingCostMode = usePersistentRef('ap_healingCostMode', 'normal'); // free|low|normal|high|progressive|custom
   const healingCostCustom = usePersistentRef('ap_healingCostCustom', 30);
   const livesBought = usePersistentRef('ap_livesBought', 0); // count for progressive healing cost (per seed)
+  // Heart containers / quarter-hearts (feature 4b)
+  const zeldaHeartMode = usePersistentRef('ap_zeldaHeartMode', false);
+  const shopHearts = usePersistentRef('ap_shopHearts', false);
+  const heartCostMode = usePersistentRef('ap_heartCostMode', 'normal');
+  const heartCostCustom = usePersistentRef('ap_heartCostCustom', 100);
+  const heartQuarters = usePersistentRef('ap_heartQuarters', 0); // 0-3 quarters toward next heart
+  const heartsBought = usePersistentRef('ap_heartsBought', 0); // for progressive heart cost
 
   // Coins system
   const startingCoins = usePersistentRef('ap_startingCoins', 5); // Starting coins (configurable)
@@ -442,8 +449,10 @@ export function useArchipelagoItems() {
         addRandomHintReveal(); // Immediately reveal a new hint on current puzzle
         break;
       case AP_ITEMS.EXTRA_LIFE:
-        extraLives.value += 1;
-        currentLives.value = Math.min(currentLives.value + 1, maxLives.value);
+        // Zelda mode: the AP item grants a quarter heart (4 pieces = +1 max). Classic mode: a whole heart.
+        // Forming a new heart fully heals and respects the 10-heart cap.
+        if (zeldaHeartMode.value) gainHeartQuarter();
+        else gainMaxHeart();
         break;
       case AP_ITEMS.COINS_BUNDLE:
         // Use addCoins to track total earned and trigger milestones
@@ -470,6 +479,8 @@ export function useArchipelagoItems() {
     receivedItems.value = [];
     extraLives.value = 0;
     livesBought.value = 0;
+    heartQuarters.value = 0;
+    heartsBought.value = 0;
     currentLives.value = baseLives.value;
     coins.value = startingCoins.value;
     walletLevel.value = startingWalletLevel.value;
@@ -573,6 +584,56 @@ export function useArchipelagoItems() {
     if (!spendCoins(nextHealingCost.value)) return { success: false, reason: 'Not enough coins.' };
     currentLives.value = Math.min(maxLives.value, currentLives.value + 1);
     livesBought.value += 1;
+    return { success: true };
+  }
+
+  // ----- Heart containers (max-life expansion; feature 4b) -----
+  const MAX_HEARTS = 10;
+  // Gain one whole max heart (+1 max, full heal), respecting the cap.
+  function gainMaxHeart(): boolean {
+    if (maxLives.value >= MAX_HEARTS) return false;
+    extraLives.value += 1;
+    currentLives.value = maxLives.value; // forming a new heart fully heals
+    return true;
+  }
+  // Gain one quarter toward the next heart; converts to a whole heart at 4 (Zelda style).
+  function gainHeartQuarter(): boolean {
+    if (maxLives.value >= MAX_HEARTS) return false;
+    heartQuarters.value += 1;
+    if (heartQuarters.value >= 4) {
+      heartQuarters.value -= 4;
+      return gainMaxHeart();
+    }
+    return true;
+  }
+  function heartCostValue(): number {
+    switch (heartCostMode.value) {
+      case 'free': return 0;
+      case 'low': return 30;
+      case 'high': return 300;
+      case 'progressive': return Math.min(9999, 50 * (heartsBought.value + 1));
+      case 'custom': return heartCostCustom.value;
+      case 'normal':
+      default: return 100;
+    }
+  }
+  const nextHeartCost = computed(() => heartCostValue());
+  const canBuyHeart = computed(
+    () =>
+      shopHearts.value &&
+      !unlimitedLives.value &&
+      maxLives.value < MAX_HEARTS &&
+      coins.value >= nextHeartCost.value,
+  );
+  // Buy one heart (whole) or one quarter (Zelda mode) toward max hearts.
+  function buyHeart(): { success: boolean; reason?: string } {
+    if (!shopHearts.value) return { success: false, reason: 'Heart purchase is not available.' };
+    if (unlimitedLives.value) return { success: false, reason: 'Unlimited lives is on.' };
+    if (maxLives.value >= MAX_HEARTS) return { success: false, reason: 'Already at the maximum (10 hearts).' };
+    if (!spendCoins(nextHeartCost.value)) return { success: false, reason: 'Not enough coins.' };
+    if (zeldaHeartMode.value) gainHeartQuarter();
+    else gainMaxHeart();
+    heartsBought.value += 1;
     return { success: true };
   }
 
@@ -999,6 +1060,15 @@ export function useArchipelagoItems() {
     nextHealingCost,
     canHeal,
     buyHealing,
+    zeldaHeartMode,
+    shopHearts,
+    heartCostMode,
+    heartCostCustom,
+    heartQuarters,
+    heartsBought,
+    nextHeartCost,
+    canBuyHeart,
+    buyHeart,
 
     // Coins
     coins,

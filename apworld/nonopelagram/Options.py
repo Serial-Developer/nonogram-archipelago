@@ -243,6 +243,41 @@ class HealingCostCustom(Range):
     default = 30
 
 
+class ZeldaHeartMode(Toggle):
+    """Shop heart purchases come as quarter-heart pieces (4 = +1 max heart, Zelda-style)
+    instead of whole hearts. Forming a new heart fully heals you. Damage and healing always
+    use whole hearts. Ignored when Unlimited Lives is on."""
+    display_name = "Zelda Heart Mode (quarter hearts)"
+
+
+class ShopHearts(Toggle):
+    """Offer max-heart expansion in the shop (buy a whole heart, or a quarter in Zelda Heart
+    Mode), up to 10 hearts. Ignored when Unlimited Lives is on."""
+    display_name = "Offer Heart Containers in Shop"
+
+
+class HeartCost(Choice):
+    """Coin cost per shop heart purchase (one whole heart, or one quarter in Zelda Heart Mode).
+    free=0, low=30, normal=100 (default), high=300,
+    progressive (50, +50 per purchase, capped 9999), custom=heart_cost_custom."""
+    display_name = "Heart Cost"
+    option_free = 0
+    option_low = 1
+    option_normal = 2
+    option_high = 3
+    option_progressive = 4
+    option_custom = 5
+    default = 2
+
+
+class HeartCostCustom(Range):
+    """Flat coin cost per heart purchase when heart_cost is 'custom'."""
+    display_name = "Heart Cost (custom)"
+    range_start = 0
+    range_end = 9999
+    default = 100
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -273,3 +308,7 @@ class NonogramOptions(PerGameCommonOptions):
     shop_healing: ShopHealing
     healing_cost: HealingCost
     healing_cost_custom: HealingCostCustom
+    zelda_heart_mode: ZeldaHeartMode
+    shop_hearts: ShopHearts
+    heart_cost: HeartCost
+    heart_cost_custom: HeartCostCustom

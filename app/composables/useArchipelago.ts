@@ -273,8 +273,22 @@ export function useArchipelago() {
         if (typeof slotData.value.healing_cost_custom === 'number') {
           items.healingCostCustom.value = slotData.value.healing_cost_custom;
         }
+        if (typeof slotData.value.zelda_heart_mode !== 'undefined') {
+          items.zeldaHeartMode.value = !!slotData.value.zelda_heart_mode;
+        }
+        if (typeof slotData.value.shop_hearts !== 'undefined') {
+          items.shopHearts.value = !!slotData.value.shop_hearts;
+        }
+        if (typeof slotData.value.heart_cost === 'string') {
+          items.heartCostMode.value = slotData.value.heart_cost;
+        }
+        if (typeof slotData.value.heart_cost_custom === 'number') {
+          items.heartCostCustom.value = slotData.value.heart_cost_custom;
+        }
         if (isNewSeed) {
           items.livesBought.value = 0;
+          items.heartQuarters.value = 0;
+          items.heartsBought.value = 0;
         }
         // Clamp held coins to the wallet capacity (e.g. starting_coins above the cap).
         if (isNewSeed && !items.unlimitedCoins.value && items.coins.value > items.coinCap.value) {
