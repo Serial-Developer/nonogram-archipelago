@@ -1083,6 +1083,14 @@ export function useArchipelagoItems() {
         }
       }
     }
+
+    // Rebuild current difficulty from the UNLOCK checks (server-authoritative
+    // progression); fall back to the lowest played size when nothing is unlocked yet.
+    let unlockedDifficulty = firstActiveDifficulty();
+    if (checkedIds.includes(AP_LOCATIONS.UNLOCK_10X10)) unlockedDifficulty = 10;
+    if (checkedIds.includes(AP_LOCATIONS.UNLOCK_15X15)) unlockedDifficulty = 15;
+    if (checkedIds.includes(AP_LOCATIONS.UNLOCK_20X20)) unlockedDifficulty = 20;
+    currentDifficulty.value = unlockedDifficulty;
   }
 
   // Get location definition by ID
