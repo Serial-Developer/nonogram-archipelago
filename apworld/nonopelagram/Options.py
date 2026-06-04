@@ -278,6 +278,13 @@ class HeartCostCustom(Range):
     default = 100
 
 
+class FlawlessChecks(DefaultOnToggle):
+    """Send location checks for clearing puzzles without any mistakes: one per played grid size,
+    one for a 5-in-a-row flawless streak, and one for 10 flawless clears total. Only the checks
+    that are actually reachable for your configured puzzle counts are created."""
+    display_name = "Flawless Checks"
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -312,3 +319,4 @@ class NonogramOptions(PerGameCommonOptions):
     shop_hearts: ShopHearts
     heart_cost: HeartCost
     heart_cost_custom: HeartCostCustom
+    flawless_checks: FlawlessChecks

@@ -63,6 +63,14 @@ export const AP_LOCATIONS = {
   PUZZLE_15X15_BASE: 9003000, // 9003001-9003010
   PUZZLE_20X20_BASE: 9004000, // 9004001-9004005
 
+  // Flawless checks (no-mistake clears)
+  FLAWLESS_5X5: 9005001,
+  FLAWLESS_10X10: 9005002,
+  FLAWLESS_15X15: 9005003,
+  FLAWLESS_20X20: 9005004,
+  FLAWLESS_STREAK_5: 9005005,
+  FLAWLESS_TOTAL_10: 9005006,
+
   // Shop wallet check locations (active when wallets are in the pool)
   SHOP_WALLET_1: 9006001,
   SHOP_WALLET_2: 9006002,
@@ -151,6 +159,14 @@ export const LOCATION_REGISTRY: LocationDefinition[] = [
     threshold: i + 1,
     difficulty: '20x20',
   })),
+
+  // Flawless checks (no-mistake clears)
+  { id: AP_LOCATIONS.FLAWLESS_5X5, name: 'Flawless 5x5', description: 'Clear a 5x5 puzzle without any mistakes' },
+  { id: AP_LOCATIONS.FLAWLESS_10X10, name: 'Flawless 10x10', description: 'Clear a 10x10 puzzle without any mistakes' },
+  { id: AP_LOCATIONS.FLAWLESS_15X15, name: 'Flawless 15x15', description: 'Clear a 15x15 puzzle without any mistakes' },
+  { id: AP_LOCATIONS.FLAWLESS_20X20, name: 'Flawless 20x20', description: 'Clear a 20x20 puzzle without any mistakes' },
+  { id: AP_LOCATIONS.FLAWLESS_STREAK_5, name: 'Flawless Streak (5)', description: 'Clear 5 puzzles in a row without any mistakes' },
+  { id: AP_LOCATIONS.FLAWLESS_TOTAL_10, name: 'Flawless Total (10)', description: 'Clear 10 puzzles without any mistakes' },
 ];
 
 // ============================================
@@ -238,6 +254,12 @@ export function useArchipelagoItems() {
   const heartCostCustom = usePersistentRef('ap_heartCostCustom', 100);
   const heartQuarters = usePersistentRef('ap_heartQuarters', 0); // 0-3 quarters toward next heart
   const heartsBought = usePersistentRef('ap_heartsBought', 0); // for progressive heart cost
+
+  // ----- Flawless checks (feature 5) -----
+  const flawlessChecks = usePersistentRef('ap_flawlessChecks', false); // feature enabled (from slot_data)
+  const flawlessStreak = usePersistentRef('ap_flawlessStreak', 0); // consecutive flawless clears
+  const flawlessTotal = usePersistentRef('ap_flawlessTotal', 0); // total flawless clears
+  const mistakesThisPuzzle = usePersistentRef('ap_mistakesThisPuzzle', 0); // gameplay mistakes this puzzle (auto-X never counts)
 
   // Coins system
   const startingCoins = usePersistentRef('ap_startingCoins', 5); // Starting coins (configurable)
@@ -481,6 +503,9 @@ export function useArchipelagoItems() {
     livesBought.value = 0;
     heartQuarters.value = 0;
     heartsBought.value = 0;
+    flawlessStreak.value = 0;
+    flawlessTotal.value = 0;
+    mistakesThisPuzzle.value = 0;
     currentLives.value = baseLives.value;
     coins.value = startingCoins.value;
     walletLevel.value = startingWalletLevel.value;
@@ -961,6 +986,52 @@ export function useArchipelagoItems() {
     return newChecks;
   }
 
+  // Register something that voids a flawless clear: a wrong cell (gameplay) or a received DeathLink.
+  // Auto-X never calls this. Counted even with unlimited lives (flawless = a clean clear).
+  function registerMistake() {
+    mistakesThisPuzzle.value += 1;
+  }
+
+  // Reset the per-puzzle mistake counter (called at the start of every puzzle).
+  function resetMistakesForNewPuzzle() {
+    mistakesThisPuzzle.value = 0;
+  }
+
+  // A failed puzzle (game over) breaks the flawless streak.
+  function noteFlawlessRunBroken() {
+    flawlessStreak.value = 0;
+  }
+
+  // Call when a puzzle is CLEARED. If flawless (no mistakes), advance streak/total and return any
+  // newly-earned flawless checks; otherwise reset the streak. Returns [] when off or not in AP mode.
+  function markFlawlessProgress(difficulty: '5x5' | '10x10' | '15x15' | '20x20'): number[] {
+    if (!archipelagoMode.value || !flawlessChecks.value) return [];
+    ensureCompletedChecksIsSet();
+    if (mistakesThisPuzzle.value > 0) {
+      flawlessStreak.value = 0;
+      return [];
+    }
+    flawlessStreak.value += 1;
+    flawlessTotal.value += 1;
+    const newChecks: number[] = [];
+    const perSize: Record<'5x5' | '10x10' | '15x15' | '20x20', number> = {
+      '5x5': AP_LOCATIONS.FLAWLESS_5X5,
+      '10x10': AP_LOCATIONS.FLAWLESS_10X10,
+      '15x15': AP_LOCATIONS.FLAWLESS_15X15,
+      '20x20': AP_LOCATIONS.FLAWLESS_20X20,
+    };
+    const push = (id: number) => {
+      if (!completedChecks.value.has(id)) {
+        addCompletedCheck(id);
+        newChecks.push(id);
+      }
+    };
+    push(perSize[difficulty]);
+    if (flawlessStreak.value >= 5) push(AP_LOCATIONS.FLAWLESS_STREAK_5);
+    if (flawlessTotal.value >= 10) push(AP_LOCATIONS.FLAWLESS_TOTAL_10);
+    return newChecks;
+  }
+
   // Reconcile local check/progress state with the server's authoritative list of checked
   // locations (called on connect, #3). The server is the source of truth: completedChecks and
   // every derived counter (puzzlesCompleted / firstLineCompleted / coinMilestones) are rebuilt
@@ -1135,6 +1206,14 @@ export function useArchipelagoItems() {
     resetLivesForNewPuzzle,
     resetTempHintsForNewPuzzle,
     loseLife,
+    registerMistake,
+    resetMistakesForNewPuzzle,
+    noteFlawlessRunBroken,
+    markFlawlessProgress,
+    flawlessChecks,
+    flawlessStreak,
+    flawlessTotal,
+    mistakesThisPuzzle,
     addCoins,
     spendCoins,
     selectRevealedHints,

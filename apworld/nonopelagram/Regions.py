@@ -7,7 +7,14 @@ Nonopelagram is simple - just one main region with all locations.
 
 from typing import TYPE_CHECKING
 from BaseClasses import Region
-from .Locations import NonogramLocation, location_table, WALLET_SHOP_LOCATION_NAMES
+from .Locations import (
+    NonogramLocation,
+    location_table,
+    WALLET_SHOP_LOCATION_NAMES,
+    FLAWLESS_PER_SIZE_NAMES,
+    FLAWLESS_STREAK_NAME,
+    FLAWLESS_TOTAL_NAME,
+)
 
 if TYPE_CHECKING:
     from . import NonogramWorld
@@ -51,6 +58,8 @@ def create_regions(world: "NonogramWorld") -> None:
     add_location("Obtain 100 Coins")
 
     # Per-size locations (only for sizes that are actually played).
+    flawless_enabled = world.options.flawless_checks.value
+    total_puzzles = sum(counts.get(t, 0) for t in tiers)
     for tier in tiers:
         n = counts.get(tier, 0)
         if n <= 0:
@@ -61,6 +70,15 @@ def create_regions(world: "NonogramWorld") -> None:
             add_location(unlock_names[tier])
         for i in range(1, n + 1):
             add_location(f"Complete {i} {tier} Puzzle{'s' if i > 1 else ''}")
+        if flawless_enabled:
+            add_location(FLAWLESS_PER_SIZE_NAMES[tier])
+
+    # Flawless aggregate checks: only when enough puzzles exist for them to be reachable.
+    if flawless_enabled:
+        if total_puzzles >= 5:
+            add_location(FLAWLESS_STREAK_NAME)
+        if total_puzzles >= 10:
+            add_location(FLAWLESS_TOTAL_NAME)
 
     # Conditionally add wallet shop check locations (first N levels, N = wallets_in_pool).
     wallets_in_pool = world.options.wallets_in_pool.value

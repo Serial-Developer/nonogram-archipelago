@@ -192,6 +192,7 @@ class NonogramWorld(World):
             "shop_hearts": bool(self.options.shop_hearts.value),
             "heart_cost": self.options.heart_cost.current_key,
             "heart_cost_custom": self.options.heart_cost_custom.value,
+            "flawless_checks": bool(self.options.flawless_checks.value),
             "auto_x": bool(self.options.auto_x.value),
             "grey_completed_hints": bool(self.options.grey_completed_hints.value),
             "unlimited_lives": unlimited_lives,

@@ -177,6 +177,7 @@
   const simShopHearts = ref(false);
   const simHeartCost = ref('normal');
   const simHeartCostCustom = ref(100);
+  const simFlawlessChecks = ref(true);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -228,6 +229,10 @@
     items.heartCostCustom.value = simHeartCostCustom.value;
     items.heartQuarters.value = 0;
     items.heartsBought.value = 0;
+    items.flawlessChecks.value = simFlawlessChecks.value;
+    items.flawlessStreak.value = 0;
+    items.flawlessTotal.value = 0;
+    items.mistakesThisPuzzle.value = 0;
     items.PUZZLE_COUNTS['5x5'] = simPuzzles5x5.value;
     items.PUZZLE_COUNTS['10x10'] = simPuzzles10x10.value;
     items.PUZZLE_COUNTS['15x15'] = simPuzzles15x15.value;
@@ -262,6 +267,7 @@
       shop_hearts: simShopHearts.value,
       heart_cost: simHeartCost.value,
       heart_cost_custom: simHeartCostCustom.value,
+      flawless_checks: simFlawlessChecks.value,
       puzzles_5x5: simPuzzles5x5.value,
       puzzles_10x10: simPuzzles10x10.value,
       puzzles_15x15: simPuzzles15x15.value,
@@ -356,6 +362,15 @@
 
   const AP_LOC = items.AP_LOCATIONS;
   function checkIconFor(id: number): string {
+    if (
+      id === AP_LOC.FLAWLESS_5X5 ||
+      id === AP_LOC.FLAWLESS_10X10 ||
+      id === AP_LOC.FLAWLESS_15X15 ||
+      id === AP_LOC.FLAWLESS_20X20 ||
+      id === AP_LOC.FLAWLESS_STREAK_5 ||
+      id === AP_LOC.FLAWLESS_TOTAL_10
+    )
+      return '\u2B50';
     if (id === AP_LOC.OBTAIN_50_COINS || id === AP_LOC.OBTAIN_100_COINS) return '🪙';
     if (id === AP_LOC.FIRST_LINE_5X5 || id === AP_LOC.FIRST_LINE_10X10 || id === AP_LOC.FIRST_LINE_15X15 || id === AP_LOC.FIRST_LINE_20X20)
       return '📏';
@@ -594,6 +609,7 @@
           checkLocations(coinChecks);
         }
       } else {
+        items.registerMistake();
         items.loseLife(); // Mistake
         player.value = player.value.slice(); // Force update after mistake
       }
@@ -604,6 +620,7 @@
           checkLocations(coinChecks);
         }
       } else {
+        items.registerMistake();
         items.loseLife(); // Mistake
         player.value = player.value.slice(); // Force update after mistake
       }
@@ -784,6 +801,11 @@
       if (newLocationChecks.length > 0) {
         checkLocations(newLocationChecks);
       }
+      // Flawless tracking: a clear with zero mistakes counts toward the flawless checks.
+      const flawlessChecksToSend = items.markFlawlessProgress(difficulty);
+      if (flawlessChecksToSend.length > 0) {
+        checkLocations(flawlessChecksToSend);
+      }
       checkPuzzleSolved(); // Legacy logging
       // Check if we've reached the goal
       checkGoalCompletion();
@@ -797,8 +819,12 @@
   watch(
     () => items.currentLives.value,
     (newLives, oldLives) => {
-      if (newLives === 0 && oldLives > 0 && deathLinkEnabled.value) {
-        sendDeathLink('Lost all lives on a puzzle');
+      if (newLives === 0 && oldLives > 0) {
+        // A failed puzzle breaks the flawless streak.
+        items.noteFlawlessRunBroken();
+        if (deathLinkEnabled.value) {
+          sendDeathLink('Lost all lives on a puzzle');
+        }
       }
     },
   );
@@ -958,6 +984,8 @@
     items.resetLivesForNewPuzzle(afterClear);
     // Reset temporary hints
     items.resetTempHintsForNewPuzzle();
+    // Reset the per-puzzle mistake counter (flawless tracking)
+    items.resetMistakesForNewPuzzle();
     // Reset completed line tracking
     completedRows.value = new Set();
     completedCols.value = new Set();
@@ -2103,6 +2131,10 @@
                     </select>
                     <input type="number" min="0" max="9999" v-model.number="simHeartCostCustom" :disabled="!simShopHearts" class="w-16 bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />
                   </div>
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" v-model="simFlawlessChecks" class="checkbox-field" />
+                    <span class="text-sm text-neutral-200">flawless_checks</span>
+                  </label>
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">puzzles_5x5 / 10x10 / 15x15 / 20x20</span>
                     <input type="number" min="0" max="100" v-model.number="simPuzzles5x5" class="w-14 ml-auto bg-neutral-700 text-neutral-100 rounded px-1 py-1 text-sm" />

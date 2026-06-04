@@ -112,6 +112,23 @@ for _k in range(1, 5):
         region="Puzzle Area"
     )
 
+# Flawless checks (no-mistake clears). IDs 9005001-9005006.
+# Created in regions only when reachable for the configured puzzle counts.
+FLAWLESS_PER_SIZE_NAMES = {
+    "5x5": "Clear a 5x5 Puzzle Flawlessly",
+    "10x10": "Clear a 10x10 Puzzle Flawlessly",
+    "15x15": "Clear a 15x15 Puzzle Flawlessly",
+    "20x20": "Clear a 20x20 Puzzle Flawlessly",
+}
+FLAWLESS_STREAK_NAME = "Clear 5 Puzzles Flawlessly in a Row"
+FLAWLESS_TOTAL_NAME = "Clear 10 Puzzles Flawlessly"
+location_table[FLAWLESS_PER_SIZE_NAMES["5x5"]] = NonogramLocationData(code=9005001, region="Puzzle Area")
+location_table[FLAWLESS_PER_SIZE_NAMES["10x10"]] = NonogramLocationData(code=9005002, region="Puzzle Area")
+location_table[FLAWLESS_PER_SIZE_NAMES["15x15"]] = NonogramLocationData(code=9005003, region="Puzzle Area")
+location_table[FLAWLESS_PER_SIZE_NAMES["20x20"]] = NonogramLocationData(code=9005004, region="Puzzle Area")
+location_table[FLAWLESS_STREAK_NAME] = NonogramLocationData(code=9005005, region="Puzzle Area")
+location_table[FLAWLESS_TOTAL_NAME] = NonogramLocationData(code=9005006, region="Puzzle Area")
+
 # Add Victory event (no code)
 location_table["Goal"] = NonogramLocationData(
     code=None,

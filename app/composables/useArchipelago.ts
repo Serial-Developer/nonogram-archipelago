@@ -48,6 +48,22 @@ export function useArchipelago() {
   // Get items composable
   const items = useArchipelagoItems();
 
+  // Persist the flawless streak/total to the server's data storage so they survive reconnects and
+  // follow the player across devices. localStorage stays as the offline fallback; on connect the
+  // server value wins (see connect()). Best-effort: write failures are swallowed.
+  watch(
+    () => [items.flawlessStreak.value, items.flawlessTotal.value] as [number, number],
+    ([streak, total]) => {
+      if (status.value !== 'connected') return;
+      try {
+        const flawlessKey = `Nonopelagram:flawless:${slot.value}`;
+        client.storage.prepare(flawlessKey, {}).replace({ streak, total }).commit(false).catch(() => {});
+      } catch {
+        /* best-effort */
+      }
+    },
+  );
+
   // Persist connection settings across page reloads (F5). useState alone resets on a full reload,
   // so we mirror host/port/slot/secure into localStorage. The password is intentionally NOT
   // persisted (avoid storing a secret in plaintext localStorage).
@@ -155,6 +171,7 @@ export function useArchipelago() {
 
     addLogMessage(`☠️ Death Link from ${source}: ${cause}`, 'error');
     items.loseLife();
+    items.registerMistake(); // a received DeathLink voids a flawless clear
   }
 
   // Send a Death Link to other players via the native DeathLinkManager.
@@ -285,6 +302,9 @@ export function useArchipelago() {
         if (typeof slotData.value.heart_cost_custom === 'number') {
           items.heartCostCustom.value = slotData.value.heart_cost_custom;
         }
+        if (typeof slotData.value.flawless_checks !== 'undefined') {
+          items.flawlessChecks.value = !!slotData.value.flawless_checks;
+        }
         if (isNewSeed) {
           items.livesBought.value = 0;
           items.heartQuarters.value = 0;
@@ -318,6 +338,27 @@ export function useArchipelago() {
 
       // Reconcile local check state with the server's authoritative checked locations (#3).
       items.reconcileCheckedLocations(client.room.checkedLocations ?? []);
+
+      // Restore the flawless streak/total from the server's data storage (survives reconnects and
+      // follows the player across devices). The server value wins over the local cache; a brand-new
+      // room simply has no value yet. Best-effort: storage failures fall back to localStorage.
+      try {
+        const flawlessKey = `Nonopelagram:flawless:${slot.value}`;
+        const stored = await client.storage.notify([flawlessKey], (_k, value) => {
+          if (value && typeof value === 'object') {
+            const v = value as { streak?: number; total?: number };
+            if (typeof v.streak === 'number') items.flawlessStreak.value = v.streak;
+            if (typeof v.total === 'number') items.flawlessTotal.value = v.total;
+          }
+        });
+        const cur = stored?.[flawlessKey] as { streak?: number; total?: number } | undefined;
+        if (cur && typeof cur === 'object') {
+          if (typeof cur.streak === 'number') items.flawlessStreak.value = cur.streak;
+          if (typeof cur.total === 'number') items.flawlessTotal.value = cur.total;
+        }
+      } catch {
+        /* data storage is best-effort; localStorage remains the fallback */
+      }
 
       status.value = 'connected';
       lastMessage.value = 'Connected!';
