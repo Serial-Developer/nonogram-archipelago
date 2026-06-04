@@ -205,6 +205,7 @@ class NonogramWorld(World):
             "grey_completed_hints": bool(self.options.grey_completed_hints.value),
             "unlimited_lives": unlimited_lives,
             "death_link": bool(self.options.death_link.value),
+            "death_link_one_heart": bool(self.options.death_link_one_heart.value),
             # With finite lives, mistakes must be shown in real-time (locked on the client).
             "show_mistakes": True if not unlimited_lives else bool(self.options.show_mistakes.value),
         }

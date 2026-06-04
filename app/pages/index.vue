@@ -756,13 +756,8 @@
       cycleCell(cell.r, cell.c, 'x'); // Will toggle empty -> x
     }
 
-    // Award coins for the correct placement
-    const coinChecks = items.addCoins(1);
-    if (coinChecks.length > 0) {
-      checkLocations(coinChecks);
-    }
-
-    // Check for newly completed lines
+    // Power-ups don't pay out the per-cell coin (a token was spent to use the power-up);
+    // line-completion coins below still apply.
     checkLineCompletions();
     return true;
   }
@@ -1090,6 +1085,7 @@
     // connect() reconciled currentDifficulty from the server; if the on-screen puzzle size no
     // longer matches (e.g. we came from a local game at another size), regenerate at the right
     // size. Otherwise just re-baseline the solved-banner checks.
+    void refreshShopScout();
     if (items.archipelagoMode.value && rows.value !== items.currentDifficulty.value) {
       randomize();
     } else {
@@ -1615,7 +1611,7 @@
                     <span>Heal +1 Life</span>
                     <div class="text-[10px] opacity-70">{{ items.currentLives.value }}/{{ items.maxLives.value }} lives</div>
                   </div>
-                  <span class="text-xs">{{ items.nextHealingCost.value }}</span>
+                  <span class="text-xs">&#129689; {{ items.nextHealingCost.value }}</span>
                 </button>
 
                 <!-- Heart container (AP mode, shop hearts on, finite lives): pooled slots are checks -->
@@ -1641,7 +1637,7 @@
                         <span class="opacity-70">&rarr; {{ heartScout.receiver === slot ? 'toi' : heartScout.receiver }}</span>
                       </div>
                     </div>
-                    <span class="text-xs">{{ items.nextHeartAction.value.price }}</span>
+                    <span class="text-xs">&#129689; {{ items.nextHeartAction.value.price }}</span>
                   </button>
                   <button
                     v-else
@@ -1661,7 +1657,7 @@
                         <template v-else>{{ items.maxLives.value }}/10 max hearts</template>
                       </div>
                     </div>
-                    <span class="text-xs">{{ items.nextHeartAction.value.price }}</span>
+                    <span class="text-xs">&#129689; {{ items.nextHeartAction.value.price }}</span>
                   </button>
                 </template>
 
@@ -2089,15 +2085,27 @@
                 <p class="text-xs text-neutral-400">Location checks for this world</p>
               </div>
 
-              <!-- Goal panel -->
-              <div class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-                <div class="text-[11px] uppercase tracking-wider text-amber-300/70">Goal</div>
-                <div class="mt-0.5 flex items-center gap-2 text-sm text-amber-200">
-                  <span>&#127919;</span>
-                  <span>Compl&eacute;ter <span class="font-semibold">{{ items.goalTarget.value }}</span> grilles</span>
-                  <span class="ml-auto text-xs" :class="goalCompleted ? 'text-lime-400' : 'text-amber-300/80'">{{ goalCompleted ? '&#10003; Atteint' : items.goalProgress.value + ' / ' + items.goalTarget.value }}</span>
+              <!-- Goal panel (collapsible: total in the summary, per-size detail inside) -->
+              <details class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+                <summary class="cursor-pointer list-none">
+                  <div class="text-[11px] uppercase tracking-wider text-amber-300/70">Goal</div>
+                  <div class="mt-0.5 flex items-center gap-2 text-sm text-amber-200">
+                    <span>&#127919;</span>
+                    <span>Compl&eacute;ter <span class="font-semibold">{{ items.goalTarget.value }}</span> grilles</span>
+                    <span class="ml-auto text-xs" :class="goalCompleted ? 'text-lime-400' : 'text-amber-300/80'">{{ goalCompleted ? '&#10003; Atteint' : items.goalProgress.value + ' / ' + items.goalTarget.value }}</span>
+                  </div>
+                </summary>
+                <div class="mt-2 space-y-1 border-t border-amber-500/20 pt-2">
+                  <div
+                    v-for="b in items.goalBreakdown.value"
+                    :key="b.size"
+                    class="flex items-center gap-2 text-xs text-amber-200/90"
+                  >
+                    <span class="font-mono">{{ b.size }}</span>
+                    <span class="ml-auto">{{ b.done }} / {{ b.total }}</span>
+                  </div>
                 </div>
-              </div>
+              </details>
 
               <!-- Collapsible sections: one per played grid size, plus wallets + misc -->
               <details

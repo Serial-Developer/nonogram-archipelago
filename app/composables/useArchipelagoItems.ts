@@ -607,6 +607,11 @@ export function useArchipelagoItems() {
     return currentLives.value > 0;
   }
 
+  // Remove all lives at once (used by a lethal Death Link).
+  function loseAllLives(): void {
+    currentLives.value = 0;
+  }
+
   // Coin cost of the next shop heal, per healing_cost mode.
   function healingCostValue(): number {
     switch (healingCostMode.value) {
@@ -1227,6 +1232,11 @@ export function useArchipelagoItems() {
   const goalProgress = computed(
     () => puzzlesCompleted["5x5"] + puzzlesCompleted["10x10"] + puzzlesCompleted["15x15"] + puzzlesCompleted["20x20"],
   );
+  const goalBreakdown = computed(() =>
+    (["5x5", "10x10", "15x15", "20x20"] as const)
+      .filter((sz) => PUZZLE_COUNTS[sz] > 0)
+      .map((sz) => ({ size: sz, done: puzzlesCompleted[sz], total: PUZZLE_COUNTS[sz] })),
+  );
 
   // Start in free play mode by default (only if not already in archipelago mode)
   if (!archipelagoMode.value) {
@@ -1325,6 +1335,7 @@ export function useArchipelagoItems() {
     checkSections,
     goalTarget,
     goalProgress,
+    goalBreakdown,
     reconcileCheckedLocations,
     enableArchipelagoMode,
     enableArchipelagoModeForConnection,
@@ -1333,6 +1344,7 @@ export function useArchipelagoItems() {
     resetLivesForNewPuzzle,
     resetTempHintsForNewPuzzle,
     loseLife,
+    loseAllLives,
     registerMistake,
     resetMistakesForNewPuzzle,
     noteFlawlessRunBroken,

@@ -40,6 +40,7 @@ export function useArchipelago() {
 
   // Death Link state
   const deathLinkEnabled = useState('ap_deathLink', () => false);
+  const deathLinkOneHeart = useState('ap_deathLinkOneHeart', () => false);
   const lastDeathTime = useState('ap_lastDeathTime', () => 0);
 
   // Goal state
@@ -68,6 +69,7 @@ export function useArchipelago() {
       items.extraLives.value,
       items.walletLevel.value,
       items.randomCellSolves.value,
+      items.currentLives.value,
     ]);
 
   // Write the full economy blob (counters + item-fed balances + replay high-water-mark) to the
@@ -89,6 +91,7 @@ export function useArchipelago() {
           extraLives: items.extraLives.value,
           walletLevel: items.walletLevel.value,
           randomCellSolves: items.randomCellSolves.value,
+          currentLives: items.currentLives.value,
           itemIndex: highestItemIndexProcessed,
         })
         .commit(false)
@@ -113,6 +116,7 @@ export function useArchipelago() {
       items.extraLives.value,
       items.walletLevel.value,
       items.randomCellSolves.value,
+      items.currentLives.value,
     ] as const,
     () => {
       if (status.value !== 'connected') return;
@@ -169,16 +173,9 @@ export function useArchipelago() {
       localStorage.setItem('nonogram_ap_highestItemIndex', currentIndex.toString());
     }
     if (!item) return;
-    const itemName = handleItemReceived(item.id);
-    if (itemName) {
-      const sender = item.sender?.name || 'Unknown';
-      const receiver = slot.value;
-      let extra = '';
-      if (item.locationId) {
-        extra = ` (Location #${item.locationId})`;
-      }
-      addLogMessage(`${sender} sent ${itemName} to ${receiver}${extra}`.replace(/ ,/g, ''), 'item');
-    }
+    // The library's `message` handler already logs item sends in human-readable form
+    // ("X found their Y"), so here we only mutate balances.
+    handleItemReceived(item.id);
   }
 
   // Set up event handlers once
@@ -227,7 +224,11 @@ export function useArchipelago() {
     lastDeathTime.value = Date.now();
 
     addLogMessage(`☠️ Death Link from ${source}: ${cause}`, 'error');
-    items.loseLife();
+    if (deathLinkOneHeart.value) {
+      items.loseLife();
+    } else {
+      items.loseAllLives();
+    }
     items.registerMistake(); // a received DeathLink voids a flawless clear
   }
 
@@ -398,6 +399,7 @@ export function useArchipelago() {
         // Death Link is driven entirely by slot data (#2); there is no manual UI toggle.
         if (typeof slotData.value.death_link !== 'undefined') {
           deathLinkEnabled.value = !!slotData.value.death_link;
+          deathLinkOneHeart.value = !!slotData.value.death_link_one_heart;
           if (deathLinkEnabled.value) {
             client.deathLink.enableDeathLink();
           }
@@ -424,6 +426,7 @@ export function useArchipelago() {
           extraLives?: number;
           walletLevel?: number;
           randomCellSolves?: number;
+          currentLives?: number;
           itemIndex?: number;
         };
         const applyEconomy = (value: unknown, restoreMark: boolean) => {
@@ -438,6 +441,7 @@ export function useArchipelago() {
           if (typeof v.extraLives === 'number') items.extraLives.value = v.extraLives;
           if (typeof v.walletLevel === 'number') items.walletLevel.value = v.walletLevel;
           if (typeof v.randomCellSolves === 'number') items.randomCellSolves.value = v.randomCellSolves;
+          if (typeof v.currentLives === 'number') items.currentLives.value = v.currentLives;
           // Only the initial connect restore touches the replay mark; a live update from another
           // device must not rewind/advance this device's processing position.
           if (restoreMark && typeof v.itemIndex === 'number') {
@@ -527,7 +531,6 @@ export function useArchipelago() {
     }
     try {
       client.check(...locationIds);
-      addLogMessage(`Checked ${locationIds.length} location(s).`, 'info');
     } catch (e: any) {
       const errorMsg = e?.message ?? String(e);
       lastMessage.value = errorMsg;
