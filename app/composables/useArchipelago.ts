@@ -53,6 +53,22 @@ export function useArchipelago() {
 
   // Get items composable
   const items = useArchipelagoItems();
+  // Guard against the data-storage echo loop: each blob write triggers a SetReply that our own
+  // notify subscription delivers back, which applyEconomy would re-apply and the watch would
+  // re-write, forever. Remember the last economy state written/applied and skip identical writes.
+  let lastEconomyJson = '';
+  const economySnapshot = () =>
+    JSON.stringify([
+      items.flawlessStreak.value,
+      items.flawlessTotal.value,
+      items.livesBought.value,
+      items.heartsBought.value,
+      items.heartQuarters.value,
+      items.coins.value,
+      items.extraLives.value,
+      items.walletLevel.value,
+      items.randomCellSolves.value,
+    ]);
 
   // Write the full economy blob (counters + item-fed balances + replay high-water-mark) to the
   // server's data storage. Best-effort. Called on local changes (when connected) and right after
@@ -60,6 +76,7 @@ export function useArchipelago() {
   function writeEconomyBlob() {
     try {
       const economyKey = `Nonopelagram:economy:${slot.value}`;
+      lastEconomyJson = economySnapshot();
       client.storage
         .prepare(economyKey, {})
         .replace({
@@ -99,6 +116,7 @@ export function useArchipelago() {
     ] as const,
     () => {
       if (status.value !== 'connected') return;
+      if (economySnapshot() === lastEconomyJson) return;
       writeEconomyBlob();
     },
   );
@@ -425,6 +443,8 @@ export function useArchipelago() {
               localStorage.setItem('nonogram_ap_highestItemIndex', v.itemIndex.toString());
             }
           }
+          // Remember what we just applied so the watcher it triggers does not echo it straight back.
+          lastEconomyJson = economySnapshot();
         };
         const stored = await client.storage.notify([economyKey], (_k, value) => applyEconomy(value, false));
         applyEconomy(stored?.[economyKey], true);

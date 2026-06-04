@@ -1023,7 +1023,15 @@
   // After connecting (and the server reconciliation in connect()), re-baseline so the solved
   // banner doesn't list checks that were already completed on the server.
   watch(status, (s) => {
-    if (s === 'connected') snapshotChecksBaseline();
+    if (s !== 'connected') return;
+    // connect() reconciled currentDifficulty from the server; if the on-screen puzzle size no
+    // longer matches (e.g. we came from a local game at another size), regenerate at the right
+    // size. Otherwise just re-baseline the solved-banner checks.
+    if (items.archipelagoMode.value && rows.value !== items.currentDifficulty.value) {
+      randomize();
+    } else {
+      snapshotChecksBaseline();
+    }
   });
 
   // Debug functions
