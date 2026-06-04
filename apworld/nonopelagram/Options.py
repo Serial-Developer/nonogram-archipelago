@@ -175,6 +175,17 @@ class WalletsInPool(Range):
     default = 0
 
 
+class HeartsInPool(Range):
+    """Number of Heart Container checks placed in the shop (0-10). Their shop slots become
+    multiworld location checks instead of coin purchases; the max-heart increase arrives as a
+    Heart Container item (a quarter in Zelda Heart Mode, a whole heart otherwise). Requires
+    Offer Heart Containers in Shop, and is ignored under Unlimited Lives."""
+    display_name = "Heart Containers in Pool"
+    range_start = 0
+    range_end = 10
+    default = 0
+
+
 class RequireTierCompletion(DefaultOnToggle):
     """Require completing every puzzle of your current grid size before you can buy the
     next difficulty in the shop. When disabled, difficulty can be bought with coins alone."""
@@ -314,6 +325,7 @@ class NonogramOptions(PerGameCommonOptions):
     show_mistakes: ShowMistakes
     starting_wallet_level: StartingWalletLevel
     wallets_in_pool: WalletsInPool
+    hearts_in_pool: HeartsInPool
     require_tier_completion: RequireTierCompletion
     difficulty_cost: DifficultyCost
     life_restore_on_clear: LifeRestoreOnClear

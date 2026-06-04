@@ -331,6 +331,9 @@ export function useArchipelago() {
         if (typeof slotData.value.wallets_in_pool === 'number') {
           items.walletsInPool.value = slotData.value.wallets_in_pool;
         }
+        if (typeof slotData.value.hearts_in_pool === 'number') {
+          items.heartsInPool.value = slotData.value.hearts_in_pool;
+        }
         if (typeof slotData.value.require_tier_completion !== 'undefined') {
           items.requireTierCompletion.value = !!slotData.value.require_tier_completion;
         }

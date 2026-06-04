@@ -112,6 +112,15 @@ for _k in range(1, 5):
         region="Puzzle Area"
     )
 
+# Heart Container shop checks. IDs 9007001-9007010 (created in regions when shop hearts on,
+# lives are finite, and hearts_in_pool > 0).
+HEART_SHOP_LOCATION_NAMES = [f"Shop: Heart Container {k}" for k in range(1, 11)]
+for _h in range(1, 11):
+    location_table[f"Shop: Heart Container {_h}"] = NonogramLocationData(
+        code=9007000 + _h,
+        region="Puzzle Area"
+    )
+
 # Flawless checks (no-mistake clears). IDs 9005001-9005006.
 # Created in regions only when reachable for the configured puzzle counts.
 FLAWLESS_PER_SIZE_NAMES = {

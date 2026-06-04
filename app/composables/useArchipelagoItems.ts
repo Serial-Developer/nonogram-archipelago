@@ -36,6 +36,9 @@ export const AP_ITEMS = {
 
   // Wallet (8005xxx range) - progressive coin capacity
   WALLET_UPGRADE: 8005001,
+
+  // Heart Container (8006xxx range) - max-heart expansion via pooled shop checks
+  HEART_CONTAINER: 8006001,
 } as const;
 
 // ============================================
@@ -76,6 +79,18 @@ export const AP_LOCATIONS = {
   SHOP_WALLET_2: 9006002,
   SHOP_WALLET_3: 9006003,
   SHOP_WALLET_4: 9006004,
+
+  // Shop heart-container check locations (active when hearts are in the pool)
+  SHOP_HEART_1: 9007001,
+  SHOP_HEART_2: 9007002,
+  SHOP_HEART_3: 9007003,
+  SHOP_HEART_4: 9007004,
+  SHOP_HEART_5: 9007005,
+  SHOP_HEART_6: 9007006,
+  SHOP_HEART_7: 9007007,
+  SHOP_HEART_8: 9007008,
+  SHOP_HEART_9: 9007009,
+  SHOP_HEART_10: 9007010,
 } as const;
 
 // Puzzle completion counts per difficulty
@@ -210,6 +225,12 @@ export const ITEM_REGISTRY: ItemDefinition[] = [
     description: 'Progressively increases your maximum coin capacity',
     category: 'progression',
   },
+  {
+    id: AP_ITEMS.HEART_CONTAINER,
+    name: 'Heart Container',
+    description: 'Expands your maximum hearts (a quarter in Zelda mode, a whole heart otherwise)',
+    category: 'progression',
+  },
 ];
 
 // ============================================
@@ -272,6 +293,7 @@ export function useArchipelagoItems() {
   const startingWalletLevel = usePersistentRef('ap_startingWalletLevel', 0); // Wallet level granted at seed start (YAML)
   const walletLevel = usePersistentRef('ap_walletLevel', 0); // Current wallet level (0-4)
   const walletsInPool = usePersistentRef('ap_walletsInPool', 0); // Wallet levels coming from the multiworld pool
+  const heartsInPool = usePersistentRef('ap_heartsInPool', 0); // Heart Container checks coming from the multiworld pool
   const coinCap = computed(() => WALLET_CAPS[Math.min(Math.max(walletLevel.value, 0), 4)]);
 
   // Random cell solve tokens
@@ -456,7 +478,7 @@ export function useArchipelagoItems() {
   function receiveItem(itemId: number): { itemName: string | null; checks: number[] } {
     // Don't process duplicates (except for stackable items)
     const isStackable =
-      itemId === AP_ITEMS.EXTRA_LIFE || itemId === AP_ITEMS.UNLOCK_HINTS || itemId === AP_ITEMS.COINS_BUNDLE || itemId === AP_ITEMS.SOLVE_RANDOM_CELL || itemId === AP_ITEMS.WALLET_UPGRADE;
+      itemId === AP_ITEMS.EXTRA_LIFE || itemId === AP_ITEMS.UNLOCK_HINTS || itemId === AP_ITEMS.COINS_BUNDLE || itemId === AP_ITEMS.SOLVE_RANDOM_CELL || itemId === AP_ITEMS.WALLET_UPGRADE || itemId === AP_ITEMS.HEART_CONTAINER;
     if (!isStackable && receivedItems.value.includes(itemId)) {
       return { itemName: null, checks: [] };
     }
@@ -486,6 +508,11 @@ export function useArchipelagoItems() {
         break;
       case AP_ITEMS.WALLET_UPGRADE:
         walletLevel.value = Math.min(walletLevel.value + 1, 4);
+        break;
+      case AP_ITEMS.HEART_CONTAINER:
+        // Same effect as Extra Life: a quarter in Zelda mode, a whole heart otherwise (cap 10).
+        if (zeldaHeartMode.value) gainHeartQuarter();
+        else gainMaxHeart();
         break;
       default:
         console.warn(`Unknown item received: ${itemId}`);
@@ -661,6 +688,34 @@ export function useArchipelagoItems() {
     else gainMaxHeart();
     heartsBought.value += 1;
     return { success: true };
+  }
+
+  // Next heart-shop action: pooled Heart Container slots are multiworld checks (claim them; the
+  // max-heart increase arrives as a Heart Container item); beyond the pool they are coin purchases.
+  const nextHeartAction = computed(() => {
+    if (!archipelagoMode.value || !shopHearts.value || unlimitedLives.value) return null;
+    if (maxLives.value >= MAX_HEARTS) return null;
+    const n = Math.min(heartsInPool.value, 10);
+    for (let k = 1; k <= n; k++) {
+      const checkId = AP_LOCATIONS.SHOP_HEART_1 + (k - 1);
+      if (!completedChecks.value.has(checkId)) {
+        return { index: k, kind: 'check' as const, price: nextHeartCost.value, checkId };
+      }
+    }
+    return { index: 0, kind: 'purchase' as const, price: nextHeartCost.value };
+  });
+
+  // Claim a pooled Heart Container shop slot (a multiworld check). Pays and sends the check; the
+  // max-heart increase itself arrives as the Heart Container item.
+  function claimHeartShopCheck(index: number): { success: boolean; checkId?: number; reason?: string } {
+    if (!shopHearts.value || unlimitedLives.value) return { success: false, reason: 'Heart purchase is not available.' };
+    if (index < 1 || index > Math.min(heartsInPool.value, 10)) return { success: false, reason: 'Not a pooled heart slot.' };
+    ensureCompletedChecksIsSet();
+    const checkId = AP_LOCATIONS.SHOP_HEART_1 + (index - 1);
+    if (completedChecks.value.has(checkId)) return { success: false, reason: 'Already claimed.' };
+    if (!spendCoins(nextHeartCost.value)) return { success: false, reason: 'Not enough coins.' };
+    addCompletedCheck(checkId);
+    return { success: true, checkId };
   }
 
   // Add coins (for completing rows/columns)
@@ -1149,6 +1204,13 @@ export function useArchipelagoItems() {
       wallets.push(mk(AP_LOCATIONS.SHOP_WALLET_1 + (k - 1), `Wallet Upgrade ${k}`));
     }
     if (wallets.length) sections.push(finish("wallets", "Bourses", wallets));
+    const hearts: CItem[] = [];
+    if (shopHearts.value && !unlimitedLives.value) {
+      for (let k = 1; k <= Math.min(heartsInPool.value, 10); k++) {
+        hearts.push(mk(AP_LOCATIONS.SHOP_HEART_1 + (k - 1), `Heart Container ${k}`));
+      }
+    }
+    if (hearts.length) sections.push(finish("hearts", "Coeurs", hearts));
     const misc: CItem[] = [
       mk(AP_LOCATIONS.OBTAIN_50_COINS, "Obtain 50 Coins"),
       mk(AP_LOCATIONS.OBTAIN_100_COINS, "Obtain 100 Coins"),
@@ -1213,10 +1275,12 @@ export function useArchipelagoItems() {
     walletLevel,
     startingWalletLevel,
     walletsInPool,
+    heartsInPool,
     coinCap,
     WALLET_CAPS,
     WALLET_PRICES,
     nextWalletAction,
+    nextHeartAction,
 
     // Hints
     startingHintReveals,
@@ -1288,6 +1352,7 @@ export function useArchipelagoItems() {
     buyTempHintReveal,
     buyWalletUpgrade,
     claimWalletShopCheck,
+    claimHeartShopCheck,
     buyDifficultyIncrease,
     buyDifficultyDecrease,
     markFirstLineCompleted,

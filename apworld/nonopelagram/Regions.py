@@ -11,6 +11,7 @@ from .Locations import (
     NonogramLocation,
     location_table,
     WALLET_SHOP_LOCATION_NAMES,
+    HEART_SHOP_LOCATION_NAMES,
     FLAWLESS_PER_SIZE_NAMES,
     FLAWLESS_STREAK_NAME,
     FLAWLESS_TOTAL_NAME,
@@ -84,6 +85,12 @@ def create_regions(world: "NonogramWorld") -> None:
     wallets_in_pool = world.options.wallets_in_pool.value
     for location_name in WALLET_SHOP_LOCATION_NAMES[:wallets_in_pool]:
         add_location(location_name)
+
+    # Heart Container shop checks (first N = hearts_in_pool); only with finite lives + shop hearts.
+    if world.options.shop_hearts.value and not world.options.unlimited_lives.value:
+        hearts_in_pool = world.options.hearts_in_pool.value
+        for location_name in HEART_SHOP_LOCATION_NAMES[:hearts_in_pool]:
+            add_location(location_name)
 
     # Add victory event location
     victory_location = NonogramLocation(

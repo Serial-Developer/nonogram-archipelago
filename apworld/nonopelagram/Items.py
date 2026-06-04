@@ -59,6 +59,12 @@ item_table: Dict[str, NonogramItemData] = {
         classification=ItemClassification.useful
     ),
 
+    # === Heart Container (Useful - max-heart expansion; pooled heart shop checks) ===
+    "Heart Container": NonogramItemData(
+        code=8006001,
+        classification=ItemClassification.useful
+    ),
+
     # === Event Items (no code, used for logic) ===
     "Victory": NonogramItemData(
         code=None,

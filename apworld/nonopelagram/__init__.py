@@ -138,6 +138,12 @@ class NonogramWorld(World):
                     count = self.options.cell_solves_in_pool.value
                 elif item_name == "Wallet Upgrade":
                     count = self.options.wallets_in_pool.value
+                elif item_name == "Heart Container":
+                    count = (
+                        self.options.hearts_in_pool.value
+                        if self.options.shop_hearts.value and not self.options.unlimited_lives.value
+                        else 0
+                    )
                 else:
                     count = 1
 
@@ -181,6 +187,7 @@ class NonogramWorld(World):
             "puzzles_20x20": self.grid_counts["20x20"],
             "starting_wallet_level": self.options.starting_wallet_level.value,
             "wallets_in_pool": self.options.wallets_in_pool.value,
+            "hearts_in_pool": self.options.hearts_in_pool.value,
             "require_tier_completion": bool(self.options.require_tier_completion.value),
             "difficulty_cost": self.options.difficulty_cost.current_key,
             "life_restore_on_clear": self.options.life_restore_on_clear.current_key,

@@ -786,6 +786,14 @@
       alert(result.reason);
     }
   }
+  function claimHeartShopCheck(index: number) {
+    const result = items.claimHeartShopCheck(index);
+    if (result.success && result.checkId != null) {
+      checkLocations([result.checkId]);
+    } else if (result.reason) {
+      alert(result.reason);
+    }
+  }
 
   function checkAll() {
     // Ability is always available
@@ -1538,27 +1546,46 @@
                   <span class="text-xs">{{ items.nextHealingCost.value }}</span>
                 </button>
 
-                <!-- Buy Heart container (AP mode, shop hearts on, finite lives) -->
-                <button
-                  v-if="items.archipelagoMode.value && items.shopHearts.value && !items.unlimitedLives.value"
-                  class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
-                  :class="
-                    items.canBuyHeart.value
-                      ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
-                      : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
-                  "
-                  :disabled="!items.canBuyHeart.value"
-                  @click="buyHeart()"
-                >
-                  <div class="text-left">
-                    <span>{{ items.zeldaHeartMode.value ? 'Buy Quarter Heart' : 'Buy Heart' }}</span>
-                    <div class="text-[10px] opacity-70">
-                      <template v-if="items.zeldaHeartMode.value">{{ items.heartQuarters.value }}/4 &#9829; - {{ items.maxLives.value }}/10 max</template>
-                      <template v-else>{{ items.maxLives.value }}/10 max hearts</template>
+                <!-- Heart container (AP mode, shop hearts on, finite lives): pooled slots are checks -->
+                <template v-if="items.archipelagoMode.value && items.shopHearts.value && !items.unlimitedLives.value && items.nextHeartAction.value">
+                  <button
+                    v-if="items.nextHeartAction.value.kind === 'check'"
+                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                    :class="
+                      items.coins.value >= items.nextHeartAction.value.price
+                        ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                    "
+                    :disabled="items.coins.value < items.nextHeartAction.value.price"
+                    @click="claimHeartShopCheck(items.nextHeartAction.value.index)"
+                  >
+                    <div class="text-left">
+                      <span>Heart Container {{ items.nextHeartAction.value.index }} (multiworld check)</span>
+                      <div class="text-[10px] opacity-70">Sends a check &middot; {{ items.maxLives.value }}/10 max hearts</div>
                     </div>
-                  </div>
-                  <span class="text-xs">{{ items.nextHeartCost.value }}</span>
-                </button>
+                    <span class="text-xs">{{ items.nextHeartAction.value.price }}</span>
+                  </button>
+                  <button
+                    v-else
+                    class="w-full px-4 py-3 rounded text-sm font-medium transition-colors flex items-center justify-between"
+                    :class="
+                      items.canBuyHeart.value
+                        ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                        : 'bg-neutral-700/30 text-neutral-500 cursor-not-allowed'
+                    "
+                    :disabled="!items.canBuyHeart.value"
+                    @click="buyHeart()"
+                  >
+                    <div class="text-left">
+                      <span>{{ items.zeldaHeartMode.value ? 'Buy Quarter Heart' : 'Buy Heart' }}</span>
+                      <div class="text-[10px] opacity-70">
+                        <template v-if="items.zeldaHeartMode.value">{{ items.heartQuarters.value }}/4 &#9829; - {{ items.maxLives.value }}/10 max</template>
+                        <template v-else>{{ items.maxLives.value }}/10 max hearts</template>
+                      </div>
+                    </div>
+                    <span class="text-xs">{{ items.nextHeartAction.value.price }}</span>
+                  </button>
+                </template>
 
                 <!-- Increase Difficulty (only in AP mode, hidden at max tier) -->
                 <button
