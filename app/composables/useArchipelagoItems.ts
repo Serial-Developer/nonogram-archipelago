@@ -260,6 +260,7 @@ export function useArchipelagoItems() {
   const flawlessStreak = usePersistentRef('ap_flawlessStreak', 0); // consecutive flawless clears
   const flawlessTotal = usePersistentRef('ap_flawlessTotal', 0); // total flawless clears
   const mistakesThisPuzzle = usePersistentRef('ap_mistakesThisPuzzle', 0); // gameplay mistakes this puzzle (auto-X never counts)
+  const debugMode = usePersistentRef('ap_debugMode', false); // debug tab/simulator visible (from slot_data debug_mode)
 
   // Coins system
   const startingCoins = usePersistentRef('ap_startingCoins', 5); // Starting coins (configurable)
@@ -1222,6 +1223,7 @@ export function useArchipelagoItems() {
     flawlessStreak,
     flawlessTotal,
     mistakesThisPuzzle,
+    debugMode,
     addCoins,
     spendCoins,
     selectRevealedHints,

@@ -285,6 +285,12 @@ class FlawlessChecks(DefaultOnToggle):
     display_name = "Flawless Checks"
 
 
+class DebugMode(Toggle):
+    """Show the in-client Debug tab (slot_data simulator and debug tools) for connected players.
+    Off by default; turn on only when you need to debug a seed."""
+    display_name = "Debug Mode"
+
+
 @dataclass
 class NonogramOptions(PerGameCommonOptions):
     """Options for Nonogram."""
@@ -320,3 +326,4 @@ class NonogramOptions(PerGameCommonOptions):
     heart_cost: HeartCost
     heart_cost_custom: HeartCostCustom
     flawless_checks: FlawlessChecks
+    debug_mode: DebugMode

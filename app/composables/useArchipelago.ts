@@ -349,6 +349,9 @@ export function useArchipelago() {
         if (typeof slotData.value.flawless_checks !== 'undefined') {
           items.flawlessChecks.value = !!slotData.value.flawless_checks;
         }
+        if (typeof slotData.value.debug_mode !== 'undefined') {
+          items.debugMode.value = !!slotData.value.debug_mode;
+        }
         if (isNewSeed) {
           items.livesBought.value = 0;
           items.heartQuarters.value = 0;

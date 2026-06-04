@@ -178,6 +178,7 @@
   const simHeartCost = ref('normal');
   const simHeartCostCustom = ref(100);
   const simFlawlessChecks = ref(true);
+  const simDebugMode = ref(false);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
@@ -230,6 +231,7 @@
     items.heartQuarters.value = 0;
     items.heartsBought.value = 0;
     items.flawlessChecks.value = simFlawlessChecks.value;
+    items.debugMode.value = simDebugMode.value;
     items.flawlessStreak.value = 0;
     items.flawlessTotal.value = 0;
     items.mistakesThisPuzzle.value = 0;
@@ -268,6 +270,7 @@
       heart_cost: simHeartCost.value,
       heart_cost_custom: simHeartCostCustom.value,
       flawless_checks: simFlawlessChecks.value,
+      debug_mode: simDebugMode.value,
       puzzles_5x5: simPuzzles5x5.value,
       puzzles_10x10: simPuzzles10x10.value,
       puzzles_15x15: simPuzzles15x15.value,
@@ -870,6 +873,12 @@
   const activeTab = ref<RightTab>('archipelago');
   const activeMobileTab = ref<MobileTab>('puzzle');
   const activeLogTab = ref<'log' | 'debug'>('log');
+  // Debug tab: visible when the host enabled debug_mode, or while offline (so the slot_data
+  // simulator stays reachable before/without a connection).
+  const debugTabVisible = computed(() => items.debugMode.value || status.value !== 'connected');
+  watch(debugTabVisible, (visible) => {
+    if (!visible && activeLogTab.value === 'debug') activeLogTab.value = 'log';
+  });
 
   // Ref for chat log container to enable auto-scroll
   const chatLogContainer = ref<HTMLElement | null>(null);
@@ -1218,6 +1227,10 @@
                 <span class="text-xl sm:text-2xl">🎉</span>
                 <div>
                   <div class="font-semibold text-sm sm:text-base">Puzzle Solved!</div>
+                  <div v-if="items.archipelagoMode.value && items.flawlessChecks.value" class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
+                    <span>&#11088;</span>
+                    <span>S&#233;rie sans faute : {{ items.flawlessStreak.value }} <span class="text-accent-300/70">(total : {{ items.flawlessTotal.value }})</span></span>
+                  </div>
                   <!-- Archipelago: show what solving this puzzle unlocked -->
                   <div v-if="solvedItems.length > 0 || solvedUnlockedChecks.length > 0 || goalCompleted" class="mt-1 space-y-0.5">
                     <div class="text-[11px] uppercase tracking-wider text-accent-300/70">
@@ -1278,6 +1291,10 @@
                 <span class="text-xl sm:text-2xl">💔</span>
                 <div>
                   <div class="font-semibold text-sm sm:text-base">Game Over!</div>
+                  <div v-if="items.archipelagoMode.value && items.flawlessChecks.value" class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
+                    <span>&#11088;</span>
+                    <span>S&#233;rie sans faute remise &#224; 0 <span class="text-red-300/70">(total : {{ items.flawlessTotal.value }})</span></span>
+                  </div>
                   <div class="text-xs sm:text-sm text-red-300/80">You ran out of lives. Try again?</div>
                 </div>
               </div>
@@ -1989,7 +2006,7 @@
             <!-- mini tab bar: Game Log | Debug -->
             <div class="flex border-b border-neutral-700/50 shrink-0">
               <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'log' }" @click="activeLogTab = 'log'">Game Log</button>
-              <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'debug' }" @click="activeLogTab = 'debug'">Debug</button>
+              <button v-if="debugTabVisible" class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'debug' }" @click="activeLogTab = 'debug'">Debug</button>
             </div>
             <div v-show="activeLogTab === 'log'" ref="chatLogContainer" class="flex-1 min-h-0 px-4 pb-3 overflow-auto custom-scrollbar">
               <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
@@ -2015,7 +2032,7 @@
                 </div>
               </div>
             </div>
-            <div v-show="activeLogTab === 'debug'" class="space-y-6 p-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            <div v-show="activeLogTab === 'debug' && debugTabVisible" class="space-y-6 p-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
               <div class="flex items-center gap-3">
                 <div>
                   <h2 class="font-semibold text-neutral-100">Debug Tools</h2>
