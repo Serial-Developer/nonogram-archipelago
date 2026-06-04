@@ -17,6 +17,12 @@ let highestItemIndexProcessed = (() => {
   return -1;
 })();
 
+// Step 2b: gate item application during (re)connect until the economy blob is restored, so
+// item-fed balances (coins, lives, wallet, cell solves) are never double-counted. Items that
+// arrive before the blob is loaded are buffered here and flushed once economyReady flips true.
+let economyReady = false;
+let bufferedItems: Array<{ item: Item | undefined; index: number }> = [];
+
 export function useArchipelago() {
   const nuxt = useNuxtApp();
   const client = nuxt.$apClient as Client;
@@ -48,11 +54,37 @@ export function useArchipelago() {
   // Get items composable
   const items = useArchipelagoItems();
 
-  // Persist the local economy state (purchase counters + flawless progress) to the server's data
-  // storage so it survives reconnects and follows the player across devices. localStorage stays as
-  // the offline fallback; on connect the server value wins (see connect()). Best-effort: writes are
-  // swallowed on failure. NOTE: item-fed values (coins, extraLives, walletLevel, randomCellSolves)
-  // are NOT here yet -- they require item-replay coordination (step 2b).
+  // Write the full economy blob (counters + item-fed balances + replay high-water-mark) to the
+  // server's data storage. Best-effort. Called on local changes (when connected) and right after
+  // the connect-time buffer flush.
+  function writeEconomyBlob() {
+    try {
+      const economyKey = `Nonopelagram:economy:${slot.value}`;
+      client.storage
+        .prepare(economyKey, {})
+        .replace({
+          flawlessStreak: items.flawlessStreak.value,
+          flawlessTotal: items.flawlessTotal.value,
+          livesBought: items.livesBought.value,
+          heartsBought: items.heartsBought.value,
+          heartQuarters: items.heartQuarters.value,
+          coins: items.coins.value,
+          extraLives: items.extraLives.value,
+          walletLevel: items.walletLevel.value,
+          randomCellSolves: items.randomCellSolves.value,
+          itemIndex: highestItemIndexProcessed,
+        })
+        .commit(false)
+        .catch(() => {});
+    } catch {
+      /* best-effort */
+    }
+  }
+
+  // Persist the local economy state to the server's data storage on change (when connected) so it
+  // survives reconnects and follows the player across devices. localStorage stays as the offline
+  // fallback; on connect the server value wins (see connect()). Item-fed balances are included; the
+  // stored itemIndex (replay high-water-mark) keeps each item counted exactly once across devices.
   watch(
     () => [
       items.flawlessStreak.value,
@@ -60,19 +92,14 @@ export function useArchipelago() {
       items.livesBought.value,
       items.heartsBought.value,
       items.heartQuarters.value,
-    ] as [number, number, number, number, number],
-    ([flawlessStreak, flawlessTotal, livesBought, heartsBought, heartQuarters]) => {
+      items.coins.value,
+      items.extraLives.value,
+      items.walletLevel.value,
+      items.randomCellSolves.value,
+    ] as const,
+    () => {
       if (status.value !== 'connected') return;
-      try {
-        const economyKey = `Nonopelagram:economy:${slot.value}`;
-        client.storage
-          .prepare(economyKey, {})
-          .replace({ flawlessStreak, flawlessTotal, livesBought, heartsBought, heartQuarters })
-          .commit(false)
-          .catch(() => {});
-      } catch {
-        /* best-effort */
-      }
+      writeEconomyBlob();
     },
   );
 
@@ -115,6 +142,27 @@ export function useArchipelago() {
     }
   }
 
+  // Apply a single received item: advance the replay high-water-mark and mutate balances. Shared
+  // by the live itemsReceived handler and the post-blob buffer flush in connect().
+  function applyReceivedItem(item: Item | undefined, currentIndex: number) {
+    if (currentIndex <= highestItemIndexProcessed) return;
+    highestItemIndexProcessed = currentIndex;
+    if (import.meta.client) {
+      localStorage.setItem('nonogram_ap_highestItemIndex', currentIndex.toString());
+    }
+    if (!item) return;
+    const itemName = handleItemReceived(item.id);
+    if (itemName) {
+      const sender = item.sender?.name || 'Unknown';
+      const receiver = slot.value;
+      let extra = '';
+      if (item.locationId) {
+        extra = ` (Location #${item.locationId})`;
+      }
+      addLogMessage(`${sender} sent ${itemName} to ${receiver}${extra}`.replace(/ ,/g, ''), 'item');
+    }
+  }
+
   // Set up event handlers once
   function setupEventHandlers() {
     if (eventHandlersInitialized) return;
@@ -124,33 +172,12 @@ export function useArchipelago() {
     client.items.on('itemsReceived', (receivedItems: Item[], startingIndex: number) => {
       for (let i = 0; i < receivedItems.length; i++) {
         const currentIndex = startingIndex + i;
-
-        // Skip items we've already processed
-        if (currentIndex <= highestItemIndexProcessed) {
+        // Until the economy blob is restored, buffer instead of applying (avoids double-counting).
+        if (!economyReady) {
+          bufferedItems.push({ item: receivedItems[i], index: currentIndex });
           continue;
         }
-
-        // Update the highest index we've processed and persist it
-        highestItemIndexProcessed = currentIndex;
-        if (import.meta.client) {
-          localStorage.setItem('nonogram_ap_highestItemIndex', currentIndex.toString());
-        }
-
-        const item = receivedItems[i];
-        if (!item) continue; // Safety check
-
-        // item.id is the item ID from the AP world
-        const itemName = handleItemReceived(item.id);
-        if (itemName) {
-          // Format: NonopelagramPlayer2 sent Extra Cooldown Trap to Player2 (Complete 2 5x5 Puzzles)
-          const sender = item.sender?.name || 'Unknown';
-          const receiver = slot.value;
-          let extra = '';
-          if (item.locationId) {
-            extra = ` (Location #${item.locationId})`;
-          }
-          addLogMessage(`${sender} sent ${itemName} to ${receiver}${extra}`.replace(/ ,/g, ''), 'item');
-        }
+        applyReceivedItem(receivedItems[i], currentIndex);
       }
     });
 
@@ -211,6 +238,11 @@ export function useArchipelago() {
       // Enable Archipelago mode when connecting (preserve persisted state)
       items.enableArchipelagoModeForConnection();
       addLogMessage('Connecting to Archipelago...', 'info');
+
+      // Gate item application until the economy blob is restored (prevents double-counting on
+      // (re)connect): items received during login are buffered, then flushed after the blob load.
+      economyReady = false;
+      bufferedItems = [];
 
       // Set up event handlers before connecting
       setupEventHandlers();
@@ -351,10 +383,11 @@ export function useArchipelago() {
       // Reconcile local check state with the server's authoritative checked locations (#3).
       items.reconcileCheckedLocations(client.room.checkedLocations ?? []);
 
-      // Restore the local economy state (purchase counters + flawless progress) from the server's
-      // data storage (survives reconnects, follows the player across devices). The server value wins
-      // over the local cache; a brand-new room has no value yet. Best-effort: falls back to
-      // localStorage on failure. Item-fed values are restored separately via item replay (step 2b).
+      // Restore the local economy state from the server's data storage (survives reconnects,
+      // follows the player across devices). The server value wins over the local cache; a brand-new
+      // room has no value yet. Best-effort: falls back to localStorage on failure. The stored
+      // itemIndex (replay high-water-mark) is restored so the buffered-item flush below counts each
+      // item exactly once.
       try {
         const economyKey = `Nonopelagram:economy:${slot.value}`;
         type EconomyBlob = {
@@ -363,8 +396,13 @@ export function useArchipelago() {
           livesBought?: number;
           heartsBought?: number;
           heartQuarters?: number;
+          coins?: number;
+          extraLives?: number;
+          walletLevel?: number;
+          randomCellSolves?: number;
+          itemIndex?: number;
         };
-        const applyEconomy = (value: unknown) => {
+        const applyEconomy = (value: unknown, restoreMark: boolean) => {
           if (!value || typeof value !== 'object') return;
           const v = value as EconomyBlob;
           if (typeof v.flawlessStreak === 'number') items.flawlessStreak.value = v.flawlessStreak;
@@ -372,12 +410,34 @@ export function useArchipelago() {
           if (typeof v.livesBought === 'number') items.livesBought.value = v.livesBought;
           if (typeof v.heartsBought === 'number') items.heartsBought.value = v.heartsBought;
           if (typeof v.heartQuarters === 'number') items.heartQuarters.value = v.heartQuarters;
+          if (typeof v.coins === 'number') items.coins.value = v.coins;
+          if (typeof v.extraLives === 'number') items.extraLives.value = v.extraLives;
+          if (typeof v.walletLevel === 'number') items.walletLevel.value = v.walletLevel;
+          if (typeof v.randomCellSolves === 'number') items.randomCellSolves.value = v.randomCellSolves;
+          // Only the initial connect restore touches the replay mark; a live update from another
+          // device must not rewind/advance this device's processing position.
+          if (restoreMark && typeof v.itemIndex === 'number') {
+            highestItemIndexProcessed = v.itemIndex;
+            if (import.meta.client) {
+              localStorage.setItem('nonogram_ap_highestItemIndex', v.itemIndex.toString());
+            }
+          }
         };
-        const stored = await client.storage.notify([economyKey], (_k, value) => applyEconomy(value));
-        applyEconomy(stored?.[economyKey]);
+        const stored = await client.storage.notify([economyKey], (_k, value) => applyEconomy(value, false));
+        applyEconomy(stored?.[economyKey], true);
       } catch {
         /* data storage is best-effort; localStorage remains the fallback */
       }
+
+      // Economy restored: open the gate and flush any items buffered during login (each applied
+      // only if its index is beyond the restored high-water-mark), then persist the reconciled blob.
+      economyReady = true;
+      const itemsToFlush = bufferedItems;
+      bufferedItems = [];
+      for (const buffered of itemsToFlush) {
+        applyReceivedItem(buffered.item, buffered.index);
+      }
+      writeEconomyBlob();
 
       status.value = 'connected';
       lastMessage.value = 'Connected!';
