@@ -40,7 +40,7 @@ export function useArchipelago() {
 
   // Death Link state
   const deathLinkEnabled = useState('ap_deathLink', () => false);
-  const deathLinkOneHeart = useState('ap_deathLinkOneHeart', () => false);
+  const deathLinkLethal = useState('ap_deathLinkLethal', () => true);
   const lastDeathTime = useState('ap_lastDeathTime', () => 0);
 
   // Goal state
@@ -224,10 +224,10 @@ export function useArchipelago() {
     lastDeathTime.value = Date.now();
 
     addLogMessage(`☠️ Death Link from ${source}: ${cause}`, 'error');
-    if (deathLinkOneHeart.value) {
-      items.loseLife();
-    } else {
+    if (deathLinkLethal.value) {
       items.loseAllLives();
+    } else {
+      items.loseLife();
     }
     items.registerMistake(); // a received DeathLink voids a flawless clear
   }
@@ -398,8 +398,9 @@ export function useArchipelago() {
         }
         // Death Link is driven entirely by slot data (#2); there is no manual UI toggle.
         if (typeof slotData.value.death_link !== 'undefined') {
-          deathLinkEnabled.value = !!slotData.value.death_link;
-          deathLinkOneHeart.value = !!slotData.value.death_link_one_heart;
+          const dlMode = Number(slotData.value.death_link) || 0;
+          deathLinkEnabled.value = dlMode !== 0;
+          deathLinkLethal.value = dlMode !== 2;
           if (deathLinkEnabled.value) {
             client.deathLink.enableDeathLink();
           }

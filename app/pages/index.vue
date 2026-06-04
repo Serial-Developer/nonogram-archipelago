@@ -1036,7 +1036,7 @@
     }
   });
 
-  function randomize(afterClear = false) {
+  function randomize(afterClear = false, resetLives = true) {
     // In archipelago mode, use the current difficulty setting
     const size = items.archipelagoMode.value ? items.currentDifficulty.value : rows.value;
     // When locked, ensure square randomize
@@ -1048,7 +1048,8 @@
       cols.value = size;
     }
     // Lives for the new puzzle (restore-on-clear only when following a solved puzzle).
-    items.resetLivesForNewPuzzle(afterClear);
+    // On a connect-time regen (resetLives=false) the economy blob governs health instead.
+    if (resetLives) items.resetLivesForNewPuzzle(afterClear);
     // Reset temporary hints
     items.resetTempHintsForNewPuzzle();
     // Reset the per-puzzle mistake counter (flawless tracking)
@@ -1073,7 +1074,7 @@
     () => items.archipelagoMode.value,
     (isArchipelagoMode) => {
       if (isArchipelagoMode) {
-        randomize();
+        randomize(false, false);
       }
     },
   );
@@ -1087,7 +1088,7 @@
     // size. Otherwise just re-baseline the solved-banner checks.
     void refreshShopScout();
     if (items.archipelagoMode.value && rows.value !== items.currentDifficulty.value) {
-      randomize();
+      randomize(false, false);
     } else {
       snapshotChecksBaseline();
     }

@@ -125,17 +125,16 @@ class Puzzles20x20(Range):
     default = 10
 
 
-class DeathLink(Toggle):
-    """When you lose all lives, everyone with DeathLink enabled dies.
-    When you receive a DeathLink, you lose all your lives by default
-    (enable Death Link Only Removes One Heart to lose just one heart instead)."""
+class DeathLink(Choice):
+    """How Death Link affects you when another linked player dies:
+    off: Death Link is disabled.
+    on: you lose all your lives (and your own death also sends a Death Link).
+    damage: you lose a single heart instead of all your lives."""
     display_name = "Death Link"
-
-
-class DeathLinkOneHeart(Toggle):
-    """When enabled, a received DeathLink removes only one heart instead of all your lives.
-    Has no effect unless Death Link is enabled."""
-    display_name = "Death Link Only Removes One Heart"
+    option_off = 0
+    option_on = 1
+    option_damage = 2
+    default = 0
 
 
 class AutoX(DefaultOnToggle):
@@ -326,7 +325,6 @@ class NonogramOptions(PerGameCommonOptions):
     puzzles_15x15: Puzzles15x15
     puzzles_20x20: Puzzles20x20
     death_link: DeathLink
-    death_link_one_heart: DeathLinkOneHeart
     auto_x: AutoX
     grey_completed_hints: GreyCompletedHints
     unlimited_lives: UnlimitedLives

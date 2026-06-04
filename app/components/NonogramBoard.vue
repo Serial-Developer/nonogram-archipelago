@@ -346,7 +346,7 @@
       />
 
       <!-- column clues (grid: rows=colDepth, cols=cols) -->
-      <div>
+      <div :style="{ paddingLeft: padPx + 'px' }">
         <div
           class="grid"
           :style="{
@@ -393,7 +393,7 @@
       </div>
 
       <!-- row clues (grid: rows=rows, cols=rowDepth) -->
-      <div class="overflow-hidden">
+      <div class="overflow-hidden" :style="{ paddingTop: padPx + 'px' }">
         <div
           class="grid"
           :style="{
