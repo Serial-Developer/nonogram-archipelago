@@ -46,6 +46,8 @@
     sendDeathLink,
     debugReceiveItem,
     items,
+    loadGridState,
+    saveGridState,
   } = useArchipelago();
 
   // Compute the latest item message (sent or received)
@@ -1069,11 +1071,96 @@
     items.selectRevealedHints(rows.value, cols.value);
   }
 
+  // --- Last-played grid persistence (server-side, per slot; pairs with useArchipelago.saveGridState). ---
+  function buildGridBlob() {
+    return {
+      rows: rows.value,
+      cols: cols.value,
+      solution: solution.value,
+      player: player.value,
+      revealedRows: [...items.revealedRows.value],
+      revealedCols: [...items.revealedCols.value],
+    };
+  }
+
+  // Recompute per-puzzle line-completion trackers from the current grid WITHOUT awarding coins
+  // (used after restoring a saved grid; coins were already earned and come back via the economy blob).
+  function recomputeCompletedLines() {
+    const cr = new Set<number>();
+    const cc = new Set<number>();
+    let anyNonTrivial = false;
+    for (let r = 0; r < rows.value; r++) {
+      let complete = true;
+      let hasFills = false;
+      for (let c = 0; c < cols.value; c++) {
+        const should = solution.value[r]?.[c] === 1;
+        if (should) hasFills = true;
+        if (should !== (player.value[r]?.[c] === 'fill')) { complete = false; break; }
+      }
+      if (complete) { cr.add(r); if (hasFills) anyNonTrivial = true; }
+    }
+    for (let c = 0; c < cols.value; c++) {
+      let complete = true;
+      let hasFills = false;
+      for (let r = 0; r < rows.value; r++) {
+        const should = solution.value[r]?.[c] === 1;
+        if (should) hasFills = true;
+        if (should !== (player.value[r]?.[c] === 'fill')) { complete = false; break; }
+      }
+      if (complete) { cc.add(c); if (hasFills) anyNonTrivial = true; }
+    }
+    completedRows.value = cr;
+    completedCols.value = cc;
+    hasCompletedFirstLineThisPuzzle.value = anyNonTrivial;
+  }
+
+  // On connect: restore the saved grid if present and size-compatible, else a fresh puzzle.
+  async function setupGridOnConnect() {
+    try {
+      const size = items.currentDifficulty.value;
+      const blob = (await loadGridState()) as null | {
+        rows?: number; cols?: number;
+        solution?: typeof solution.value;
+        player?: typeof player.value;
+        revealedRows?: number[]; revealedCols?: number[];
+      };
+      if (
+        blob && blob.rows === size &&
+        Array.isArray(blob.solution) && blob.solution.length === size &&
+        Array.isArray(blob.player) && blob.player.length === size
+      ) {
+        rows.value = size;
+        cols.value = blob.cols ?? size;
+        solution.value = blob.solution;
+        player.value = blob.player;
+        items.revealedRows.value = new Set(blob.revealedRows ?? []);
+        items.revealedCols.value = new Set(blob.revealedCols ?? []);
+        recomputeCompletedLines();
+        items.resetTempHintsForNewPuzzle();
+        solvedItems.value = [];
+        snapshotChecksBaseline();
+        return;
+      }
+    } catch {
+      /* fall through to a fresh puzzle */
+    }
+    randomize(false, false);
+  }
+
+  // Persist the current grid to the server (debounced) whenever it changes while connected.
+  let gridSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  watch([player, solution], () => {
+    if (status.value !== 'connected') return;
+    if (gridSaveTimer) clearTimeout(gridSaveTimer);
+    gridSaveTimer = setTimeout(() => { saveGridState(buildGridBlob()); }, 800);
+  });
+
   // When Archipelago mode is enabled, generate a new puzzle so user doesn't see the hints
   watch(
     () => items.archipelagoMode.value,
     (isArchipelagoMode) => {
-      if (isArchipelagoMode) {
+      // Manual enable while offline -> fresh puzzle. On connect, setupGridOnConnect() owns grid setup.
+      if (isArchipelagoMode && status.value === 'disconnected') {
         randomize(false, false);
       }
     },
@@ -1083,12 +1170,11 @@
   // banner doesn't list checks that were already completed on the server.
   watch(status, (s) => {
     if (s !== 'connected') return;
-    // connect() reconciled currentDifficulty from the server; if the on-screen puzzle size no
-    // longer matches (e.g. we came from a local game at another size), regenerate at the right
-    // size. Otherwise just re-baseline the solved-banner checks.
     void refreshShopScout();
-    if (items.archipelagoMode.value && rows.value !== items.currentDifficulty.value) {
-      randomize(false, false);
+    // Restore the last-played grid for this slot from the server (cross-device); falls back to a
+    // fresh puzzle when there is no saved grid or its size no longer matches currentDifficulty.
+    if (items.archipelagoMode.value) {
+      void setupGridOnConnect();
     } else {
       snapshotChecksBaseline();
     }

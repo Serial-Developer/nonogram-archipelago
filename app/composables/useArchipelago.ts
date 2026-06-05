@@ -125,6 +125,31 @@ export function useArchipelago() {
     },
   );
 
+  // --- Per-slot last-played grid, persisted to server data storage for cross-device resume. ---
+  // Stored under `Nonopelagram:grid:${slot}` as { rows, cols, solution, player, revealedRows, revealedCols }.
+  function saveGridState(blob: unknown) {
+    if (status.value !== 'connected') return;
+    try {
+      const gridKey = `Nonopelagram:grid:${slot.value}`;
+      client.storage
+        .prepare(gridKey, {})
+        .replace(blob as Record<string, unknown>)
+        .commit(false)
+        .catch(() => {});
+    } catch {
+      /* best-effort */
+    }
+  }
+
+  async function loadGridState(): Promise<unknown> {
+    try {
+      const gridKey = `Nonopelagram:grid:${slot.value}`;
+      return await client.storage.fetch(gridKey, false);
+    } catch {
+      return null;
+    }
+  }
+
   // Persist connection settings across page reloads (F5). useState alone resets on a full reload,
   // so we mirror host/port/slot/secure into localStorage. The password is intentionally NOT
   // persisted (avoid storing a secret in plaintext localStorage).
@@ -637,6 +662,8 @@ export function useArchipelago() {
     goalCompleted,
     connect,
     disconnect,
+    saveGridState,
+    loadGridState,
     checkLocation,
     checkLocations,
     scoutChecks,
