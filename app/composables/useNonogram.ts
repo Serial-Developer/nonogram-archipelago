@@ -79,7 +79,7 @@ export function useNonogram() {
     player.value[r][c] = v;
   }
 
-  function cycleCell(r: number, c: number, mode: 'fill' | 'x' | 'erase') {
+  function cycleCell(r: number, c: number, mode: 'fill' | 'x' | 'erase' | 'maybe') {
     // Create new array to trigger reactivity
     const newPlayer = [...player.value.map((row) => [...row])];
     const cur = newPlayer[r][c];
@@ -90,6 +90,8 @@ export function useNonogram() {
       newPlayer[r][c] = cur === 'fill' ? 'empty' : 'fill';
     } else if (mode === 'x') {
       newPlayer[r][c] = cur === 'x' ? 'empty' : 'x';
+    } else if (mode === 'maybe') {
+      newPlayer[r][c] = cur === 'maybe' ? 'empty' : 'maybe';
     }
 
     player.value = newPlayer;

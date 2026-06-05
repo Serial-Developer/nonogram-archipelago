@@ -18,7 +18,7 @@
     dragPainting?: boolean;
     isRowHintRevealed?: (rowIndex: number) => boolean;
     isColHintRevealed?: (colIndex: number) => boolean;
-    mobileCellMode?: 'fill' | 'x'; // For mobile mode toggle
+    mobileCellMode?: 'fill' | 'x' | 'maybe'; // For mobile mode toggle
     cursorRow?: number; // Mobile D-pad cursor cell (-1 to hide)
     cursorCol?: number;
     reservedBottom?: number; // px reserved below the board (e.g. mobile D-pad) so the grid still fits
@@ -26,12 +26,12 @@
   }>();
 
   const emit = defineEmits<{
-    (e: 'cell', r: number, c: number, mode: 'fill' | 'x' | 'erase'): void;
+    (e: 'cell', r: number, c: number, mode: 'fill' | 'x' | 'erase' | 'maybe'): void;
   }>();
 
   // Drag painting state
   const isDragging = ref(false);
-  const dragMode = ref<'fill' | 'x' | 'erase' | null>(null);
+  const dragMode = ref<'fill' | 'x' | 'erase' | 'maybe' | null>(null);
   const dragStartCell = ref<{ r: number; c: number } | null>(null);
 
   // Global pointer up handler for when pointer is released outside grid
@@ -155,12 +155,13 @@
     e.preventDefault();
 
     // On mobile, use the toggle for mode
-    let mode: 'fill' | 'x' | 'erase';
+    let mode: 'fill' | 'x' | 'erase' | 'maybe';
     if (mobile && props.mobileCellMode) {
       mode = props.mobileCellMode;
     } else {
       const erase = (e as PointerEvent).shiftKey;
       if (erase) mode = 'erase';
+      else if ((e as PointerEvent).button === 1) mode = 'maybe'; // middle click = "?" template
       else if ((e as PointerEvent).button === 2) mode = 'x';
       else mode = 'fill';
     }
@@ -560,6 +561,10 @@
               >
                 ✕
               </span>
+              <span
+                v-else-if="player[Math.floor((idx - 1) / cols)]?.[(idx - 1) % cols] === 'maybe'"
+                class="text-sm font-bold text-sky-300/80"
+              >?</span>
             </button>
           </div>
         </div>

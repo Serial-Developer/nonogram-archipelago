@@ -186,7 +186,7 @@
   const simDebugMode = ref(false);
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
-  const mobileCellMode = ref<'fill' | 'x'>('fill');
+  const mobileCellMode = ref<'fill' | 'x' | 'maybe'>('fill');
 
   // Mobile D-pad cursor (selected cell) + touch-controls height (reserved below the board).
   const cursorR = ref(0);
@@ -637,7 +637,7 @@
   }
 
   // Handle cell changes - award coins for correct moves
-  function handleCellChange(r: number, c: number, mode: 'fill' | 'x' | 'erase') {
+  function handleCellChange(r: number, c: number, mode: 'fill' | 'x' | 'erase' | 'maybe') {
     // Block interaction if puzzle is solved or game is over
     if (solved.value || gameOver.value) {
       return;
@@ -665,6 +665,13 @@
       (completedRows.value.has(r) || completedCols.value.has(c));
     if (isCorrectFill || isCorrectX || isAutoXed) {
       return; // Can't modify already-resolved cells
+    }
+
+    // "?" is a pure planning annotation: toggle it, never award coins, never deal damage.
+    if (mode === 'maybe') {
+      cycleCell(r, c, 'maybe');
+      player.value = player.value.slice();
+      return;
     }
 
     // Apply the change
@@ -1629,11 +1636,11 @@
               <button
                 type="button"
                 class="flex items-center justify-center rounded text-white text-xl font-bold transition active:scale-95"
-                :class="mobileCellMode === 'fill' ? 'bg-lime-600' : 'bg-red-600'"
+                :class="mobileCellMode === 'fill' ? 'bg-lime-600' : mobileCellMode === 'x' ? 'bg-red-600' : 'bg-sky-700'"
                 @click="applyCursor()"
                 :aria-label="mobileCellMode === 'fill' ? 'Fill selected cell' : 'Cross selected cell'"
               >
-                <span v-if="mobileCellMode === 'fill'">&#9632;</span><span v-else>&#10005;</span>
+                <span v-if="mobileCellMode === 'fill'">&#9632;</span><span v-else-if="mobileCellMode === 'x'">&#10005;</span><span v-else>?</span>
               </button>
               <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, 1)" aria-label="Move right">&#9654;</button>
               <span></span>
@@ -1645,6 +1652,7 @@
                 <span class="text-xs text-neutral-400">Mode</span>
                 <div class="flex items-center">
                   <button type="button" class="px-3 py-2 rounded-l border border-neutral-700 text-lg" :class="mobileCellMode === 'fill' ? 'bg-lime-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'fill'" aria-label="Fill mode">&#9632;</button>
+                  <button type="button" class="px-3 py-2 border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'maybe' ? 'bg-sky-700 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'maybe'" aria-label="Maybe (template) mode">?</button>
                   <button type="button" class="px-3 py-2 rounded-r border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'x' ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'x'" aria-label="X mode">&#10005;</button>
                 </div>
               </div>

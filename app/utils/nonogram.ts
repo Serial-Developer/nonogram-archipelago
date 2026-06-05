@@ -1,5 +1,5 @@
 export type Cell = 0 | 1;
-export type Mark = 'empty' | 'fill' | 'x';
+export type Mark = 'empty' | 'fill' | 'x' | 'maybe';
 
 export type Grid<T> = T[][];
 
