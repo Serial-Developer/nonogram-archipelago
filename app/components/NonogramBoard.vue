@@ -19,6 +19,9 @@
     isRowHintRevealed?: (rowIndex: number) => boolean;
     isColHintRevealed?: (colIndex: number) => boolean;
     mobileCellMode?: 'fill' | 'x'; // For mobile mode toggle
+    cursorRow?: number; // Mobile D-pad cursor cell (-1 to hide)
+    cursorCol?: number;
+    reservedBottom?: number; // px reserved below the board (e.g. mobile D-pad) so the grid still fits
     disabled?: boolean; // Disable interactions when puzzle is failed or completed
   }>();
 
@@ -96,7 +99,8 @@
     // Width: safe small constant (no wrap risk). Height: measured from the board top to the
     // viewport bottom, so the whole grid always fits with no scroll, whatever the grid size.
     const availW = desktop ? 560 : windowWidth.value - 32;
-    const availH = measuredAvailH.value > 0 ? measuredAvailH.value : windowHeight.value - 180;
+    const availH =
+      (measuredAvailH.value > 0 ? measuredAvailH.value : windowHeight.value - 180) - (props.reservedBottom ?? 0);
 
     // Width fit: account for the left row-clue gutter (max of its fixed-min and cell-scaled size).
     const byWidth = Math.min(
@@ -514,6 +518,10 @@
               v-for="idx in rows * cols"
               :key="idx"
               class="flex items-center justify-center transition active:scale-[0.98]"
+              :class="{
+                'ring-2 ring-inset ring-amber-400 relative z-10':
+                  cursorRow === Math.floor((idx - 1) / cols) && cursorCol === (idx - 1) % cols,
+              }"
               :style="{
                 backgroundColor: (() => {
                   const r = Math.floor((idx - 1) / cols);

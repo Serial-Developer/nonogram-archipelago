@@ -132,6 +132,7 @@
     checkMobile();
     resizeReady.value = true;
     window.addEventListener('resize', checkMobile);
+    window.addEventListener('resize', measureControls);
 
     // Wait for next tick after mount to ensure hydration is complete
     nextTick(() => {
@@ -139,6 +140,7 @@
       newRandom(rows.value, cols.value);
       // Baseline the checks already unlocked for the first puzzle of the session
       snapshotChecksBaseline();
+      measureControls();
       // Small delay to ensure styles are fully applied
       setTimeout(() => {
         isClientReady.value = true;
@@ -185,6 +187,27 @@
   const dragPainting = ref(true);
   // Mobile cell mode toggle: 'fill' or 'x'
   const mobileCellMode = ref<'fill' | 'x'>('fill');
+
+  // Mobile D-pad cursor (selected cell) + touch-controls height (reserved below the board).
+  const cursorR = ref(0);
+  const cursorC = ref(0);
+  const controlsEl = ref<HTMLElement | null>(null);
+  const controlsH = ref(0);
+  const controlsReserve = computed(() => (isMobile.value ? controlsH.value + 8 : 0));
+  function moveCursor(dr: number, dc: number) {
+    cursorR.value = Math.min(Math.max(0, cursorR.value + dr), Math.max(0, rows.value - 1));
+    cursorC.value = Math.min(Math.max(0, cursorC.value + dc), Math.max(0, cols.value - 1));
+  }
+  function applyCursor() {
+    handleCellChange(cursorR.value, cursorC.value, mobileCellMode.value);
+  }
+  function measureControls() {
+    controlsH.value = controlsEl.value?.offsetHeight ?? 0;
+  }
+  watch([rows, cols], () => {
+    cursorR.value = Math.min(cursorR.value, Math.max(0, rows.value - 1));
+    cursorC.value = Math.min(cursorC.value, Math.max(0, cols.value - 1));
+  });
   const coinsPerLine = ref(0); // Coins earned per completed row/column
 
   // Computed values that combine user preferences with unlock state
@@ -1381,33 +1404,9 @@
                 <span class="text-xs sm:text-sm text-neutral-400">Coins:</span>
                 <span class="text-base sm:text-lg font-bold text-amber-400">🪙 {{ items.coins.value }}<span v-if="items.archipelagoMode.value && !items.unlimitedCoins.value" class="text-[11px] font-normal text-amber-400/60"> / {{ items.coinCap.value }}</span></span>
                 <span v-if="items.unlimitedCoins.value" class="text-xs text-neutral-500">(∞)</span>
-                <!-- Mobile fill/X toggle -->
-                <div v-if="isMobile" class="ml-2 flex items-center gap-1">
-                  <span class="text-xs text-neutral-400">Mode:</span>
-                  <button
-                    :class="[
-                      'px-2 py-1 rounded-l border border-neutral-700',
-                      mobileCellMode === 'fill' ? 'bg-lime-600 text-white' : 'bg-neutral-800 text-neutral-300',
-                    ]"
-                    @click="mobileCellMode = 'fill'"
-                    aria-label="Fill mode"
-                  >
-                    ■
-                  </button>
-                  <button
-                    :class="[
-                      'px-2 py-1 rounded-r border border-l-0 border-neutral-700',
-                      mobileCellMode === 'x' ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300',
-                    ]"
-                    @click="mobileCellMode = 'x'"
-                    aria-label="X mode"
-                  >
-                    ✕
-                  </button>
-                </div>
               </div>
               <!-- Power-ups: click an icon to use it directly -->
-              <div class="flex items-center gap-1 sm:gap-2">
+              <div class="hidden lg:flex items-center gap-1 sm:gap-2">
                 <span class="text-xs sm:text-sm text-neutral-400">Power-ups:</span>
                 <button
                   class="flex items-center gap-1 px-2 py-1 rounded text-base sm:text-lg transition-colors"
@@ -1538,6 +1537,9 @@
                   :is-row-hint-revealed="items.isRowHintRevealed"
                   :is-col-hint-revealed="items.isColHintRevealed"
                   :mobile-cell-mode="mobileCellMode"
+                  :cursor-row="isMobile ? cursorR : -1"
+                  :cursor-col="isMobile ? cursorC : -1"
+                  :reserved-bottom="controlsReserve"
                   :disabled="gameOver && !solved"
                   @cell="handleCellChange"
                 />
@@ -1613,6 +1615,45 @@
                     <span class="text-amber-400">[{{ rowClueNumbers[r]?.join(', ') || '?' }}]</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+          <!-- Mobile touch controls: directional pad + mode + power-up (below the grid) -->
+          <div ref="controlsEl" class="lg:hidden mt-2 flex items-center justify-center gap-5 select-none">
+            <!-- Directional pad: arrows move the cursor, center applies the current mode -->
+            <div class="grid grid-cols-3 grid-rows-3 gap-1" style="width: 150px; height: 150px">
+              <span></span>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(-1, 0)" aria-label="Move up">&#9650;</button>
+              <span></span>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, -1)" aria-label="Move left">&#9664;</button>
+              <button
+                type="button"
+                class="flex items-center justify-center rounded text-white text-xl font-bold transition active:scale-95"
+                :class="mobileCellMode === 'fill' ? 'bg-lime-600' : 'bg-red-600'"
+                @click="applyCursor()"
+                :aria-label="mobileCellMode === 'fill' ? 'Fill selected cell' : 'Cross selected cell'"
+              >
+                <span v-if="mobileCellMode === 'fill'">&#9632;</span><span v-else>&#10005;</span>
+              </button>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, 1)" aria-label="Move right">&#9654;</button>
+              <span></span>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(1, 0)" aria-label="Move down">&#9660;</button>
+              <span></span>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs text-neutral-400">Mode</span>
+                <div class="flex items-center">
+                  <button type="button" class="px-3 py-2 rounded-l border border-neutral-700 text-lg" :class="mobileCellMode === 'fill' ? 'bg-lime-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'fill'" aria-label="Fill mode">&#9632;</button>
+                  <button type="button" class="px-3 py-2 rounded-r border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'x' ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'x'" aria-label="X mode">&#10005;</button>
+                </div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-xs text-neutral-400">Power-up</span>
+                <button type="button" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-base transition-colors" :class="items.randomCellSolves.value > 0 ? 'bg-cyan-500/20 text-cyan-300 active:bg-cyan-500/30' : 'bg-neutral-700/30 text-neutral-500'" :disabled="items.randomCellSolves.value <= 0" @click="useRandomCellSolve()" aria-label="Use a random cell solve">
+                  <span>&#128302;</span>
+                  <span class="text-sm font-bold">{{ items.randomCellSolves.value }}</span>
+                </button>
               </div>
             </div>
           </div>
