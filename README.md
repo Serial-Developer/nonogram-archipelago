@@ -83,7 +83,8 @@ All options are set in your YAML. Defaults are shown below; generate the templat
 | `starting_coins` | 0-50 | 5 | Coins you start with |
 | `starting_hints` | 0-5 | 1 | Hints revealed per puzzle |
 | `starting_wallet_level` | 0-4 | 0 | Starting coin cap (0=49 ... 4=9999) |
-| `coins_per_bundle` | 1-50 | 50 | Coins per Coin Bundle item |
+| `coins_per_bundle` | low / normal / high / custom | normal | Coins per Coin Bundle (low=5, normal=50, high=100) |
+| `coins_per_bundle_custom` | 0-999 | 50 | Coins per bundle when `coins_per_bundle` is custom |
 | `extra_lives_in_pool` | 0-10 | 5 | Extra Life items in the pool |
 | `wallets_in_pool` | 0-4 | 0 | Wallet upgrades placed in the multiworld (shop slots become checks) |
 | `hearts_in_pool` | 0-10 | 0 | Heart containers placed in the shop as checks |

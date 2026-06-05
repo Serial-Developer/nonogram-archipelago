@@ -186,11 +186,16 @@ class NonogramWorld(World):
     def fill_slot_data(self) -> Dict[str, Any]:
         """Return slot data to be sent to the client."""
         unlimited_lives = bool(self.options.unlimited_lives.value)
+        coins_per_bundle_map = {"low": 5, "normal": 50, "high": 100}
+        coins_per_bundle = coins_per_bundle_map.get(
+            self.options.coins_per_bundle.current_key,
+            self.options.coins_per_bundle_custom.value,
+        )
         return {
             "starting_lives": self.options.starting_lives.value,
             "starting_coins": self.options.starting_coins.value,
             "starting_hints": self.options.starting_hints.value,
-            "coins_per_bundle": self.options.coins_per_bundle.value,
+            "coins_per_bundle": coins_per_bundle,
             "goal_puzzles": sum(self.grid_counts.values()),
             "puzzles_5x5": self.grid_counts["5x5"],
             "puzzles_10x10": self.grid_counts["10x10"],

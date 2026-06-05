@@ -38,11 +38,22 @@ class StartingHints(Range):
     default = 1
 
 
-class CoinsPerBundle(Range):
-    """Number of coins received from each Coin Bundle item."""
+class CoinsPerBundle(Choice):
+    """Coins received from each Coin Bundle item.
+    low=5, normal=50 (default), high=100, custom=coins_per_bundle_custom."""
     display_name = "Coins Per Bundle"
-    range_start = 1
-    range_end = 50
+    option_low = 0
+    option_normal = 1
+    option_high = 2
+    option_custom = 3
+    default = 1
+
+
+class CoinsPerBundleCustom(Range):
+    """Coins received from each Coin Bundle item when coins_per_bundle is 'custom'."""
+    display_name = "Coins Per Bundle (custom)"
+    range_start = 0
+    range_end = 999
     default = 50
 
 
@@ -291,6 +302,7 @@ class NonogramOptions(PerGameCommonOptions):
     starting_coins: StartingCoins
     starting_hints: StartingHints
     coins_per_bundle: CoinsPerBundle
+    coins_per_bundle_custom: CoinsPerBundleCustom
     extra_lives_in_pool: ExtraLivesInPool
     grid_preset: GridPreset
     puzzles_5x5: Puzzles5x5

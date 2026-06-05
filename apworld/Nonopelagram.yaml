@@ -16,7 +16,8 @@ Nonopelagram:
   starting_wallet_level: 0     # 0-4 (coin cap tier)
 
   # Item pool
-  coins_per_bundle: 50         # 1-50, coins per Coin Bundle item
+  coins_per_bundle: normal     # low=5 / normal=50 / high=100 / custom
+  # coins_per_bundle_custom: 50  # coins per bundle when coins_per_bundle: custom
   extra_lives_in_pool: 5       # 0-10
   wallets_in_pool: 0           # 0-4  (each becomes a shop check)
   hearts_in_pool: 0            # 0-10 (each becomes a shop check)

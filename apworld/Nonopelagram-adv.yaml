@@ -100,16 +100,24 @@ Nonopelagram:
     random-range-0-5: 0 # random value between 0 and 5
 
   coins_per_bundle:
-    # Number of coins received from each Coin Bundle item.
+    # Coins received from each Coin Bundle item.
+    # low=5, normal=50 (default), high=100, custom=coins_per_bundle_custom.
+    low: 0
+    normal: 50
+    high: 0
+    custom: 0
+
+  coins_per_bundle_custom:
+    # Coins received from each Coin Bundle item when coins_per_bundle is 'custom'.
     #
     # You can define additional values between the minimum and maximum values.
-    # Minimum value is 1
-    # Maximum value is 50
+    # Minimum value is 0
+    # Maximum value is 999
     50: 50
     random: 0
     random-low: 0 # random value weighted towards lower values
     random-high: 0 # random value weighted towards higher values
-    random-range-1-50: 0 # random value between 1 and 50
+    random-range-0-999: 0 # random value between 0 and 999
 
   extra_lives_in_pool:
     # Number of Extra Life items in the item pool.
