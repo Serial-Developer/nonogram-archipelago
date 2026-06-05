@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue';
+  import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
   import type { Cell, Mark } from '~/utils/nonogram';
 
   const props = defineProps<{
@@ -46,12 +46,24 @@
   // Reactive window size for responsive sizing - consistent defaults for SSR
   const windowWidth = ref(520);
   const windowHeight = ref(800);
+  const rootEl = ref<HTMLElement | null>(null);
+  const measuredAvailH = ref(0);
 
   function updateWindowWidth() {
     if (typeof window !== 'undefined') {
       windowWidth.value = window.innerWidth;
       windowHeight.value = window.innerHeight;
+      measureAvail();
     }
+  }
+
+  // Measure the real space from the board's top edge to the viewport bottom. Because the board is
+  // top-aligned, this top is stable as the board resizes (no feedback loop), and it naturally
+  // accounts for all chrome above (burger bar + Lives/Coins status bar, even when it wraps).
+  function measureAvail() {
+    if (typeof window === 'undefined' || !rootEl.value) return;
+    const top = rootEl.value.getBoundingClientRect().top;
+    measuredAvailH.value = Math.max(0, window.innerHeight - top - 12);
   }
 
   // Add global event listeners
@@ -60,12 +72,16 @@
     document.addEventListener('pointerup', handleGlobalPointerUp);
     updateWindowWidth();
     window.addEventListener('resize', updateWindowWidth);
+    void nextTick(measureAvail);
   });
 
   onUnmounted(() => {
     document.removeEventListener('pointerup', handleGlobalPointerUp);
     window.removeEventListener('resize', updateWindowWidth);
   });
+
+  // Re-measure when the puzzle size changes (layout reflows).
+  watch([() => props.rows, () => props.cols], () => void nextTick(measureAvail));
 
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
@@ -75,11 +91,12 @@
   const CELL_FLOOR = 6;
   const cellSize = computed(() => {
     const count = Math.max(props.rows, props.cols);
-    const desktop = windowWidth.value >= 640;
+    const desktop = windowWidth.value >= 1024;
 
-    // Conservative available area (errs toward fitting; leaves room for chrome + status bar).
-    const availW = desktop ? Math.min(windowWidth.value - 48, 560) : windowWidth.value - 48;
-    const availH = windowHeight.value - (desktop ? 200 : 160);
+    // Width: safe small constant (no wrap risk). Height: measured from the board top to the
+    // viewport bottom, so the whole grid always fits with no scroll, whatever the grid size.
+    const availW = desktop ? 560 : windowWidth.value - 32;
+    const availH = measuredAvailH.value > 0 ? measuredAvailH.value : windowHeight.value - 180;
 
     // Width fit: account for the left row-clue gutter (max of its fixed-min and cell-scaled size).
     const byWidth = Math.min(
@@ -314,6 +331,7 @@
 
 <template>
   <div
+    ref="rootEl"
     class="select-none"
     :style="{
       '--cell': `${cellSize}px`,

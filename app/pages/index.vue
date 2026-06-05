@@ -1345,11 +1345,11 @@
     <div class="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
       <!-- Main content area (grid) - hidden on mobile when not on puzzle tab -->
       <div
-        class="flex-1 px-3 sm:px-6 py-2 sm:py-0 min-h-0 overflow-hidden lg:overflow-y-auto"
+        class="flex-1 px-1.5 sm:px-6 py-1 sm:py-0 min-h-0 overflow-hidden lg:overflow-y-auto"
         :class="{ 'hidden lg:block': activeMobileTab !== 'puzzle' }"
       >
         <!-- LEFT: board -->
-        <div class="glass-card p-3 animate-fade-in overflow-visible">
+        <div class="glass-card p-2 sm:p-3 animate-fade-in overflow-visible">
           <!-- Status bar: Lives, Coins-->
           <div class="flex flex-wrap items-center justify-between gap-2 mb-1 pb-1 border-b border-neutral-700/50">
             <div class="flex flex-wrap items-center gap-3 sm:gap-6">
@@ -1516,10 +1516,10 @@
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center sm:items-start sm:justify-start">
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 items-center justify-start sm:items-start sm:justify-start">
             <!-- Grid - with custom scrollbars on mobile -->
             <div class="shrink-0 lg:pr-0">
-              <ScrollableGrid max-width="calc(100vw - 80px)" max-height="calc(100dvh - 160px)">
+              <ScrollableGrid max-width="calc(100vw - 16px)" max-height="calc(100dvh - 56px)">
                 <NonogramBoard
                   v-if="isClientReady"
                   :rows="rows"
