@@ -933,6 +933,27 @@
   type RightTab = 'archipelago' | 'settings' | 'goals' | 'chat' | 'shop' | 'debug';
   const activeTab = ref<RightTab>('archipelago');
   const activeMobileTab = ref<MobileTab>('puzzle');
+
+  // Mobile navigation drawer (replaces the cramped horizontal tab bar).
+  const mobileMenuOpen = ref(false);
+  const mobileMenuItems = computed(() => {
+    const list: { key: MobileTab; label: string }[] = [
+      { key: 'puzzle', label: 'Puzzle' },
+      { key: 'archipelago', label: 'Archipelago' },
+      { key: 'shop', label: 'Shop' },
+    ];
+    if (items.archipelagoMode.value) list.push({ key: 'goals', label: 'Checks' });
+    list.push({ key: 'chat', label: 'Game Log' });
+    list.push({ key: 'settings', label: 'Settings' });
+    return list;
+  });
+  const mobileTabLabel = computed(
+    () => mobileMenuItems.value.find((t) => t.key === activeMobileTab.value)?.label ?? 'Puzzle',
+  );
+  function selectMobileTab(key: MobileTab) {
+    activeMobileTab.value = key;
+    mobileMenuOpen.value = false;
+  }
   const activeLogTab = ref<'log' | 'debug'>('log');
   // Debug tab: visible when the host enabled debug_mode, or while offline (so the slot_data
   // simulator stays reachable before/without a connection).
@@ -1281,26 +1302,44 @@
   </div>
 
   <div v-show="!isLoading" class="h-screen bg-neutral-950 text-neutral-100 flex flex-col overflow-hidden">
-    <!-- Mobile Tab Bar (visible only on mobile) -->
-    <div class="lg:hidden flex border-b border-neutral-700/50 bg-neutral-900/95 shrink-0 overflow-x-auto">
-      <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'puzzle' }" @click="activeMobileTab = 'puzzle'">
-        <span class="text-xs">🧩</span>
+    <!-- Mobile top bar with burger menu (mobile only) -->
+    <div class="lg:hidden flex items-center gap-2 border-b border-neutral-700/50 bg-neutral-900/95 shrink-0 px-3 py-2">
+      <button
+        type="button"
+        class="p-1.5 -ml-1 rounded hover:bg-neutral-800 text-neutral-200 transition-colors"
+        aria-label="Open menu"
+        @click="mobileMenuOpen = true"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
       </button>
-      <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'archipelago' }" @click="activeMobileTab = 'archipelago'">
-        <span class="text-xs">🏝️</span>
-      </button>
-      <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'settings' }" @click="activeMobileTab = 'settings'">
-        <span class="text-xs">⚙️</span>
-      </button>
-      <button v-if="items.archipelagoMode.value" class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'goals' }" @click="activeMobileTab = 'goals'">
-        <span class="text-xs">📋</span>
-      </button>
-      <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'chat' }" @click="activeMobileTab = 'chat'">
-        <span class="text-xs">💬</span>
-      </button>
-      <button class="tab-button flex-1 min-w-0 px-2" :class="{ active: activeMobileTab === 'shop' }" @click="activeMobileTab = 'shop'">
-        <span class="text-xs">🛒</span>
-      </button>
+      <span class="text-sm font-semibold text-neutral-100">{{ mobileTabLabel }}</span>
+    </div>
+
+    <!-- Mobile navigation drawer -->
+    <div v-if="mobileMenuOpen" class="lg:hidden fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/60" @click="mobileMenuOpen = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-64 max-w-[80%] bg-neutral-900 border-r border-neutral-700/50 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-700/50 shrink-0">
+          <span class="text-sm font-semibold text-neutral-100">Menu</span>
+          <button type="button" class="p-1 text-neutral-400 hover:text-white" aria-label="Close menu" @click="mobileMenuOpen = false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" /></svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto py-1">
+          <button
+            v-for="t in mobileMenuItems"
+            :key="t.key"
+            type="button"
+            class="w-full flex items-center px-4 py-3 text-left text-sm transition-colors"
+            :class="activeMobileTab === t.key ? 'bg-neutral-800 text-white font-medium border-l-2 border-lime-400' : 'text-neutral-300 hover:bg-neutral-800/60 border-l-2 border-transparent'"
+            @click="selectMobileTab(t.key)"
+          >
+            {{ t.label }}
+          </button>
+        </div>
+      </nav>
     </div>
 
     <div class="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">

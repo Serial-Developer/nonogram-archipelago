@@ -70,37 +70,31 @@
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
 
-  // Cell size floor: below this we stop shrinking and let the grid scroll (clues stay pinned).
-  const MIN_CELL_SIZE = 24;
-
-  // Compute the largest cell size that keeps the WHOLE grid (cells + clues) within the visible
-  // area, on both axes. Priority is "fit everything"; we only fall back to scrolling once cells
-  // would drop below MIN_CELL_SIZE.
+  // No hard floor: the board always fits the viewport. Cells shrink as needed so the whole grid
+  // (cells + clues, both axes) stays visible without scrolling, whatever the grid size.
+  const CELL_FLOOR = 6;
   const cellSize = computed(() => {
     const count = Math.max(props.rows, props.cols);
+    const desktop = windowWidth.value >= 640;
 
-    // Height budget: keep cells + the top clue header inside the scroll area, matching
-    // ScrollableGrid's max-height (~100dvh - 160px). This stops the top clues from being
-    // silently scrolled out of view. Total height ≈ rows*cell + colDepth*(cell*0.5).
-    const availH = windowHeight.value - 168;
-    const byHeight = Math.floor(availH / (props.rows + 0.5 * colDepth.value));
+    // Conservative available area (errs toward fitting; leaves room for chrome + status bar).
+    const availW = desktop ? Math.min(windowWidth.value - 48, 560) : windowWidth.value - 48;
+    const availH = windowHeight.value - (desktop ? 200 : 160);
 
-    let byWidth: number;
-    let cap: number;
-    if (windowWidth.value >= 640) {
-      // Desktop: board capped around 520px wide.
-      byWidth = Math.floor(520 / count);
-      cap = 45;
-    } else {
-      // Mobile: fit width minus the left row-clues and padding.
-      const rowClueWidth = rowDepth.value * 12;
-      const availableWidth = windowWidth.value - 48 - rowClueWidth - 16;
-      byWidth = Math.floor(availableWidth / props.cols);
-      cap = count <= 10 ? 42 : 32;
-    }
+    // Width fit: account for the left row-clue gutter (max of its fixed-min and cell-scaled size).
+    const byWidth = Math.min(
+      availW / (props.cols + 0.6 * rowDepth.value),
+      (availW - 16 * rowDepth.value) / props.cols,
+    );
+    // Height fit: account for the top col-clue header.
+    const byHeight = Math.min(
+      availH / (props.rows + 0.5 * colDepth.value),
+      (availH - 14 * colDepth.value) / props.rows,
+    );
 
-    const ideal = Math.min(byWidth, byHeight, cap);
-    return Math.max(MIN_CELL_SIZE, ideal);
+    const cap = desktop ? 45 : count <= 10 ? 42 : 34;
+    const ideal = Math.floor(Math.min(byWidth, byHeight, cap));
+    return Math.max(CELL_FLOOR, ideal);
   });
 
   const groupSize = 5;
