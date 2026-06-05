@@ -2,43 +2,43 @@
 
 A web-based Nonogram (Picross) puzzle game with [Archipelago](https://archipelago.gg/) multiworld randomizer integration.
 
-## Playable online at:
-https://stefanducharme.github.io/nonogram-archipelago/
+This project is a fork and continuation of the original [Nonogram Archipelago](https://github.com/StefanDucharme/nonogram-archipelago) by **Stefan Ducharme**, expanded into a full, economy-driven multiworld experience.
+
+## Playable online
+
+- This build (once GitHub Pages is enabled -- see [Hosting](#hosting-on-github-pages)): https://serial-developer.github.io/nonogram-archipelago/
+- Original by Stefan Ducharme: https://stefanducharme.github.io/nonogram-archipelago/
 
 ## Features
 
-- **Nonogram Puzzles**: Classic logic puzzle gameplay
-- **Archipelago Integration**: Connect to Archipelago multiworld servers to receive items and send checks
-- **Progressive Unlocks**: Start with limited Hint Visibility
-- **Resource System**: Manage lives and coins as you solve puzzles
-- **Difficulty Progression**: Start at 5x5 grids and unlock larger puzzles
-- **Shop System**: Spend coins on temporary hints and other powerups
+- **Nonogram puzzles** -- classic logic puzzles across four grid sizes (5x5 to 20x20).
+- **Archipelago integration** -- fully YAML / slot_data driven; receive items and send location checks.
+- **Difficulty progression** -- unlock larger grids, optionally gated by tier completion or coin cost.
+- **Lives system** -- per-puzzle lives, life-restore-on-clear, an optional unlimited-lives mode, and a shop heal.
+- **Hearts** -- optional Zelda-style heart containers (quarter-heart purchases), up to 10 hearts.
+- **Coin economy & wallet** -- earn coins, upgrade your wallet (coin cap), and spend in the shop.
+- **Multiworld shop checks** -- pooled wallet upgrades and heart containers become location checks that display the scouted item.
+- **Flawless tracking** -- no-mistake clears send checks, with an on-screen win-streak indicator.
+- **Death Link** -- off / on (lose all lives) / damage (lose a single heart).
+- **Server-synced economy** -- coins, lives, hearts, wallet level and streaks persist on the Archipelago server; they survive reconnects and follow you across devices.
+- **Configurable goal** -- clear a chosen number of puzzles per grid size.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [Node.js](https://nodejs.org/) (v20 or higher recommended)
 - npm (comes with Node.js)
-- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) (only required to generate or host a game)
+- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) 0.6.7 or newer (only needed to generate or host a game)
 
-## Getting Started
+## Getting started (web client)
 
 ### 1. Get the code
 
-**Option A: Clone with Git**
 ```bash
-git clone https://github.com/StefanDucharme/nonogram-archipelago.git
-cd nonogram-archipelago/nuxt-nonogram
+git clone https://github.com/Serial-Developer/nonogram-archipelago.git
+cd nonogram-archipelago
 ```
 
-**Option B: Download without Git**
-1. Go to the GitHub repository page
-2. Click the green **Code** button
-3. Select **Download ZIP**
-4. Extract the ZIP file to a folder on your computer
-5. Open a terminal/command prompt and navigate to the `nuxt-nonogram` folder:
-   ```bash
-   cd path/to/nonogram-archipelago/nuxt-nonogram
-   ```
+(Or download the ZIP from the GitHub page and extract it.)
 
 ### 2. Install dependencies
 
@@ -52,177 +52,184 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`
+The app is available at http://localhost:3000.
 
+## Archipelago setup & local testing
 
-## Archipelago Local Testing & Setup
+### 1. Build the APWorld
 
-### 1. Build the APWorld file
-
-Open a terminal and run:
-
-```powershell
-cd E:\repo\personal\nonogram-archipelago\apworld
+```bash
+cd apworld
 python build_apworld.py
 ```
 
-This creates `nonogram.apworld` in the `apworld` folder.
+This creates `nonopelagram.apworld` in the `apworld` folder.
 
-### 2. Install the APWorld in Archipelago
+### 2. Install the APWorld
 
-1. Open `ArchipelagoLauncher.exe`
-2. Click **"Install APWorld"**
-3. Select the `nonogram.apworld` file you just built
-4. Restart the Launcher if prompted
+1. Open `ArchipelagoLauncher.exe`.
+2. Click **Install APWorld** and select `nonopelagram.apworld`.
+3. Restart the Launcher if prompted.
 
-### 3. Create a Test YAML
+### 3. Create a YAML
 
-Copy the example YAML to the Archipelago `Players` folder:
+The quickest way to a valid YAML is the Launcher's **Generate Template Options** (it writes a fully commented template to `Players/Templates/Nonopelagram.yaml`), or the in-Launcher **Options Creator**. Example YAMLs are also provided in `apworld/` (`Nonopelagram.yaml`, `Nonopelagram-adv.yaml`).
 
-```powershell
-copy apworld\Nonogram.yaml <ARCHIPELAGO_PATH>\Players\
-```
-
-Or create `Players/Nonogram.yaml` with:
+A minimal player YAML:
 
 ```yaml
 name: TestPlayer
 game: Nonopelagram
+requires:
+  version: 0.6.7
 Nonopelagram:
+  grid_preset: normal
   starting_lives: 3
   starting_coins: 5
-  starting_hints: 1
-  coins_per_bundle: 5
-  extra_lives_in_pool: 5
-  hint_reveals_in_pool: 10
-  coin_bundles_in_pool: 15
-  cell_solves_in_pool: 3
-  goal_puzzles: 16
-  death_link: false
+  flawless_checks: true
+  death_link: "off"
 ```
 
-### 4. Generate a Game
+Place it in your Archipelago `Players/` folder.
 
-1. In the Archipelago Launcher, click **"Generate"**
-2. It will use YAML files from your Players folder
-3. The generated `.archipelago` file appears in the `output/` folder
+### 4. Generate & host
 
-### 5. Start the Server
+1. In the Launcher, click **Generate** (it uses the YAMLs in `Players/`).
+2. **Host** the generated `.archipelago` file from `output/`.
 
-**Using the Launcher:**
-1. Open `ArchipelagoLauncher.exe`
-2. Click "Host"
-3. Select your generated `.archipelago` file from `output/`
+### 5. Connect
 
+Open the client (http://localhost:3000 in dev, or your hosted URL), open the **Archipelago** tab, and enter Host / Port / Slot (your YAML `name`) / Password.
 
+## Game options
 
-The server will display:
-```
-Server running on port 38281
-```
+All options are set in your YAML. Defaults are shown below; generate the template (**Generate Template Options**) for the authoritative, fully commented list.
 
-### 6. Start the Nonopelagram Client
+### Start & item pool
 
-In a new terminal:
+| Option | Values | Default | Description |
+|---|---|---|---|
+| `starting_lives` | 1-10 | 3 | Lives per puzzle |
+| `starting_coins` | 0-50 | 5 | Coins you start with |
+| `starting_hints` | 0-5 | 1 | Hints revealed per puzzle |
+| `starting_wallet_level` | 0-4 | 0 | Starting coin cap (0=49 ... 4=9999) |
+| `coins_per_bundle` | 1-20 | 5 | Coins per Coin Bundle item |
+| `extra_lives_in_pool` | 0-10 | 5 | Extra Life items in the pool |
+| `hint_reveals_in_pool` | 0-20 | 10 | Hint Reveal items in the pool |
+| `coin_bundles_in_pool` | 0-30 | 15 | Coin Bundle items in the pool |
+| `cell_solves_in_pool` | 0-10 | 3 | Random Cell Solve items in the pool |
+| `wallets_in_pool` | 0-4 | 0 | Wallet upgrades placed in the multiworld (shop slots become checks) |
+| `hearts_in_pool` | 0-10 | 0 | Heart containers placed in the shop as checks |
 
-```powershell
-cd E:\repo\personal\nonogram-archipelago
-npm run dev
-```
+### Grid & goal
 
-Open http://localhost:3000 in your browser.
+| Option | Values | Default | Description |
+|---|---|---|---|
+| `grid_preset` | easy / normal / hard / evil / expedition_33 / custom | normal | Puzzle counts per size (goal = their sum) |
+| `puzzles_5x5` | 0-100 | 10 | 5x5 puzzles (custom preset only) |
+| `puzzles_10x10` | 0-100 | 10 | 10x10 puzzles (custom preset only) |
+| `puzzles_15x15` | 0-100 | 10 | 15x15 puzzles (custom preset only) |
+| `puzzles_20x20` | 0-100 | 10 | 20x20 puzzles (custom preset only) |
+| `require_tier_completion` | true/false | true | Must clear a size before buying the next |
+| `difficulty_cost` | free / low / normal / high / progressive | low | Coin cost to raise difficulty |
 
-### 7. Connect
+### Lives & hearts
 
-1. Click on the **Archipelago** tab in the right panel
-2. Enter connection details:
-   - **Host**: `localhost`
-   - **Port**: `38281`
-   - **Slot**: `TestPlayer` (must match your YAML `name` field)
-   - **Password**: (leave empty unless you set one)
-3. Click **Connect**
+| Option | Values | Default | Description |
+|---|---|---|---|
+| `unlimited_lives` | true/false | false | Play without losing lives on mistakes |
+| `show_mistakes` | true/false | true | Highlight wrong cells (forced on when using lives) |
+| `life_restore_on_clear` | none / one / full / custom | full | Lives restored after a clear |
+| `life_restore_custom` | 0-20 | 3 | Lives restored when set to custom |
+| `shop_healing` | true/false | false | Offer a heal purchase |
+| `healing_cost` | free / low / normal / high / progressive / custom | normal | Cost of one heal |
+| `healing_cost_custom` | 0-9999 | 30 | Flat heal cost when set to custom |
+| `zelda_heart_mode` | true/false | false | Buy quarter-hearts (4 = +1 max heart) |
+| `shop_hearts` | true/false | false | Offer heart-container purchases |
+| `heart_cost` | free / low / normal / high / progressive / custom | normal | Cost per heart purchase |
+| `heart_cost_custom` | 0-9999 | 100 | Flat heart cost when set to custom |
 
-### Game Options
+### Misc
 
-| Option                | Range   | Default | Description                        |
-|-----------------------|---------|---------|------------------------------------|
-| `starting_lives`      | 1-10    | 3       | Lives per puzzle                   |
-| `starting_coins`      | 0-50    | 5       | Starting coins                     |
-| `starting_hints`      | 0-5     | 1       | Hints revealed per puzzle          |
-| `coins_per_bundle`    | 1-50    | 5       | Coins per Coin Bundle item         |
-| `extra_lives_in_pool` | 0-50    | 5       | Extra Life items in pool           |
-| `hint_reveals_in_pool`| 0-50    | 10      | Hint Reveal items in pool          |
-| `coin_bundles_in_pool`| 0-50    | 15      | Coin Bundle items in pool          |
-| `cell_solves_in_pool` | 0-50    | 3       | Cell Solve items in pool           |
-| `goal_puzzles`        | 1-100   | 16      | Puzzles required to win            |
-| `death_link`          | true/false | false | Share deaths with other players    |
+| Option | Values | Default | Description |
+|---|---|---|---|
+| `death_link` | off / on / damage | off | on = lose all lives; damage = lose a single heart |
+| `auto_x` | true/false | true | Auto-X the rest of a completed line |
+| `grey_completed_hints` | true/false | true | Grey out satisfied hint numbers |
+| `flawless_checks` | true/false | true | Send checks for no-mistake clears |
+| `debug_mode` | true/false | false | Show the in-client Debug tab |
 
-## Usage
+Standard Archipelago options (`progression_balancing`, `accessibility`, item/location plando, etc.) are also supported.
 
-### Free Play Mode
-By default, the game runs in Free Play mode with all features unlocked. You can adjust puzzle size, generate new puzzles, and play without any restrictions.
+## Items you can receive
 
-### Archipelago Mode
-1. Click the **Archipelago** tab in the right panel
-2. Enter your server details:
-   - **Host**: The Archipelago server address (e.g., `archipelago.gg` or `localhost`)
-   - **Port**: Server port (default: `38281`)
-   - **Player Name**: Your slot name from the multiworld
-   - **Password**: Room password (if required)
-3. Click **Connect**
+- **Hint Reveal** -- reveal another row/column hint
+- **Extra Life** -- increase your lives
+- **Coin Bundle** -- coins for the shop
+- **Random Cell Solve** -- auto-solve one cell
+- **Wallet Upgrade** -- raise your coin cap (when seeded in the pool)
+- **Heart Container** -- raise your max hearts (when seeded in the pool)
 
-In Archipelago Mode:
-- Features are locked until you receive them from other players
-- Complete puzzles to send checks to the multiworld
-- Resource settings come from your YAML configuration
-- Receive items from other players in your multiworld
+## Controls
 
-### Items You Can Receive
-- **Hint Reveal** - See more row/column hints
-- **Extra Life** - Increase max lives
-- **Coin Bundle** - Get coins for the shop
-- **Random Cell Solve** - Auto-solve one cell
+- **Left click**: fill a cell
+- **Right click**: mark a cell with X
+- **Shift + click** / **click again**: erase a cell
 
-### Controls
-- **Left Click**: Fill a cell
-- **Right Click**: Mark a cell with X
-- **Shift + Click** or **Click again**: Erase a cell
+## Hosting on GitHub Pages
+
+The client is a static (SPA) Nuxt build and ships with a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds and deploys it to GitHub Pages on every push to `master`.
+
+To enable it on your fork:
+
+1. **Actions** tab -> enable workflows (forks have Actions disabled by default).
+2. **Settings -> Pages -> Build and deployment -> Source: GitHub Actions**.
+3. **Actions** tab -> **Deploy to GitHub Pages** -> **Run workflow** (or just push to `master`).
+
+Your site will then be live at `https://<your-account>.github.io/nonogram-archipelago/`. The base path is provided by the `NUXT_APP_BASE_URL` env var in the workflow (defaults to `/nonogram-archipelago/`, matching the repo name).
+
+## Usage modes
+
+- **Free play** -- all features unlocked; pick any size and play with no restrictions.
+- **Archipelago** -- features and difficulty come from your YAML; complete puzzles to send checks and receive items from the multiworld. Your economy is saved on the server and restored on reconnect.
 
 ## Development
 
-### Tech Stack
-- [Nuxt 4](https://nuxt.com/) - Vue.js framework
-- [Vue 3](https://vuejs.org/) - Frontend framework
-- [Tailwind CSS 4](https://tailwindcss.com/) - Styling
-- [archipelago.js](https://github.com/ThePhar/archipelago.js) - Archipelago client library
+### Tech stack
 
-### Project Structure
+- [Nuxt 4](https://nuxt.com/) + [Vue 3](https://vuejs.org/)
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [archipelago.js](https://github.com/ThePhar/archipelago.js)
+
+### Project structure
+
 ```
 nonogram-archipelago/
-├── app/                    # Nuxt application
-│   ├── components/         # Vue components
-│   ├── composables/        # Vue composables (game logic, AP integration)
-│   ├── pages/              # Page components
-│   └── plugins/            # Nuxt plugins (AP client setup)
-├── apworld/                # Archipelago world files
-│   ├── nonogram/           # Python world implementation
-│   ├── build_apworld.py    # APWorld packaging script
-│   └── Nonogram.yaml       # Example player YAML
-└── README.md               # This file
+  app/                    # Nuxt web client
+    components/           # Vue components (NonogramBoard, ThemePicker, ...)
+    composables/          # game logic + Archipelago integration
+    pages/                # page components
+  apworld/                # Archipelago world (Python)
+    nonopelagram/         # world: Options, Items, Locations, Regions, __init__
+    build_apworld.py      # APWorld packaging script
+    Nonopelagram.yaml     # example player YAML
+  .github/workflows/      # GitHub Pages deploy workflow
+  CHANGELOG.md
+  README.md
 ```
 
 ### Scripts
 
 ```bash
-# Start development server
-npm run dev
-
-# To generate static site for hosting
-npm run generate
-
-# Build APWorld
-cd apworld && python build_apworld.py
+npm run dev        # start the dev server
+npm run generate   # build the static site (for hosting)
+cd apworld && python build_apworld.py   # build the APWorld
 ```
+
+## Credits
+
+- Original **Nonogram** game & Archipelago integration: **Stefan Ducharme**
+- Fork additions (economy, hearts, wallets, flawless, multiworld shop checks, server sync, Death Link modes, UX): see the commit history and [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## License
 
