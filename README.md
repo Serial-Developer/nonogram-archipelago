@@ -4,10 +4,11 @@ A web-based Nonogram (Picross) puzzle game with [Archipelago](https://archipelag
 
 This project is a fork and continuation of the original [Nonogram Archipelago](https://github.com/StefanDucharme/nonogram-archipelago) by **Stefan Ducharme**, expanded into a full, economy-driven multiworld experience.
 
-## Playable online
+## Play online
 
-- This build (once GitHub Pages is enabled -- see [Hosting](#hosting-on-github-pages)): https://serial-developer.github.io/nonogram-archipelago/
-- Original by Stefan Ducharme: https://stefanducharme.github.io/nonogram-archipelago/
+**[Play Nonopelagram in your browser](https://serial-developer.github.io/nonogram-archipelago/)** -- no install needed.
+
+(Original by Stefan Ducharme: https://stefanducharme.github.io/nonogram-archipelago/)
 
 ## Features
 
@@ -23,57 +24,21 @@ This project is a fork and continuation of the original [Nonogram Archipelago](h
 - **Server-synced economy** -- coins, lives, hearts, wallet level and streaks persist on the Archipelago server; they survive reconnects and follow you across devices.
 - **Configurable goal** -- clear a chosen number of puzzles per grid size.
 
-## Prerequisites
+## Setting up an Archipelago game
 
-- [Node.js](https://nodejs.org/) (v20 or higher recommended)
-- npm (comes with Node.js)
-- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) 0.6.7 or newer (only needed to generate or host a game)
+You only need this section to **generate or host** a multiworld. To play in an existing room, jump straight to [Connect](#4-connect) and use the [online client](https://serial-developer.github.io/nonogram-archipelago/).
 
-## Getting started (web client)
+**Requirement:** [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) 0.6.7 or newer.
 
-### 1. Get the code
+### 1. Install the APWorld
 
-```bash
-git clone https://github.com/Serial-Developer/nonogram-archipelago.git
-cd nonogram-archipelago
-```
-
-(Or download the ZIP from the GitHub page and extract it.)
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Start the development server
-
-```bash
-npm run dev
-```
-
-The app is available at http://localhost:3000.
-
-## Archipelago setup & local testing
-
-### 1. Build the APWorld
-
-```bash
-cd apworld
-python build_apworld.py
-```
-
-This creates `nonopelagram.apworld` in the `apworld` folder.
-
-### 2. Install the APWorld
-
-1. Open `ArchipelagoLauncher.exe`.
-2. Click **Install APWorld** and select `nonopelagram.apworld`.
+1. Download `nonopelagram.apworld` from the [latest release](https://github.com/Serial-Developer/nonogram-archipelago/releases) (or build it from source -- see [Local development](#local-development)).
+2. Open `ArchipelagoLauncher.exe`, click **Install APWorld**, and select the file.
 3. Restart the Launcher if prompted.
 
-### 3. Create a YAML
+### 2. Create a YAML
 
-The quickest way to a valid YAML is the Launcher's **Generate Template Options** (it writes a fully commented template to `Players/Templates/Nonopelagram.yaml`), or the in-Launcher **Options Creator**. Example YAMLs are also provided in `apworld/` (`Nonopelagram.yaml`, `Nonopelagram-adv.yaml`).
+Use the Launcher's **Generate Template Options** (it writes a fully commented `Players/Templates/Nonopelagram.yaml`) or the in-Launcher **Options Creator**. Example YAMLs are also in `apworld/` (`Nonopelagram.yaml`, `Nonopelagram-adv.yaml`).
 
 A minimal player YAML:
 
@@ -90,16 +55,21 @@ Nonopelagram:
   death_link: "off"
 ```
 
-Place it in your Archipelago `Players/` folder.
+Place your YAML in the Archipelago `Players/` folder.
 
-### 4. Generate & host
+### 3. Generate & host
 
 1. In the Launcher, click **Generate** (it uses the YAMLs in `Players/`).
 2. **Host** the generated `.archipelago` file from `output/`.
 
-### 5. Connect
+### 4. Connect
 
-Open the client (http://localhost:3000 in dev, or your hosted URL), open the **Archipelago** tab, and enter Host / Port / Slot (your YAML `name`) / Password.
+Open the **[online client](https://serial-developer.github.io/nonogram-archipelago/)**, go to the **Archipelago** tab, and enter:
+
+- **Host** -- e.g. `archipelago.gg` or `localhost`
+- **Port** -- your room's port
+- **Slot** -- your YAML `name`
+- **Password** -- if the room has one
 
 ## Game options
 
@@ -176,7 +146,12 @@ Standard Archipelago options (`progression_balancing`, `accessibility`, item/loc
 - **Right click**: mark a cell with X
 - **Shift + click** / **click again**: erase a cell
 
-## Hosting on GitHub Pages
+## Usage modes
+
+- **Free play** -- all features unlocked; pick any size and play with no restrictions.
+- **Archipelago** -- features and difficulty come from your YAML; complete puzzles to send checks and receive items from the multiworld. Your economy is saved on the server and restored on reconnect.
+
+## Hosting your own copy (GitHub Pages)
 
 The client is a static (SPA) Nuxt build and ships with a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds and deploys it to GitHub Pages on every push to `master`.
 
@@ -188,12 +163,31 @@ To enable it on your fork:
 
 Your site will then be live at `https://<your-account>.github.io/nonogram-archipelago/`. The base path is provided by the `NUXT_APP_BASE_URL` env var in the workflow (defaults to `/nonogram-archipelago/`, matching the repo name).
 
-## Usage modes
+## Local development
 
-- **Free play** -- all features unlocked; pick any size and play with no restrictions.
-- **Archipelago** -- features and difficulty come from your YAML; complete puzzles to send checks and receive items from the multiworld. Your economy is saved on the server and restored on reconnect.
+Only needed to work on the client or build the APWorld from source -- **playing does not require any of this** (use the [online client](https://serial-developer.github.io/nonogram-archipelago/)).
 
-## Development
+**Prerequisites:** [Node.js](https://nodejs.org/) v20+ and npm. ([Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases) 0.6.7+ is only needed to generate or host games.)
+
+### Run the client locally
+
+```bash
+git clone https://github.com/Serial-Developer/nonogram-archipelago.git
+cd nonogram-archipelago
+npm install
+npm run dev
+```
+
+The dev server runs at http://localhost:3000.
+
+### Build the APWorld from source
+
+```bash
+cd apworld
+python build_apworld.py
+```
+
+This creates `nonopelagram.apworld` in the `apworld` folder.
 
 ### Tech stack
 
