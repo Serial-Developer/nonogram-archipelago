@@ -124,32 +124,31 @@ class NonogramWorld(World):
         """Create all items for the item pool."""
         item_count = 0
 
-        # Create progression items (one of each unlock)
-        for item_name, item_data in item_table.items():
-            if item_data.code is not None:
-                # For stackable items, create multiple based on options
-                if item_name == "Extra Life":
-                    count = self.options.extra_lives_in_pool.value
-                elif item_name == "Hint Reveal":
-                    count = self.options.hint_reveals_in_pool.value
-                elif item_name == "Coin Bundle":
-                    count = self.options.coin_bundles_in_pool.value
-                elif item_name == "Random Cell Solve":
-                    count = self.options.cell_solves_in_pool.value
-                elif item_name == "Wallet Upgrade":
-                    count = self.options.wallets_in_pool.value
-                elif item_name == "Heart Container":
-                    count = (
-                        self.options.hearts_in_pool.value
-                        if self.options.shop_hearts.value and not self.options.unlimited_lives.value
-                        else 0
-                    )
-                else:
-                    count = 1
+        # Items distributed proportionally across non-wallet / non-heart checks.
+        # Ratio derived from the historical defaults (Hint 10 : Coin 15 : Cell 3).
+        RATIO_ITEMS = (("Hint Reveal", 10), ("Coin Bundle", 15), ("Random Cell Solve", 3))
+        ratio_names = {name for name, _ in RATIO_ITEMS}
 
-                for _ in range(count):
-                    self.multiworld.itempool.append(self.create_item(item_name))
-                    item_count += 1
+        # Create fixed-count items (everything except the ratio-distributed pool).
+        for item_name, item_data in item_table.items():
+            if item_data.code is None or item_name in ratio_names:
+                continue
+            if item_name == "Extra Life":
+                count = self.options.extra_lives_in_pool.value
+            elif item_name == "Wallet Upgrade":
+                count = self.options.wallets_in_pool.value
+            elif item_name == "Heart Container":
+                count = (
+                    self.options.hearts_in_pool.value
+                    if self.options.shop_hearts.value and not self.options.unlimited_lives.value
+                    else 0
+                )
+            else:
+                count = 1
+
+            for _ in range(count):
+                self.multiworld.itempool.append(self.create_item(item_name))
+                item_count += 1
 
         # Count real locations for this player (excluding events). Counted from the
         # created regions, because some locations are added conditionally (shop checks),
@@ -159,10 +158,22 @@ class NonogramWorld(World):
             if loc.address is not None
         ])
 
-        # Fill remaining locations with Coin Bundle (filler)
-        filler_count = location_count - item_count
-        for _ in range(filler_count):
-            self.multiworld.itempool.append(self.create_item("Coin Bundle"))
+        # Distribute the remaining locations across hint / coin / cell by fixed ratio.
+        # Wallet and heart checks are already matched by their own items above, so they
+        # are naturally excluded from this remainder.
+        remaining = max(0, location_count - item_count)
+        total_ratio = sum(weight for _, weight in RATIO_ITEMS)
+        pool_counts = {}
+        assigned = 0
+        for name, weight in RATIO_ITEMS:
+            n = remaining * weight // total_ratio
+            pool_counts[name] = n
+            assigned += n
+        # Any rounding remainder goes to Coin Bundle (largest share / general filler).
+        pool_counts["Coin Bundle"] += remaining - assigned
+        for name, n in pool_counts.items():
+            for _ in range(n):
+                self.multiworld.itempool.append(self.create_item(name))
 
     def set_rules(self) -> None:
         """Set access rules for locations."""

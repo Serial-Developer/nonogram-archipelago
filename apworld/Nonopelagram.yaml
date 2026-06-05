@@ -1,19 +1,30 @@
-# Example Nonopelagram Archipelago Player YAML
-name: NonopelagramP1          # Slot name (must match client)
-game: Nonopelagram                 # Do not change
+# Example Nonopelagram Archipelago player YAML.
+# For the full, commented option list, use the Launcher's "Generate Template Options".
+name: NonopelagramP1
+game: Nonopelagram
+requires:
+  version: 0.6.7
 
 Nonopelagram:
-  starting_lives: 3            # Number of lives at start
-  starting_coins: 5            # Coins at start
-  starting_hints: 1            # Hints at start
-  coins_per_bundle: 5          # Coins per Coin Bundle item
-  extra_lives_in_pool: 5       # Extra Life items in pool
-  hint_reveals_in_pool: 10     # Hint Reveal items in pool
-  coin_bundles_in_pool: 15     # Coin Bundle items in pool
-  cell_solves_in_pool: 3       # Cell Solve items in pool
-  goal_puzzles: 16             # Number of puzzles to complete to win
-  death_link: false            # Enable DeathLink (true/false)
-  # Optional advanced settings (uncomment to use):
-  # puzzle_difficulty: normal   # Options: easy, normal, hard
-  # allow_mistakes: true        # Allow mistakes (true/false)
-  # puzzle_seed: 123456         # Set a specific puzzle seed
+  # Grid sizes / goal
+  grid_preset: normal          # easy / normal / hard / evil / expedition_33 / custom
+
+  # Start
+  starting_lives: 3            # 1-10
+  starting_coins: 5            # 0-50
+  starting_hints: 1            # 0-5
+  starting_wallet_level: 0     # 0-4 (coin cap tier)
+
+  # Item pool
+  coins_per_bundle: 50         # 1-50, coins per Coin Bundle item
+  extra_lives_in_pool: 5       # 0-10
+  wallets_in_pool: 0           # 0-4  (each becomes a shop check)
+  hearts_in_pool: 0            # 0-10 (each becomes a shop check)
+  # Hint Reveal / Coin Bundle / Random Cell Solve fillers are distributed
+  # automatically across the remaining checks (fixed 10:15:3 ratio).
+
+  # Rules
+  require_tier_completion: true
+  difficulty_cost: low         # free / low / normal / high / progressive
+  flawless_checks: true
+  death_link: "off"            # off / on / damage

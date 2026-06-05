@@ -42,8 +42,8 @@ class CoinsPerBundle(Range):
     """Number of coins received from each Coin Bundle item."""
     display_name = "Coins Per Bundle"
     range_start = 1
-    range_end = 20
-    default = 5
+    range_end = 50
+    default = 50
 
 
 class ExtraLivesInPool(Range):
@@ -52,30 +52,6 @@ class ExtraLivesInPool(Range):
     range_start = 0
     range_end = 10
     default = 5
-
-
-class HintRevealsInPool(Range):
-    """Number of Hint Reveal items in the item pool."""
-    display_name = "Hint Reveals in Pool"
-    range_start = 0
-    range_end = 20
-    default = 10
-
-
-class CoinBundlesInPool(Range):
-    """Number of Coin Bundle items in the item pool."""
-    display_name = "Coin Bundles in Pool"
-    range_start = 0
-    range_end = 30
-    default = 15
-
-
-class CellSolvesInPool(Range):
-    """Number of Random Cell Solve items in the item pool."""
-    display_name = "Random Cell Solves in Pool"
-    range_start = 0
-    range_end = 10
-    default = 3
 
 
 class GridPreset(Choice):
@@ -316,9 +292,6 @@ class NonogramOptions(PerGameCommonOptions):
     starting_hints: StartingHints
     coins_per_bundle: CoinsPerBundle
     extra_lives_in_pool: ExtraLivesInPool
-    hint_reveals_in_pool: HintRevealsInPool
-    coin_bundles_in_pool: CoinBundlesInPool
-    cell_solves_in_pool: CellSolvesInPool
     grid_preset: GridPreset
     puzzles_5x5: Puzzles5x5
     puzzles_10x10: Puzzles10x10

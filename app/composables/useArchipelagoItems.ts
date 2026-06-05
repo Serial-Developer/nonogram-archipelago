@@ -301,7 +301,7 @@ export function useArchipelagoItems() {
 
   // Temporary hint reveals (only for current puzzle, purchased from shop)
   const tempHintReveals = usePersistentRef('ap_tempHintReveals', 0); // Temporary hints for current puzzle
-  const TEMP_HINT_COST = usePersistentRef('ap_tempHintCost', 5); // Cost to buy a temporary hint reveal
+  const TEMP_HINT_COST = usePersistentRef('ap_tempHintCost', 15); // Cost to buy a temporary hint reveal
 
   // Difficulty system
   const currentDifficulty = usePersistentRef('ap_currentDifficulty', 5); // Starting grid size (5x5)
@@ -879,7 +879,7 @@ export function useArchipelagoItems() {
   }
 
   // Buy a random cell solve from the shop
-  const RANDOM_CELL_SOLVE_COST = usePersistentRef('ap_randomCellSolveCost', 5);
+  const RANDOM_CELL_SOLVE_COST = usePersistentRef('ap_randomCellSolveCost', 15);
   function buyRandomCellSolve(): boolean {
     if (spendCoins(RANDOM_CELL_SOLVE_COST.value)) {
       return true;
