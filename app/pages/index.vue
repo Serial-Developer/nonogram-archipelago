@@ -48,6 +48,7 @@
     items,
     loadGridState,
     saveGridState,
+    say,
   } = useArchipelago();
 
   // Compute the latest item message (sent or received)
@@ -942,6 +943,15 @@
 
   // Ref for chat log container to enable auto-scroll
   const chatLogContainer = ref<HTMLElement | null>(null);
+
+  // Game Log chat input -> say() (plain messages + AP `!` server commands like !hint, !help).
+  const chatInput = ref('');
+  function submitChat() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    void say(msg);
+    chatInput.value = '';
+  }
 
   // Computed to check if a specific tab should be shown
   const isTabVisible = (tab: RightTab) => {
@@ -2261,6 +2271,24 @@
                   {{ msg.text.replaceAll(',', ' ') }}
                 </div>
               </div>
+            </div>
+            <!-- Chat input: plain messages + AP server commands (e.g. !hint, !help). -->
+            <div v-show="activeLogTab === 'log'" class="shrink-0 border-t border-neutral-700/50 p-2 flex gap-2">
+              <input
+                v-model="chatInput"
+                @keyup.enter="submitChat()"
+                :disabled="status !== 'connected'"
+                class="input-field flex-1 min-w-0"
+                :placeholder="status === 'connected' ? 'Message or command (e.g. !hint)' : 'Connect to chat'"
+              />
+              <button
+                type="button"
+                class="btn-secondary shrink-0"
+                :disabled="status !== 'connected' || !chatInput.trim()"
+                @click="submitChat()"
+              >
+                Send
+              </button>
             </div>
             <div v-show="activeLogTab === 'debug' && debugTabVisible" class="space-y-6 p-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
               <div class="flex items-center gap-3">
