@@ -7,6 +7,7 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
+    "@nuxtjs/i18n": "^10.4.0",
     "@tailwindcss/vite": "^4.1.18",
     "archipelago.js": "^2.0.4",
     "nuxt": "^4.2.2",

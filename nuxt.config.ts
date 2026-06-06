@@ -8,6 +8,24 @@ export default defineNuxtConfig({
   // Disable SSR for the game - it's highly client-dependent
   ssr: false,
 
+  modules: ['@nuxtjs/i18n'],
+
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'en',
+    lazy: true,
+    locales: [
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
+      { code: 'fr', language: 'fr-FR', name: 'Fran\u00e7ais', file: 'fr.json' },
+    ],
+    // EN by default, but switch to FR when the browser language is French; remembered via cookie.
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'nono_locale',
+      fallbackLocale: 'en',
+    },
+  },
+
   app: {
     head: {
       htmlAttrs: {
