@@ -4,5 +4,12 @@
   },
   "app": {
     "title": "Nonopelagram"
+  },
+  "status": {
+    "powerups": "Bonus :"
+  },
+  "controls": {
+    "mode": "Mode",
+    "powerup": "Bonus"
   }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import NonogramBoard from '~/components/NonogramBoard.vue';
   import ThemePicker from '~/components/ThemePicker.vue';
+  import LanguageSwitcher from '~/components/LanguageSwitcher.vue';
   import { useNonogram } from '~/composables/useNonogram';
   import { useArchipelago } from '~/composables/useArchipelago';
   import { AP_ITEMS } from '~/composables/useArchipelagoItems';
@@ -1414,7 +1415,7 @@
               </div>
               <!-- Power-ups: click an icon to use it directly -->
               <div class="hidden lg:flex items-center gap-1 sm:gap-2">
-                <span class="text-xs sm:text-sm text-neutral-400">Power-ups:</span>
+                <span class="text-xs sm:text-sm text-neutral-400">{{ $t('status.powerups') }}</span>
                 <button
                   class="flex items-center gap-1 px-2 py-1 rounded text-base sm:text-lg transition-colors"
                   :class="
@@ -1433,6 +1434,7 @@
               </div>
               <!-- Theme Picker - aligned to the right -->
               <div class="ml-auto">
+                <LanguageSwitcher />
                 <ThemePicker />
               </div>
             </div>
@@ -1649,7 +1651,7 @@
             </div>
             <div class="flex flex-col gap-3">
               <div class="flex flex-col gap-1">
-                <span class="text-xs text-neutral-400">Mode</span>
+                <span class="text-xs text-neutral-400">{{ $t('controls.mode') }}</span>
                 <div class="flex items-center">
                   <button type="button" class="px-3 py-2 rounded-l border border-neutral-700 text-lg" :class="mobileCellMode === 'fill' ? 'bg-lime-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'fill'" aria-label="Fill mode">&#9632;</button>
                   <button type="button" class="px-3 py-2 border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'maybe' ? 'bg-sky-700 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'maybe'" aria-label="Maybe (template) mode">?</button>
@@ -1657,7 +1659,7 @@
                 </div>
               </div>
               <div class="flex flex-col gap-1">
-                <span class="text-xs text-neutral-400">Power-up</span>
+                <span class="text-xs text-neutral-400">{{ $t('controls.powerup') }}</span>
                 <button type="button" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-base transition-colors" :class="items.randomCellSolves.value > 0 ? 'bg-cyan-500/20 text-cyan-300 active:bg-cyan-500/30' : 'bg-neutral-700/30 text-neutral-500'" :disabled="items.randomCellSolves.value <= 0" @click="useRandomCellSolve()" aria-label="Use a random cell solve">
                   <span>&#128302;</span>
                   <span class="text-sm font-bold">{{ items.randomCellSolves.value }}</span>
