@@ -1952,25 +1952,6 @@
                 </div>
               </div>
 
-              <!-- TEMP: manual goal completion (remove after the affected slot validates its goal) -->
-              <div v-if="items.archipelagoMode.value && status === 'connected'" class="bg-neutral-800/30 rounded-sm p-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <div class="text-sm font-medium text-neutral-200">{{ $t('settings.markGoalTitle') }}</div>
-                    <div class="text-xs text-neutral-400">{{ $t('settings.markGoalDesc') }}</div>
-                  </div>
-                  <button
-                    type="button"
-                    class="px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50 shrink-0"
-                    :class="goalCompleted ? 'bg-lime-500/20 text-lime-300' : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'"
-                    :disabled="goalCompleted"
-                    @click="completeGoal()"
-                  >
-                    {{ goalCompleted ? $t('settings.markGoalDone') : $t('settings.markGoalBtn') }}
-                  </button>
-                </div>
-              </div>
-
               <!-- Mode Toggle -->
               <div class="bg-neutral-800/30 rounded-sm p-4">
                 <div class="flex items-center justify-between">
@@ -2430,6 +2411,7 @@
                 <h3 class="section-heading">Actions</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
                   <button type="button" class="btn-secondary w-full" @click="autoSolve()">{{ $t('controls.autoSolve') }}</button>
+                  <button type="button" class="btn-secondary w-full" :disabled="goalCompleted" @click="completeGoal()">{{ goalCompleted ? 'Goal completed' : 'Mark goal as completed' }}</button>
                 </div>
               </section>
 
