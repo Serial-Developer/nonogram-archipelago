@@ -136,10 +136,14 @@
     "buyQuarterHeart": "Acheter un quart de cœur",
     "buyHeart": "Acheter un cœur",
     "maxHearts": "cœurs max",
-    "increaseDifficulty": "Augmenter la difficulté"
+    "increaseDifficulty": "Augmenter la difficulté",
+    "decreaseDifficulty": "Diminuer la difficulté"
   },
   "goals": {
-    "locationChecks": "Checks de localisation pour ce monde"
+    "locationChecks": "Checks de localisation pour ce monde",
+    "gridsWord": "grilles",
+    "reached": "Atteint",
+    "completedCount": "terminés ({done}/{total})"
   },
   "misc": {
     "giveFeedback": "Donner un avis"

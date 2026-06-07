@@ -136,10 +136,14 @@
     "buyQuarterHeart": "Buy Quarter Heart",
     "buyHeart": "Buy Heart",
     "maxHearts": "max hearts",
-    "increaseDifficulty": "Increase Difficulty"
+    "increaseDifficulty": "Increase Difficulty",
+    "decreaseDifficulty": "Decrease Difficulty"
   },
   "goals": {
-    "locationChecks": "Location checks for this world"
+    "locationChecks": "Location checks for this world",
+    "gridsWord": "grids",
+    "reached": "Reached",
+    "completedCount": "completed ({done}/{total})"
   },
   "misc": {
     "giveFeedback": "Give Feedback"

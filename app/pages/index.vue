@@ -1879,7 +1879,7 @@
                   @click="buyDifficultyDecrease()"
                 >
                   <div class="text-left">
-                    <span>📉 Decrease Difficulty</span>
+                    <span>📉 {{ $t('shop.decreaseDifficulty') }}</span>
                     <div class="text-[10px] opacity-70">
                       {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
                       {{ prevActiveSize }}x{{ prevActiveSize }}
@@ -2272,8 +2272,8 @@
                   <div class="text-[11px] uppercase tracking-wider text-amber-300/70">{{ $t('common.goal') }}</div>
                   <div class="mt-0.5 flex items-center gap-2 text-sm text-amber-200">
                     <span>&#127919;</span>
-                    <span>{{ $t('board.complete') }}<span class="font-semibold">{{ items.goalTarget.value }}</span> grilles</span>
-                    <span class="ml-auto text-xs" :class="goalCompleted ? 'text-lime-400' : 'text-amber-300/80'">{{ goalCompleted ? '&#10003; Atteint' : items.goalProgress.value + ' / ' + items.goalTarget.value }}</span>
+                    <span>{{ $t('board.complete') }}<span class="font-semibold">{{ items.goalTarget.value }}</span> {{ $t('goals.gridsWord') }}</span>
+                    <span class="ml-auto text-xs" :class="goalCompleted ? 'text-lime-400' : 'text-amber-300/80'">{{ goalCompleted ? '&#10003; ' + $t('goals.reached') : items.goalProgress.value + ' / ' + items.goalTarget.value }}</span>
                   </div>
                 </summary>
                 <div class="mt-2 space-y-1 border-t border-amber-500/20 pt-2">
@@ -2296,7 +2296,7 @@
               >
                 <summary class="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs font-semibold text-neutral-200">
                   <span>{{ sec.label }}</span>
-                  <span :class="sec.done === sec.total ? 'text-lime-400' : 'text-neutral-400'">termin&eacute;s ({{ sec.done }}/{{ sec.total }})</span>
+                  <span :class="sec.done === sec.total ? 'text-lime-400' : 'text-neutral-400'">{{ $t('goals.completedCount', { done: sec.done, total: sec.total }) }}</span>
                 </summary>
                 <div class="space-y-1 px-2 pb-2">
                   <div
