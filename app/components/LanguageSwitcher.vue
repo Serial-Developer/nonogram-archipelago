@@ -39,14 +39,14 @@
       role="menu"
       :aria-label="$t('language.label')"
     >
-      <div class="flex items-center gap-2">
+      <div class="flex flex-col gap-1">
         <button
           v-for="l in locales"
           :key="l.code"
           @click="pick(l.code)"
           :aria-pressed="locale === l.code"
           :title="l.name"
-          class="flex flex-col items-center gap-1 px-3 py-2 rounded-md transition-all duration-200 text-xs"
+          class="flex flex-row items-center gap-2 w-full px-3 py-2 rounded-md transition-all duration-200 text-sm"
           :class="
             locale === l.code
               ? 'bg-color-primary-color text-color-btn-primary-text font-medium'
