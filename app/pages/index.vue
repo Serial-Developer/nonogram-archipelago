@@ -7,6 +7,8 @@
   import { AP_ITEMS } from '~/composables/useArchipelagoItems';
   import { clearAllPersistence } from '~/composables/usePersistence';
 
+  const { t } = useI18n();
+
   const {
     rows,
     cols,
@@ -969,17 +971,17 @@
   const mobileMenuOpen = ref(false);
   const mobileMenuItems = computed(() => {
     const list: { key: MobileTab; label: string }[] = [
-      { key: 'puzzle', label: 'Puzzle' },
-      { key: 'archipelago', label: 'Archipelago' },
-      { key: 'shop', label: 'Shop' },
+      { key: 'puzzle', label: t('tabs.puzzle') },
+      { key: 'archipelago', label: t('tabs.archipelago') },
+      { key: 'shop', label: t('tabs.shop') },
     ];
-    if (items.archipelagoMode.value) list.push({ key: 'goals', label: 'Checks' });
-    list.push({ key: 'chat', label: 'Game Log' });
-    list.push({ key: 'settings', label: 'Settings' });
+    if (items.archipelagoMode.value) list.push({ key: 'goals', label: t('tabs.checks') });
+    list.push({ key: 'chat', label: t('tabs.log') });
+    list.push({ key: 'settings', label: t('tabs.settings') });
     return list;
   });
   const mobileTabLabel = computed(
-    () => mobileMenuItems.value.find((t) => t.key === activeMobileTab.value)?.label ?? 'Puzzle',
+    () => mobileMenuItems.value.find((m) => m.key === activeMobileTab.value)?.label ?? t('tabs.puzzle'),
   );
   function selectMobileTab(key: MobileTab) {
     activeMobileTab.value = key;
@@ -1090,13 +1092,13 @@
   const statusMeta = computed(() => {
     switch (status.value) {
       case 'connected':
-        return { label: 'Connected', dot: 'bg-lime-400', text: 'text-lime-300' };
+        return { label: t('status.connected'), dot: 'bg-lime-400', text: 'text-lime-300' };
       case 'connecting':
-        return { label: 'Connecting…', dot: 'bg-amber-400', text: 'text-amber-300' };
+        return { label: t('status.connecting'), dot: 'bg-amber-400', text: 'text-amber-300' };
       case 'error':
-        return { label: 'Error', dot: 'bg-red-400', text: 'text-red-300' };
+        return { label: t('status.error'), dot: 'bg-red-400', text: 'text-red-300' };
       default:
-        return { label: 'Disconnected', dot: 'bg-neutral-500', text: 'text-neutral-300' };
+        return { label: t('status.disconnected'), dot: 'bg-neutral-500', text: 'text-neutral-300' };
     }
   });
 

@@ -8,7 +8,11 @@
   "status": {
     "powerups": "Power-ups:",
     "lives": "Lives:",
-    "coins": "Coins:"
+    "coins": "Coins:",
+    "connected": "Connected",
+    "connecting": "Connecting…",
+    "error": "Error",
+    "disconnected": "Disconnected"
   },
   "controls": {
     "mode": "Mode",
@@ -46,7 +50,9 @@
     "shop": "Shop",
     "checks": "Checks",
     "log": "Game Log",
-    "settings": "Settings"
+    "settings": "Settings",
+    "puzzle": "Puzzle",
+    "archipelago": "Archipelago"
   },
   "modal": {
     "solvedTitle": "Puzzle Solved!",

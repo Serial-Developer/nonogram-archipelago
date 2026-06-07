@@ -8,7 +8,11 @@
   "status": {
     "powerups": "Bonus :",
     "lives": "Vies :",
-    "coins": "Pièces :"
+    "coins": "Pièces :",
+    "connected": "Connecté",
+    "connecting": "Connexion…",
+    "error": "Erreur",
+    "disconnected": "Déconnecté"
   },
   "controls": {
     "mode": "Mode",
@@ -46,7 +50,9 @@
     "shop": "Boutique",
     "checks": "Checks",
     "log": "Journal",
-    "settings": "Réglages"
+    "settings": "Réglages",
+    "puzzle": "Puzzle",
+    "archipelago": "Archipelago"
   },
   "modal": {
     "solvedTitle": "Puzzle résolu !",
