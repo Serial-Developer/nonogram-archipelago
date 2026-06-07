@@ -199,8 +199,11 @@
   const controlsH = ref(0);
   const controlsReserve = computed(() => (isMobile.value ? controlsH.value + 8 : 0));
   function moveCursor(dr: number, dc: number) {
-    cursorR.value = Math.min(Math.max(0, cursorR.value + dr), Math.max(0, rows.value - 1));
-    cursorC.value = Math.min(Math.max(0, cursorC.value + dc), Math.max(0, cols.value - 1));
+    // Wrap around: stepping past an edge re-enters from the opposite side.
+    const R = Math.max(1, rows.value);
+    const C = Math.max(1, cols.value);
+    cursorR.value = (((cursorR.value + dr) % R) + R) % R;
+    cursorC.value = (((cursorC.value + dc) % C) + C) % C;
   }
   function applyCursor() {
     handleCellChange(cursorR.value, cursorC.value, mobileCellMode.value);
@@ -1625,28 +1628,32 @@
             </div>
           </div>
           <!-- Mobile touch controls: directional pad + mode + power-up (below the grid) -->
-          <div ref="controlsEl" class="lg:hidden mt-2 flex items-center justify-center gap-5 select-none">
-            <!-- Directional pad: arrows move the cursor, center applies the current mode -->
+          <div ref="controlsEl" class="lg:hidden mt-2 flex flex-col items-center gap-3 select-none">
+            <div class="flex items-center justify-center gap-6">
+            <!-- Directional pad: arrows move the cursor (wraps around edges) -->
             <div class="grid grid-cols-3 grid-rows-3 gap-1" style="width: 150px; height: 150px">
               <span></span>
               <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(-1, 0)" :aria-label="$t('aria.moveUp')">&#9650;</button>
               <span></span>
               <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, -1)" :aria-label="$t('aria.moveLeft')">&#9664;</button>
-              <button
-                type="button"
-                class="flex items-center justify-center rounded text-white text-xl font-bold transition active:scale-95"
-                :class="mobileCellMode === 'fill' ? 'bg-lime-600' : mobileCellMode === 'x' ? 'bg-red-600' : 'bg-sky-700'"
-                @click="applyCursor()"
-                :aria-label="mobileCellMode === 'fill' ? $t('aria.fillSelected') : $t('aria.crossSelected')"
-              >
-                <span v-if="mobileCellMode === 'fill'">&#9632;</span><span v-else-if="mobileCellMode === 'x'">&#10005;</span><span v-else>?</span>
-              </button>
+              <span></span>
               <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, 1)" :aria-label="$t('aria.moveRight')">&#9654;</button>
               <span></span>
               <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(1, 0)" :aria-label="$t('aria.moveDown')">&#9660;</button>
               <span></span>
             </div>
-            <div class="flex flex-col gap-3">
+              <button
+                type="button"
+                class="flex items-center justify-center rounded-full text-white text-3xl font-bold transition active:scale-95"
+                style="width: 96px; height: 96px"
+                :class="mobileCellMode === 'fill' ? 'bg-lime-600 active:bg-lime-500' : mobileCellMode === 'x' ? 'bg-red-600 active:bg-red-500' : 'bg-sky-700 active:bg-sky-600'"
+                @click="applyCursor()"
+                :aria-label="mobileCellMode === 'fill' ? $t('aria.fillSelected') : $t('aria.crossSelected')"
+              >
+                <span v-if="mobileCellMode === 'fill'">&#9632;</span><span v-else-if="mobileCellMode === 'x'">&#10005;</span><span v-else>?</span>
+              </button>
+            </div>
+            <div class="flex items-end justify-center gap-5">
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-neutral-400">{{ $t('controls.mode') }}</span>
                 <div class="flex items-center">
