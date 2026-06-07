@@ -1,6 +1,7 @@
 {
   "language": {
-    "label": "Language"
+    "label": "Language",
+    "closeAria": "Close language menu"
   },
   "app": {
     "title": "Nonopelagram"
@@ -165,5 +166,12 @@
   "flawless": {
     "streakReset": "Flawless streak reset to 0",
     "total": "total: {n}"
+  },
+  "theme": {
+    "choose": "Choose Theme",
+    "openTitle": "Open theme selector",
+    "selectAria": "Select color theme",
+    "closeAria": "Close theme menu",
+    "menuAria": "Theme selection menu"
   }
 }

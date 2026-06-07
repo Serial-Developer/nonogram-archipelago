@@ -31,7 +31,7 @@
       <span class="hidden sm:inline uppercase">{{ locale }}</span>
     </button>
 
-    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 z-40" aria-label="Close language menu"></div>
+    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 z-40" :aria-label="$t('language.closeAria')"></div>
 
     <div
       v-show="isOpen"

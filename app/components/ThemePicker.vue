@@ -14,8 +14,8 @@
     <button
       @click="isOpen = !isOpen"
       class="btn-secondary flex items-center gap-2 text-sm"
-      title="Open theme selector"
-      aria-label="Select color theme"
+      :title="$t('theme.openTitle')"
+      :aria-label="$t('theme.selectAria')"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -29,16 +29,16 @@
     </button>
 
     <!-- Theme Dropdown Menu -->
-    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 z-40" aria-label="Close theme menu"></div>
+    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 z-40" :aria-label="$t('theme.closeAria')"></div>
 
     <div
       v-show="isOpen"
       class="absolute right-0 mt-2 w-64 bg-color-glass-bg border border-color-glass-border rounded-lg shadow-lg z-50 p-3"
       role="menu"
-      aria-label="Theme selection menu"
+      :aria-label="$t('theme.menuAria')"
     >
       <div class="space-y-2">
-        <div class="px-3 py-2 text-xs font-semibold text-color-section-heading uppercase">Choose Theme</div>
+        <div class="px-3 py-2 text-xs font-semibold text-color-section-heading uppercase">{{ $t('theme.choose') }}</div>
         <div class="space-y-1">
           <button
             v-for="theme in themeList"
