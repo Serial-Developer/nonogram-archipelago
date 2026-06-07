@@ -1932,7 +1932,7 @@
               <!-- Appearance & Language -->
               <section class="space-y-3">
                 <h3 class="section-heading">Appearance &amp; Language</h3>
-                <div class="bg-neutral-800/30 rounded-sm p-4 flex items-center gap-3">
+                <div class="bg-neutral-800/30 rounded-sm p-4 flex flex-col gap-3 items-start">
                   <LanguageSwitcher />
                   <ThemePicker />
                 </div>
