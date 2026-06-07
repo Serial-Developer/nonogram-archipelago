@@ -1433,7 +1433,7 @@
                 </button>
               </div>
               <!-- Theme Picker - aligned to the right -->
-              <div class="ml-auto">
+              <div class="ml-auto flex items-center gap-2">
                 <LanguageSwitcher />
                 <ThemePicker />
               </div>
