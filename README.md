@@ -23,6 +23,10 @@ This project is a fork and continuation of the original [Nonogram Archipelago](h
 - **Death Link** -- off / on (lose all lives) / damage (lose a single heart).
 - **Server-synced economy** -- coins, lives, hearts, wallet level and streaks persist on the Archipelago server; they survive reconnects and follow you across devices.
 - **Configurable goal** -- clear a chosen number of puzzles per grid size.
+- **English & French** -- the whole interface is localized; switch language in Settings (it auto-detects your browser language on first load).
+- **Responsive & mobile-ready** -- burger-menu navigation, an on-screen D-pad, and a board that always fits the screen with no scrolling.
+- **Three cell states** -- fill, X, and a "?" maybe/template mark that never costs a life.
+- **Navigation aids** -- the active row, column and their clues highlight while you move with the D-pad.
 
 ## Setting up an Archipelago game
 
@@ -144,7 +148,9 @@ Standard Archipelago options (`progression_balancing`, `accessibility`, item/loc
 
 - **Left click**: fill a cell
 - **Right click**: mark a cell with X
+- **Middle click**: mark a cell as "?" (maybe / template -- never costs a life)
 - **Shift + click** / **click again**: erase a cell
+- **Mobile**: move the cursor with the on-screen D-pad and place marks with the Mode toggle (fill / ? / X)
 
 ## Usage modes
 
