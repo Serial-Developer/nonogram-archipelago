@@ -510,6 +510,11 @@ export function useArchipelago() {
         checkLocations(missingChecks);
         addLogMessage(`Re-sent ${missingChecks.length} missing completion check(s).`, 'info');
       }
+
+      // Re-evaluate the goal on connect: a player who already meets it (reached the threshold
+      // while briefly disconnected, or completed everything before the catch-up existed) gets the
+      // goal status sent now instead of never.
+      checkGoalCompletion();
     } catch (e: any) {
       status.value = 'error';
       const errorMsg = e?.message ?? String(e);
