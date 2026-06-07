@@ -1328,7 +1328,7 @@
   >
     <div style="text-align: center">
       <h1 style="font-size: 1.5rem; font-weight: bold; color: #f5f5f5; margin-bottom: 0.5rem">Nonopelagram</h1>
-      <p style="font-size: 0.875rem; color: #a3a3a3">Loading puzzle...</p>
+      <p style="font-size: 0.875rem; color: #a3a3a3">{{ $t('board.loading') }}</p>
     </div>
   </div>
 
@@ -1353,7 +1353,7 @@
       <div class="absolute inset-0 bg-black/60" @click="mobileMenuOpen = false"></div>
       <nav class="absolute left-0 top-0 h-full w-64 max-w-[80%] bg-neutral-900 border-r border-neutral-700/50 shadow-xl flex flex-col">
         <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-700/50 shrink-0">
-          <span class="text-sm font-semibold text-neutral-100">Menu</span>
+          <span class="text-sm font-semibold text-neutral-100">{{ $t('nav.menu') }}</span>
           <button type="button" class="p-1 text-neutral-400 hover:text-white" aria-label="Close menu" @click="mobileMenuOpen = false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" /></svg>
           </button>
@@ -1389,7 +1389,7 @@
               </div>
               <!-- Lives Display -->
               <div class="flex items-center gap-1 sm:gap-2">
-                <span class="text-xs sm:text-sm text-neutral-400">Lives:</span>
+                <span class="text-xs sm:text-sm text-neutral-400">{{ $t('status.lives') }}</span>
                 <div class="flex items-center gap-0.5">
                   <span
                     v-for="i in items.maxLives.value"
@@ -1409,7 +1409,7 @@
               </div>
               <!-- Coins Display -->
               <div class="flex items-center gap-1 sm:gap-2">
-                <span class="text-xs sm:text-sm text-neutral-400">Coins:</span>
+                <span class="text-xs sm:text-sm text-neutral-400">{{ $t('status.coins') }}</span>
                 <span class="text-base sm:text-lg font-bold text-amber-400">🪙 {{ items.coins.value }}<span v-if="items.archipelagoMode.value && !items.unlimitedCoins.value" class="text-[11px] font-normal text-amber-400/60"> / {{ items.coinCap.value }}</span></span>
                 <span v-if="items.unlimitedCoins.value" class="text-xs text-neutral-500">(∞)</span>
               </div>
@@ -1443,7 +1443,7 @@
               <div class="flex items-start gap-3">
                 <span class="text-xl sm:text-2xl">🎉</span>
                 <div>
-                  <div class="font-semibold text-sm sm:text-base">Puzzle Solved!</div>
+                  <div class="font-semibold text-sm sm:text-base">{{ $t('modal.solvedTitle') }}</div>
                   <div v-if="items.archipelagoMode.value && items.flawlessChecks.value" class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
                     <span>&#11088;</span>
                     <span>S&#233;rie sans faute : {{ items.flawlessStreak.value }} <span class="text-accent-300/70">(total : {{ items.flawlessTotal.value }})</span></span>
@@ -1479,11 +1479,11 @@
                     </template>
                     <div v-if="goalCompleted" class="flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
                       <span>🏆</span>
-                      <span>Objectif atteint !</span>
+                      <span>{{ $t('modal.goalReached') }}</span>
                     </div>
                   </div>
                   <!-- Free play / no new check: keep the generic congratulations -->
-                  <div v-else class="text-xs sm:text-sm text-accent-300/80">Congratulations on completing the nonogram!</div>
+                  <div v-else class="text-xs sm:text-sm text-accent-300/80">{{ $t('modal.solvedBody') }}</div>
                   <!-- Tier completed: nudge the player to unlock the next difficulty in the shop -->
                   <div
                     v-if="showTierUnlockHint"
@@ -1494,7 +1494,7 @@
                   </div>
                 </div>
               </div>
-              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize(true)">Next Puzzle</button>
+              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize(true)">{{ $t('controls.nextPuzzle') }}</button>
             </div>
           </div>
 
@@ -1507,15 +1507,15 @@
               <div class="flex items-center gap-3">
                 <span class="text-xl sm:text-2xl">💔</span>
                 <div>
-                  <div class="font-semibold text-sm sm:text-base">Game Over!</div>
+                  <div class="font-semibold text-sm sm:text-base">{{ $t('modal.gameOverTitle') }}</div>
                   <div v-if="items.archipelagoMode.value && items.flawlessChecks.value" class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
                     <span>&#11088;</span>
                     <span>S&#233;rie sans faute remise &#224; 0 <span class="text-red-300/70">(total : {{ items.flawlessTotal.value }})</span></span>
                   </div>
-                  <div class="text-xs sm:text-sm text-red-300/80">You ran out of lives. Try again?</div>
+                  <div class="text-xs sm:text-sm text-red-300/80">{{ $t('modal.gameOverBody') }}</div>
                 </div>
               </div>
-              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">New Puzzle</button>
+              <button type="button" class="btn-primary text-sm w-full sm:w-auto" @click="randomize()">{{ $t('controls.newPuzzle') }}</button>
             </div>
           </div>
 
@@ -1548,7 +1548,7 @@
                   @cell="handleCellChange"
                 />
                 <div v-else class="flex items-center justify-center" style="width: 300px; height: 300px">
-                  <p class="text-neutral-400">Loading puzzle...</p>
+                  <p class="text-neutral-400">{{ $t('board.loading') }}</p>
                 </div>
               </ScrollableGrid>
             </div>
@@ -1562,9 +1562,7 @@
                     <button @click="copyDebugInfo" class="px-2 py-1 text-xs bg-neutral-700 hover:bg-neutral-600 text-neutral-200 rounded">
                       Copy Debug
                     </button>
-                    <button @click="debugHints" class="px-2 py-1 text-xs bg-neutral-700 hover:bg-neutral-600 text-neutral-200 rounded">
-                      Log Hints
-                    </button>
+                    <button @click="debugHints" class="px-2 py-1 text-xs bg-neutral-700 hover:bg-neutral-600 text-neutral-200 rounded">{{ $t('settings.logHints') }}</button>
                   </div>
                 </div>
 
@@ -1691,8 +1689,8 @@
           <div class="space-y-6">
             <div class="flex items-center gap-3">
               <div>
-                <h2 class="font-semibold text-neutral-100">Shop</h2>
-                <p class="text-xs text-neutral-400">Spend coins on boosts & upgrades</p>
+                <h2 class="font-semibold text-neutral-100">{{ $t('tabs.shop') }}</h2>
+                <p class="text-xs text-neutral-400">{{ $t('shop.subtitle') }}</p>
               </div>
             </div>
 
@@ -1728,7 +1726,7 @@
                 >
                   <div class="text-left">
                     <span>👁️ Temporary Hint Reveal</span>
-                    <div class="text-[10px] opacity-70">Reveals 1 hint (this puzzle only)</div>
+                    <div class="text-[10px] opacity-70">{{ $t('controls.revealHint') }}</div>
                   </div>
                   <span class="text-xs">🪙 {{ items.TEMP_HINT_COST.value }}</span>
                 </button>
@@ -1790,7 +1788,7 @@
                   @click="buyHealing()"
                 >
                   <div class="text-left">
-                    <span>Heal +1 Life</span>
+                    <span>{{ $t('controls.heal') }}</span>
                     <div class="text-[10px] opacity-70">{{ items.currentLives.value }}/{{ items.maxLives.value }} lives</div>
                   </div>
                   <span class="text-xs">&#129689; {{ items.nextHealingCost.value }}</span>
@@ -1905,17 +1903,13 @@
               <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'archipelago' }" @click="activeTab = 'archipelago'">
                 Archipelago
               </button>
-              <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">
-                Settings
-              </button>
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">{{ $t('tabs.settings') }}</button>
               <button
                 v-if="items.archipelagoMode.value"
                 class="tab-button whitespace-nowrap"
                 :class="{ active: activeTab === 'goals' }"
                 @click="activeTab = 'goals'"
-              >
-                Checks
-              </button>
+              >{{ $t('tabs.checks') }}</button>
             </div>
 
           <!-- tab content - on mobile, show based on activeMobileTab; on desktop, show based on activeTab -->
@@ -1924,14 +1918,14 @@
             <div v-if="isTabVisible('settings')" class="space-y-6">
               <div class="flex items-center gap-3 mb-6">
                 <div>
-                  <h2 class="font-semibold text-neutral-100">Game Settings</h2>
-                  <p class="text-xs text-neutral-400">Customize your puzzle experience</p>
+                  <h2 class="font-semibold text-neutral-100">{{ $t('settings.title') }}</h2>
+                  <p class="text-xs text-neutral-400">{{ $t('settings.subtitle') }}</p>
                 </div>
               </div>
 
               <!-- Appearance & Language -->
               <section class="space-y-3">
-                <h3 class="section-heading">Appearance &amp; Language</h3>
+                <h3 class="section-heading">{{ $t('settings.appearance') }}</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 flex flex-col gap-3 items-start">
                   <LanguageSwitcher />
                   <ThemePicker />
@@ -1942,7 +1936,7 @@
               <div v-if="items.archipelagoMode.value" class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-sm">
                 <div class="flex items-center gap-2 text-amber-300 text-sm">
                   <span>🔒</span>
-                  <span>Archipelago Mode - Some features are locked until rewarded</span>
+                  <span>{{ $t('settings.apLockedNote') }}</span>
                 </div>
               </div>
 
@@ -1950,8 +1944,8 @@
               <div class="bg-neutral-800/30 rounded-sm p-4">
                 <div class="flex items-center justify-between">
                   <div>
-                    <div class="text-sm font-medium text-neutral-200">Archipelago Mode</div>
-                    <div class="text-xs text-neutral-400">Lock features until received from AP</div>
+                    <div class="text-sm font-medium text-neutral-200">{{ $t('settings.apMode') }}</div>
+                    <div class="text-xs text-neutral-400">{{ $t('settings.apModeDesc') }}</div>
                   </div>
                   <button
                     class="px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50"
@@ -1971,7 +1965,7 @@
 
               <!-- Starting Resources -->
               <section class="space-y-3">
-                <h3 class="section-heading">Resources</h3>
+                <h3 class="section-heading">{{ $t('settings.resources') }}</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-4" :class="{ 'opacity-60': items.archipelagoMode.value }">
                   <!-- Lock notice for Archipelago mode -->
                   <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70 mb-2">
@@ -1980,16 +1974,16 @@
                   <!-- Unlimited toggles -->
                   <label class="flex items-center gap-3 group" :class="items.archipelagoMode.value ? 'cursor-not-allowed' : 'cursor-pointer'">
                     <input type="checkbox" v-model="items.unlimitedLives.value" class="checkbox-field" :disabled="items.archipelagoMode.value" />
-                    <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">Unlimited Lives</span>
+                    <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">{{ $t('settings.unlimitedLives') }}</span>
                   </label>
                   <label class="flex items-center gap-3 group" :class="items.archipelagoMode.value ? 'cursor-not-allowed' : 'cursor-pointer'">
                     <input type="checkbox" v-model="items.unlimitedCoins.value" class="checkbox-field" :disabled="items.archipelagoMode.value" />
-                    <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">Unlimited Coins</span>
+                    <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">{{ $t('settings.unlimitedCoins') }}</span>
                   </label>
 
                   <div class="border-t border-neutral-700/50 pt-4">
                     <div class="flex items-center justify-between">
-                      <label for="starting-lives" class="text-sm text-neutral-300">Starting Lives</label>
+                      <label for="starting-lives" class="text-sm text-neutral-300">{{ $t('settings.startingLives') }}</label>
                       <input
                         id="starting-lives"
                         type="number"
@@ -2002,7 +1996,7 @@
                     </div>
                   </div>
                   <div class="flex items-center justify-between">
-                    <label for="starting-coins" class="text-sm text-neutral-300">Starting Coins</label>
+                    <label for="starting-coins" class="text-sm text-neutral-300">{{ $t('settings.startingCoins') }}</label>
                     <input
                       id="starting-coins"
                       type="number"
@@ -2014,7 +2008,7 @@
                     />
                   </div>
                   <div class="flex items-center justify-between">
-                    <label for="starting-hints" class="text-sm text-neutral-300">Starting Hints Revealed</label>
+                    <label for="starting-hints" class="text-sm text-neutral-300">{{ $t('settings.startingHints') }}</label>
                     <input
                       id="starting-hints"
                       type="number"
@@ -2026,7 +2020,7 @@
                     />
                   </div>
                   <div class="flex items-center justify-between">
-                    <label for="coins-per-line" class="text-sm text-neutral-300">Coins per Line</label>
+                    <label for="coins-per-line" class="text-sm text-neutral-300">{{ $t('settings.coinsPerLine') }}</label>
                     <input
                       id="coins-per-line"
                       type="number"
@@ -2038,7 +2032,7 @@
                     />
                   </div>
                   <div class="flex items-center justify-between">
-                    <label for="coins-per-bundle" class="text-sm text-neutral-300">Coins per Bundle</label>
+                    <label for="coins-per-bundle" class="text-sm text-neutral-300">{{ $t('settings.coinsPerBundle') }}</label>
                     <input
                       id="coins-per-bundle"
                       type="number"
@@ -2057,12 +2051,12 @@
 
               <!-- Shop Prices -->
               <section class="space-y-3">
-                <h3 class="section-heading">Shop Prices</h3>
+                <h3 class="section-heading">{{ $t('settings.shopPrices') }}</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-4" :class="{ 'opacity-60': items.archipelagoMode.value }">
                   <!-- Lock notice for Archipelago mode -->
                   <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70 mb-2">🔒 Shop prices are locked in Archipelago mode</div>
                   <div class="flex items-center justify-between">
-                    <label for="random-cell-solve-cost" class="text-sm text-neutral-300">Random Cell Solve Cost</label>
+                    <label for="random-cell-solve-cost" class="text-sm text-neutral-300">{{ $t('settings.randomCellCost') }}</label>
                     <input
                       id="random-cell-solve-cost"
                       type="number"
@@ -2074,7 +2068,7 @@
                     />
                   </div>
                   <div class="flex items-center justify-between">
-                    <label for="temp-hint-cost" class="text-sm text-neutral-300">Temporary Hint Cost</label>
+                    <label for="temp-hint-cost" class="text-sm text-neutral-300">{{ $t('settings.tempHintCost') }}</label>
                     <input
                       id="temp-hint-cost"
                       type="number"
@@ -2091,50 +2085,42 @@
               <div class="space-y-6">
                 <!-- Game Display -->
                 <section class="space-y-4">
-                  <h3 class="section-heading">Behaviour</h3>
+                  <h3 class="section-heading">{{ $t('settings.behaviour') }}</h3>
                   <div class="space-y-4 bg-neutral-800/30 rounded-sm p-4">
                     <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-60 cursor-not-allowed': items.archipelagoMode.value && !items.unlimitedLives.value }">
                       <input type="checkbox" v-model="showMistakes" class="checkbox-field" :disabled="items.archipelagoMode.value && !items.unlimitedLives.value" />
-                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
-                        Show mistakes in real-time
-                        <span v-if="items.archipelagoMode.value && !items.unlimitedLives.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">{{ $t('settings.showMistakes') }}<span v-if="items.archipelagoMode.value && !items.unlimitedLives.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
                       </span>
                     </label>
 
                     <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-60 cursor-not-allowed': items.archipelagoMode.value }">
                       <input type="checkbox" v-model="autoX" class="checkbox-field" :disabled="items.archipelagoMode.value" />
-                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
-                        Auto-X completed rows/columns
-                        <span v-if="items.archipelagoMode.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">{{ $t('settings.autoX') }}<span v-if="items.archipelagoMode.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
                       </span>
                     </label>
 
                     <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-60 cursor-not-allowed': items.archipelagoMode.value }">
                       <input type="checkbox" v-model="greyCompletedHints" class="checkbox-field" :disabled="items.archipelagoMode.value" />
-                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
-                        Grey out completed hints
-                        <span v-if="items.archipelagoMode.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">{{ $t('settings.greyHints') }}<span v-if="items.archipelagoMode.value" class="text-2xs text-amber-300/70">🔒 Archipelago</span>
                       </span>
                     </label>
 
                     <label class="flex items-center gap-3 cursor-pointer group">
                       <input type="checkbox" v-model="dragPainting" class="checkbox-field" />
-                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">
-                        Click and drag to paint cells
-                      </span>
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">{{ $t('controls.clickDrag') }}</span>
                     </label>
                   </div>
                 </section>
                 <!-- Puzzle Dimensions -->
                 <section class="space-y-4">
-                  <h3 class="section-heading">Puzzle Dimensions</h3>
+                  <h3 class="section-heading">{{ $t('settings.puzzleDimensions') }}</h3>
                   <div class="space-y-4 bg-neutral-800/30 rounded-sm p-4" :class="{ 'opacity-60': items.archipelagoMode.value }">
                     <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70 mb-2">
                       ⚠️ Dimensions are controlled by Archipelago difficulty
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                       <div class="space-y-2">
-                        <label for="rows" class="block text-xs font-medium text-neutral-300">Rows</label>
+                        <label for="rows" class="block text-xs font-medium text-neutral-300">{{ $t('settings.rows') }}</label>
                         <input
                           id="rows"
                           type="number"
@@ -2146,7 +2132,7 @@
                         />
                       </div>
                       <div class="space-y-2">
-                        <label for="cols" class="block text-xs font-medium text-neutral-300">Columns</label>
+                        <label for="cols" class="block text-xs font-medium text-neutral-300">{{ $t('settings.columns') }}</label>
                         <input
                           id="cols"
                           type="number"
@@ -2161,18 +2147,18 @@
 
                     <label class="flex items-center gap-3 group" :class="items.archipelagoMode.value ? 'cursor-not-allowed' : 'cursor-pointer'">
                       <input type="checkbox" v-model="lockSize" :disabled="items.archipelagoMode.value" class="checkbox-field" />
-                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">Lock aspect ratio (square puzzles) </span>
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">{{ $t('settings.lockAspect') }}</span>
                     </label>
                   </div>
                 </section>
                 <!-- Puzzle Generation -->
                 <section class="space-y-4">
-                  <h3 class="section-heading">Puzzle Generation</h3>
+                  <h3 class="section-heading">{{ $t('settings.puzzleGeneration') }}</h3>
                   <div class="space-y-4 bg-neutral-800/30 rounded-sm p-4" :class="{ 'opacity-60': items.archipelagoMode.value }">
                     <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70 mb-2">⚠️ Fill density is controlled by Archipelago</div>
                     <div class="space-y-3">
                       <div class="flex items-center justify-between">
-                        <label for="fill-rate" class="text-xs font-medium text-neutral-300"> Fill Density </label>
+                        <label for="fill-rate" class="text-xs font-medium text-neutral-300">{{ $t('settings.fillDensity') }}</label>
                         <div class="flex items-center gap-2">
                           <span class="px-2 py-1 bg-neutral-600/30 text-neutral-300 rounded-md text-xs font-medium">
                             {{ Math.round(fillRate * 100) }}%
@@ -2190,25 +2176,23 @@
                         class="slider w-full"
                       />
                       <div class="flex justify-between text-2xs text-neutral-500">
-                        <span>Sparse (20%)</span>
-                        <span>Dense (70%)</span>
+                        <span>{{ $t('settings.sparse') }}</span>
+                        <span>{{ $t('settings.dense') }}</span>
                       </div>
                     </div>
 
-                    <button type="button" class="btn-primary w-full" @click="randomize()">Generate New Puzzle</button>
+                    <button type="button" class="btn-primary w-full" @click="randomize()">{{ $t('controls.generate') }}</button>
                   </div>
                 </section>
                 <!-- Game Actions -->
                 <section class="space-y-4">
-                  <h3 class="section-heading">Game Actions</h3>
+                  <h3 class="section-heading">{{ $t('settings.gameActions') }}</h3>
                   <div
                     class="bg-neutral-800/30 rounded-sm p-4 space-y-3"
                     :class="{ 'opacity-60 pointer-events-none': items.archipelagoMode.value }"
                   >
-                    <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70">
-                      Game actions are locked in Archipelago mode
-                    </div>
-                    <button type="button" class="btn-destructive w-full" @click="clearPlayer()">Clear Current Puzzle</button>
+                    <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70">{{ $t('settings.gameActionsLocked') }}</div>
+                    <button type="button" class="btn-destructive w-full" @click="clearPlayer()">{{ $t('settings.clearCurrent') }}</button>
                     <button
                       type="button"
                       class="btn-destructive w-full opacity-75 hover:opacity-100"
@@ -2226,36 +2210,34 @@
             <div v-else-if="isTabVisible('archipelago')" class="space-y-6">
               <div class="flex items-center gap-3">
                 <div>
-                  <h2 class="font-semibold text-neutral-100">Archipelago Connection</h2>
-                  <p class="text-xs text-neutral-400">Connect to multiplayer server</p>
+                  <h2 class="font-semibold text-neutral-100">{{ $t('ap.connectionTitle') }}</h2>
+                  <p class="text-xs text-neutral-400">{{ $t('ap.connectSubtitle') }}</p>
                 </div>
               </div>
 
               <div class="bg-neutral-800/30 rounded-sm p-4 space-y-4">
-                <p class="text-xs text-neutral-400">Enter your server details</p>
+                <p class="text-xs text-neutral-400">{{ $t('ap.enterDetails') }}</p>
 
                 <div class="space-y-3">
                   <div class="space-y-1">
-                    <label class="text-xs font-medium text-neutral-300">Host</label>
+                    <label class="text-xs font-medium text-neutral-300">{{ $t('ap.host') }}</label>
                     <input v-model="host" class="input-field" placeholder="localhost" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-xs font-medium text-neutral-300">Port</label>
+                    <label class="text-xs font-medium text-neutral-300">{{ $t('ap.port') }}</label>
                     <input v-model.number="port" class="input-field" placeholder="38281" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-xs font-medium text-neutral-300">Player Name</label>
+                    <label class="text-xs font-medium text-neutral-300">{{ $t('ap.playerName') }}</label>
                     <input v-model="slot" class="input-field" placeholder="Your player name" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-xs font-medium text-neutral-300">Password</label>
+                    <label class="text-xs font-medium text-neutral-300">{{ $t('ap.password') }}</label>
                     <input v-model="password" type="password" class="input-field" placeholder="Optional password" />
                   </div>
                   <div class="flex items-center gap-3 pt-2">
                     <input type="checkbox" v-model="useSecureConnection" class="checkbox-field" id="secure-connection" />
-                    <label for="secure-connection" class="text-xs text-neutral-300 cursor-pointer">
-                      Use secure connection
-                      <span class="text-neutral-500 text-2xs ml-1">(uncheck for local servers)</span>
+                    <label for="secure-connection" class="text-xs text-neutral-300 cursor-pointer">{{ $t('ap.useSecure') }}<span class="text-neutral-500 text-2xs ml-1">(uncheck for local servers)</span>
                     </label>
                   </div>
                 </div>
@@ -2278,17 +2260,17 @@
             <!-- GOALS (location checks) -->
             <div v-else-if="isTabVisible('goals')" class="space-y-3">
               <div>
-                <h2 class="font-semibold text-neutral-100">Checks</h2>
-                <p class="text-xs text-neutral-400">Location checks for this world</p>
+                <h2 class="font-semibold text-neutral-100">{{ $t('tabs.checks') }}</h2>
+                <p class="text-xs text-neutral-400">{{ $t('goals.locationChecks') }}</p>
               </div>
 
               <!-- Goal panel (collapsible: total in the summary, per-size detail inside) -->
               <details class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2">
                 <summary class="cursor-pointer list-none">
-                  <div class="text-[11px] uppercase tracking-wider text-amber-300/70">Goal</div>
+                  <div class="text-[11px] uppercase tracking-wider text-amber-300/70">{{ $t('common.goal') }}</div>
                   <div class="mt-0.5 flex items-center gap-2 text-sm text-amber-200">
                     <span>&#127919;</span>
-                    <span>Compl&eacute;ter <span class="font-semibold">{{ items.goalTarget.value }}</span> grilles</span>
+                    <span>{{ $t('board.complete') }}<span class="font-semibold">{{ items.goalTarget.value }}</span> grilles</span>
                     <span class="ml-auto text-xs" :class="goalCompleted ? 'text-lime-400' : 'text-amber-300/80'">{{ goalCompleted ? '&#10003; Atteint' : items.goalProgress.value + ' / ' + items.goalTarget.value }}</span>
                   </div>
                 </summary>
@@ -2345,14 +2327,14 @@
         >
             <!-- mini tab bar: Game Log | Debug -->
             <div class="flex border-b border-neutral-700/50 shrink-0">
-              <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'log' }" @click="activeLogTab = 'log'">Game Log</button>
+              <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'log' }" @click="activeLogTab = 'log'">{{ $t('tabs.log') }}</button>
               <button v-if="debugTabVisible" class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'debug' }" @click="activeLogTab = 'debug'">Debug</button>
             </div>
             <div v-show="activeLogTab === 'log'" ref="chatLogContainer" class="flex-1 min-h-0 px-4 pb-3 overflow-auto custom-scrollbar">
               <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
                 <div class="text-center space-y-1">
-                  <div>No messages yet</div>
-                  <div class="text-2xs">Game events will appear here</div>
+                  <div>{{ $t('log.noMessages') }}</div>
+                  <div class="text-2xs">{{ $t('log.eventsHere') }}</div>
                 </div>
               </div>
               <div v-else class="space-y-2">
@@ -2386,9 +2368,7 @@
                 class="btn-secondary shrink-0"
                 :disabled="status !== 'connected' || !chatInput.trim()"
                 @click="submitChat()"
-              >
-                Send
-              </button>
+              >{{ $t('log.send') }}</button>
             </div>
             <div v-show="activeLogTab === 'debug' && debugTabVisible" class="space-y-6 p-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
               <div class="flex items-center gap-3">
@@ -2400,7 +2380,7 @@
 
               <!-- Debug Display -->
               <section class="space-y-3">
-                <h3 class="section-heading">Display Options</h3>
+                <h3 class="section-heading">{{ $t('settings.displayOptions') }}</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-4">
                   <label class="flex items-center gap-3 cursor-pointer group">
                     <input type="checkbox" v-model="showDebugGrid" class="checkbox-field" />
@@ -2413,7 +2393,7 @@
               <section class="space-y-3">
                 <h3 class="section-heading">Actions</h3>
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
-                  <button type="button" class="btn-secondary w-full" @click="autoSolve()">Auto-Solve Puzzle</button>
+                  <button type="button" class="btn-secondary w-full" @click="autoSolve()">{{ $t('controls.autoSolve') }}</button>
                 </div>
               </section>
 
@@ -2589,9 +2569,7 @@
                 type="button"
                 data-sleek
                 class="px-3 py-1.5 rounded text-xs transition-colors bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/30"
-              >
-                Give Feedback
-              </button>
+              >{{ $t('misc.giveFeedback') }}</button>
             </div>
           </div>
 
@@ -2603,9 +2581,9 @@
               @click="navigateToChat"
               class="inline-block animate-message-flash hover:text-lime-400 transition-colors cursor-pointer"
             >
-              <span class="opacity-60">Latest:</span> {{ latestItemMessage }}
+              <span class="opacity-60">{{ $t('log.latest') }}</span> {{ latestItemMessage }}
             </button>
-            <span v-else class="opacity-50">No item messages</span>
+            <span v-else class="opacity-50">{{ $t('log.noItemMessages') }}</span>
             <!-- version -->
             <span class="ml-4 opacity-50">v0.6.6</span>
           </div>

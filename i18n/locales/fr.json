@@ -6,10 +6,104 @@
     "title": "Nonopelagram"
   },
   "status": {
-    "powerups": "Bonus :"
+    "powerups": "Bonus :",
+    "lives": "Vies :",
+    "coins": "Pièces :"
   },
   "controls": {
     "mode": "Mode",
-    "powerup": "Bonus"
+    "powerup": "Bonus",
+    "newPuzzle": "Nouveau puzzle",
+    "nextPuzzle": "Puzzle suivant",
+    "generate": "Générer un nouveau puzzle",
+    "autoSolve": "Résoudre automatiquement",
+    "heal": "Soigner +1 vie",
+    "clickDrag": "Cliquer-glisser pour peindre les cases",
+    "revealHint": "Révèle 1 indice (ce puzzle uniquement)"
+  },
+  "log": {
+    "latest": "Dernier :",
+    "send": "Envoyer",
+    "eventsHere": "Les événements de jeu apparaîtront ici",
+    "noMessages": "Aucun message pour l'instant",
+    "noItemMessages": "Aucun message d'objet"
+  },
+  "board": {
+    "loading": "Chargement du puzzle…",
+    "complete": "Compléter"
+  },
+  "common": {
+    "goal": "Objectif"
+  },
+  "nav": {
+    "menu": "Menu"
+  },
+  "tabs": {
+    "shop": "Boutique",
+    "checks": "Checks",
+    "log": "Journal",
+    "settings": "Réglages"
+  },
+  "modal": {
+    "solvedTitle": "Puzzle résolu !",
+    "solvedBody": "Félicitations pour avoir complété le nonogramme !",
+    "gameOverTitle": "Partie terminée !",
+    "gameOverBody": "Vous n'avez plus de vies. Réessayer ?",
+    "goalReached": "Objectif atteint !"
+  },
+  "settings": {
+    "title": "Réglages du jeu",
+    "subtitle": "Personnalisez votre expérience de puzzle",
+    "appearance": "Apparence et langue",
+    "apMode": "Mode Archipelago",
+    "apModeDesc": "Verrouille les fonctionnalités jusqu'à réception depuis AP",
+    "apLockedNote": "Mode Archipelago — certaines fonctionnalités sont verrouillées jusqu'à récompense",
+    "resources": "Ressources",
+    "startingLives": "Vies de départ",
+    "startingCoins": "Pièces de départ",
+    "startingHints": "Indices révélés au départ",
+    "unlimitedLives": "Vies illimitées",
+    "unlimitedCoins": "Pièces illimitées",
+    "shopPrices": "Prix de la boutique",
+    "tempHintCost": "Coût d'indice temporaire",
+    "randomCellCost": "Coût de résolution de case aléatoire",
+    "coinsPerBundle": "Pièces par lot",
+    "coinsPerLine": "Pièces par ligne",
+    "behaviour": "Comportement",
+    "autoX": "Marquer X auto les lignes/colonnes complétées",
+    "showMistakes": "Afficher les erreurs en temps réel",
+    "greyHints": "Griser les indices complétés",
+    "logHints": "Journaliser les indices",
+    "lockAspect": "Verrouiller le ratio (puzzles carrés)",
+    "puzzleDimensions": "Dimensions du puzzle",
+    "rows": "Lignes",
+    "columns": "Colonnes",
+    "fillDensity": "Densité de remplissage",
+    "sparse": "Clairsemé (20 %)",
+    "dense": "Dense (70 %)",
+    "puzzleGeneration": "Génération de puzzle",
+    "gameActions": "Actions de jeu",
+    "clearCurrent": "Effacer le puzzle actuel",
+    "gameActionsLocked": "Les actions de jeu sont verrouillées en mode Archipelago",
+    "displayOptions": "Options d'affichage"
+  },
+  "ap": {
+    "connectionTitle": "Connexion Archipelago",
+    "connectSubtitle": "Se connecter au serveur multijoueur",
+    "enterDetails": "Saisissez les détails du serveur",
+    "host": "Hôte",
+    "port": "Port",
+    "playerName": "Nom du joueur",
+    "password": "Mot de passe",
+    "useSecure": "Utiliser une connexion sécurisée"
+  },
+  "shop": {
+    "subtitle": "Dépensez vos pièces en bonus et améliorations"
+  },
+  "goals": {
+    "locationChecks": "Checks de localisation pour ce monde"
+  },
+  "misc": {
+    "giveFeedback": "Donner un avis"
   }
 }

@@ -6,10 +6,104 @@
     "title": "Nonopelagram"
   },
   "status": {
-    "powerups": "Power-ups:"
+    "powerups": "Power-ups:",
+    "lives": "Lives:",
+    "coins": "Coins:"
   },
   "controls": {
     "mode": "Mode",
-    "powerup": "Power-up"
+    "powerup": "Power-up",
+    "newPuzzle": "New Puzzle",
+    "nextPuzzle": "Next Puzzle",
+    "generate": "Generate New Puzzle",
+    "autoSolve": "Auto-Solve Puzzle",
+    "heal": "Heal +1 Life",
+    "clickDrag": "Click and drag to paint cells",
+    "revealHint": "Reveals 1 hint (this puzzle only)"
+  },
+  "log": {
+    "latest": "Latest:",
+    "send": "Send",
+    "eventsHere": "Game events will appear here",
+    "noMessages": "No messages yet",
+    "noItemMessages": "No item messages"
+  },
+  "board": {
+    "loading": "Loading puzzle...",
+    "complete": "Complete"
+  },
+  "common": {
+    "goal": "Goal"
+  },
+  "nav": {
+    "menu": "Menu"
+  },
+  "tabs": {
+    "shop": "Shop",
+    "checks": "Checks",
+    "log": "Game Log",
+    "settings": "Settings"
+  },
+  "modal": {
+    "solvedTitle": "Puzzle Solved!",
+    "solvedBody": "Congratulations on completing the nonogram!",
+    "gameOverTitle": "Game Over!",
+    "gameOverBody": "You ran out of lives. Try again?",
+    "goalReached": "Goal reached!"
+  },
+  "settings": {
+    "title": "Game Settings",
+    "subtitle": "Customize your puzzle experience",
+    "appearance": "Appearance & Language",
+    "apMode": "Archipelago Mode",
+    "apModeDesc": "Lock features until received from AP",
+    "apLockedNote": "Archipelago Mode - Some features are locked until rewarded",
+    "resources": "Resources",
+    "startingLives": "Starting Lives",
+    "startingCoins": "Starting Coins",
+    "startingHints": "Starting Hints Revealed",
+    "unlimitedLives": "Unlimited Lives",
+    "unlimitedCoins": "Unlimited Coins",
+    "shopPrices": "Shop Prices",
+    "tempHintCost": "Temporary Hint Cost",
+    "randomCellCost": "Random Cell Solve Cost",
+    "coinsPerBundle": "Coins per Bundle",
+    "coinsPerLine": "Coins per Line",
+    "behaviour": "Behaviour",
+    "autoX": "Auto-X completed rows/columns",
+    "showMistakes": "Show mistakes in real-time",
+    "greyHints": "Grey out completed hints",
+    "logHints": "Log Hints",
+    "lockAspect": "Lock aspect ratio (square puzzles)",
+    "puzzleDimensions": "Puzzle Dimensions",
+    "rows": "Rows",
+    "columns": "Columns",
+    "fillDensity": "Fill Density",
+    "sparse": "Sparse (20%)",
+    "dense": "Dense (70%)",
+    "puzzleGeneration": "Puzzle Generation",
+    "gameActions": "Game Actions",
+    "clearCurrent": "Clear Current Puzzle",
+    "gameActionsLocked": "Game actions are locked in Archipelago mode",
+    "displayOptions": "Display Options"
+  },
+  "ap": {
+    "connectionTitle": "Archipelago Connection",
+    "connectSubtitle": "Connect to multiplayer server",
+    "enterDetails": "Enter your server details",
+    "host": "Host",
+    "port": "Port",
+    "playerName": "Player Name",
+    "password": "Password",
+    "useSecure": "Use secure connection"
+  },
+  "shop": {
+    "subtitle": "Spend coins on boosts & upgrades"
+  },
+  "goals": {
+    "locationChecks": "Location checks for this world"
+  },
+  "misc": {
+    "giveFeedback": "Give Feedback"
   }
 }
