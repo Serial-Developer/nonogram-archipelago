@@ -102,7 +102,11 @@
     "clearAllTitle": "Supprimer toute la progression sauvegardée (état de jeu, objets, pièces, historique)",
     "showSolution": "Afficher la grille solution (debug)",
     "apModeLockedTitle": "Connecté à un serveur Archipelago — le mode est verrouillé",
-    "highlightLines": "Surligner la ligne et la colonne actives (D-pad)"
+    "highlightLines": "Surligner la ligne et la colonne actives (D-pad)",
+    "markGoalTitle": "Marquer le goal comme terminé",
+    "markGoalDesc": "Signale manuellement la complétion du goal au serveur. Aide hôte temporaire.",
+    "markGoalBtn": "Terminer le goal",
+    "markGoalDone": "Goal terminé ✓"
   },
   "ap": {
     "connectionTitle": "Connexion Archipelago",

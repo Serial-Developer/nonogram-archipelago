@@ -102,7 +102,11 @@
     "clearAllTitle": "Delete all saved progress including game state, items, coins, and puzzle history",
     "showSolution": "Show solution grid (debug)",
     "apModeLockedTitle": "Connected to an Archipelago server — the mode is locked",
-    "highlightLines": "Highlight active row & column (D-pad)"
+    "highlightLines": "Highlight active row & column (D-pad)",
+    "markGoalTitle": "Mark goal as completed",
+    "markGoalDesc": "Manually report goal completion to the server. Temporary host helper.",
+    "markGoalBtn": "Complete goal",
+    "markGoalDone": "Goal completed ✓"
   },
   "ap": {
     "connectionTitle": "Archipelago Connection",
