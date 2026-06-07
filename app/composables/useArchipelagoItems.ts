@@ -237,6 +237,7 @@ export const ITEM_REGISTRY: ItemDefinition[] = [
 // COMPOSABLE
 // ============================================
 export function useArchipelagoItems() {
+  const { t } = useI18n();
   // Unlock states - these determine what features are available
   // In "locked" mode (Archipelago run), these start as false
   // In "free play" mode, these are all true
@@ -1188,42 +1189,42 @@ export function useArchipelagoItems() {
       key, label, items, done: items.filter((x) => x.completed).length, total: items.length,
     });
     const sizeDefs = [
-      { key: "5x5", label: "Grille 5x5", unlock: 0, first: AP_LOCATIONS.FIRST_LINE_5X5, base: AP_LOCATIONS.PUZZLE_5X5_BASE, flawless: AP_LOCATIONS.FLAWLESS_5X5 },
-      { key: "10x10", label: "Grille 10x10", unlock: AP_LOCATIONS.UNLOCK_10X10, first: AP_LOCATIONS.FIRST_LINE_10X10, base: AP_LOCATIONS.PUZZLE_10X10_BASE, flawless: AP_LOCATIONS.FLAWLESS_10X10 },
-      { key: "15x15", label: "Grille 15x15", unlock: AP_LOCATIONS.UNLOCK_15X15, first: AP_LOCATIONS.FIRST_LINE_15X15, base: AP_LOCATIONS.PUZZLE_15X15_BASE, flawless: AP_LOCATIONS.FLAWLESS_15X15 },
-      { key: "20x20", label: "Grille 20x20", unlock: AP_LOCATIONS.UNLOCK_20X20, first: AP_LOCATIONS.FIRST_LINE_20X20, base: AP_LOCATIONS.PUZZLE_20X20_BASE, flawless: AP_LOCATIONS.FLAWLESS_20X20 },
+      { key: "5x5", label: t('checks.sectionGrid', { size: '5x5' }), unlock: 0, first: AP_LOCATIONS.FIRST_LINE_5X5, base: AP_LOCATIONS.PUZZLE_5X5_BASE, flawless: AP_LOCATIONS.FLAWLESS_5X5 },
+      { key: "10x10", label: t('checks.sectionGrid', { size: '10x10' }), unlock: AP_LOCATIONS.UNLOCK_10X10, first: AP_LOCATIONS.FIRST_LINE_10X10, base: AP_LOCATIONS.PUZZLE_10X10_BASE, flawless: AP_LOCATIONS.FLAWLESS_10X10 },
+      { key: "15x15", label: t('checks.sectionGrid', { size: '15x15' }), unlock: AP_LOCATIONS.UNLOCK_15X15, first: AP_LOCATIONS.FIRST_LINE_15X15, base: AP_LOCATIONS.PUZZLE_15X15_BASE, flawless: AP_LOCATIONS.FLAWLESS_15X15 },
+      { key: "20x20", label: t('checks.sectionGrid', { size: '20x20' }), unlock: AP_LOCATIONS.UNLOCK_20X20, first: AP_LOCATIONS.FIRST_LINE_20X20, base: AP_LOCATIONS.PUZZLE_20X20_BASE, flawless: AP_LOCATIONS.FLAWLESS_20X20 },
     ];
     const sections: CSection[] = [];
     for (const sd of sizeDefs) {
       const count = PUZZLE_COUNTS[sd.key as "5x5" | "10x10" | "15x15" | "20x20"];
       if (count <= 0) continue;
       const its: CItem[] = [];
-      if (sd.unlock) its.push(mk(sd.unlock, `Unlock ${sd.key}`));
-      its.push(mk(sd.first, `First Line (${sd.key})`));
-      for (let i = 1; i <= count; i++) its.push(mk(sd.base + i, `Complete ${i} ${sd.key} Puzzle${i > 1 ? "s" : ""}`));
-      if (flawlessChecks.value) its.push(mk(sd.flawless, `Flawless ${sd.key}`));
+      if (sd.unlock) its.push(mk(sd.unlock, t('checks.unlock', { size: sd.key })));
+      its.push(mk(sd.first, t('checks.firstLine', { size: sd.key })));
+      for (let i = 1; i <= count; i++) its.push(mk(sd.base + i, t('checks.completePuzzles', { i, size: sd.key, s: i > 1 ? 's' : '' })));
+      if (flawlessChecks.value) its.push(mk(sd.flawless, t('checks.flawlessSize', { size: sd.key })));
       sections.push(finish(sd.key, sd.label, its));
     }
     const wallets: CItem[] = [];
     for (let k = 1; k <= Math.min(walletsInPool.value, 4); k++) {
-      wallets.push(mk(AP_LOCATIONS.SHOP_WALLET_1 + (k - 1), `Wallet Upgrade ${k}`));
+      wallets.push(mk(AP_LOCATIONS.SHOP_WALLET_1 + (k - 1), t('checks.walletUpgradeN', { k })));
     }
-    if (wallets.length) sections.push(finish("wallets", "Bourses", wallets));
+    if (wallets.length) sections.push(finish("wallets", t('checks.sectionWallets'), wallets));
     const hearts: CItem[] = [];
     if (shopHearts.value && !unlimitedLives.value) {
       for (let k = 1; k <= Math.min(heartsInPool.value, 10); k++) {
-        hearts.push(mk(AP_LOCATIONS.SHOP_HEART_1 + (k - 1), `Heart Container ${k}`));
+        hearts.push(mk(AP_LOCATIONS.SHOP_HEART_1 + (k - 1), t('checks.heartContainerN', { k })));
       }
     }
-    if (hearts.length) sections.push(finish("hearts", "Coeurs", hearts));
+    if (hearts.length) sections.push(finish("hearts", t('checks.sectionHearts'), hearts));
     const misc: CItem[] = [
-      mk(AP_LOCATIONS.OBTAIN_50_COINS, "Obtain 50 Coins"),
-      mk(AP_LOCATIONS.OBTAIN_100_COINS, "Obtain 100 Coins"),
+      mk(AP_LOCATIONS.OBTAIN_50_COINS, t('checks.obtainCoins', { n: 50 })),
+      mk(AP_LOCATIONS.OBTAIN_100_COINS, t('checks.obtainCoins', { n: 100 })),
     ];
     const totalPuzzles = PUZZLE_COUNTS["5x5"] + PUZZLE_COUNTS["10x10"] + PUZZLE_COUNTS["15x15"] + PUZZLE_COUNTS["20x20"];
-    if (flawlessChecks.value && totalPuzzles >= 5) misc.push(mk(AP_LOCATIONS.FLAWLESS_STREAK_5, "Flawless Streak (5)"));
-    if (flawlessChecks.value && totalPuzzles >= 10) misc.push(mk(AP_LOCATIONS.FLAWLESS_TOTAL_10, "Flawless Total (10)"));
-    sections.push(finish("misc", "Divers", misc));
+    if (flawlessChecks.value && totalPuzzles >= 5) misc.push(mk(AP_LOCATIONS.FLAWLESS_STREAK_5, t('checks.flawlessStreak', { n: 5 })));
+    if (flawlessChecks.value && totalPuzzles >= 10) misc.push(mk(AP_LOCATIONS.FLAWLESS_TOTAL_10, t('checks.flawlessTotal', { n: 10 })));
+    sections.push(finish("misc", t('checks.sectionMisc'), misc));
     return sections;
   });
   const goalTarget = computed(

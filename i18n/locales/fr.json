@@ -176,6 +176,29 @@
     "openTitle": "Ouvrir le sélecteur de thème",
     "selectAria": "Sélectionner le thème de couleur",
     "closeAria": "Fermer le menu des thèmes",
-    "menuAria": "Menu de sélection du thème"
+    "menuAria": "Menu de sélection du thème",
+    "names": {
+      "default": "Sombre (défaut)",
+      "max-contrast": "Contraste élevé"
+    },
+    "descs": {
+      "default": "Agréable pour les yeux",
+      "max-contrast": "Couleurs à fort contraste pour une visibilité maximale"
+    }
+  },
+  "checks": {
+    "sectionGrid": "Grille {size}",
+    "sectionWallets": "Bourses",
+    "sectionHearts": "Cœurs",
+    "sectionMisc": "Divers",
+    "unlock": "Débloquer {size}",
+    "firstLine": "Première ligne ({size})",
+    "completePuzzles": "Compléter {i} grille{s} {size}",
+    "flawlessSize": "Sans faute {size}",
+    "walletUpgradeN": "Amélioration de bourse {k}",
+    "heartContainerN": "Conteneur de cœur {k}",
+    "obtainCoins": "Obtenir {n} pièces",
+    "flawlessStreak": "Série sans faute ({n})",
+    "flawlessTotal": "Total sans faute ({n})"
   }
 }

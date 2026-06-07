@@ -176,6 +176,29 @@
     "openTitle": "Open theme selector",
     "selectAria": "Select color theme",
     "closeAria": "Close theme menu",
-    "menuAria": "Theme selection menu"
+    "menuAria": "Theme selection menu",
+    "names": {
+      "default": "Dark (Default)",
+      "max-contrast": "High Contrast"
+    },
+    "descs": {
+      "default": "Nice for the eyes",
+      "max-contrast": "High contrast colors for maximum visibility"
+    }
+  },
+  "checks": {
+    "sectionGrid": "Grid {size}",
+    "sectionWallets": "Wallets",
+    "sectionHearts": "Hearts",
+    "sectionMisc": "Misc",
+    "unlock": "Unlock {size}",
+    "firstLine": "First Line ({size})",
+    "completePuzzles": "Complete {i} {size} Puzzle{s}",
+    "flawlessSize": "Flawless {size}",
+    "walletUpgradeN": "Wallet Upgrade {k}",
+    "heartContainerN": "Heart Container {k}",
+    "obtainCoins": "Obtain {n} Coins",
+    "flawlessStreak": "Flawless Streak ({n})",
+    "flawlessTotal": "Flawless Total ({n})"
   }
 }

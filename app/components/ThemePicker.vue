@@ -52,8 +52,8 @@
                 : 'text-color-text-primary hover:bg-color-tab-inactive-bg'
             "
           >
-            <div class="font-medium">{{ theme.name }}</div>
-            <div class="text-xs opacity-75">{{ theme.description }}</div>
+            <div class="font-medium">{{ $t('theme.names.' + theme.id) }}</div>
+            <div class="text-xs opacity-75">{{ $t('theme.descs.' + theme.id) }}</div>
           </button>
         </div>
       </div>
