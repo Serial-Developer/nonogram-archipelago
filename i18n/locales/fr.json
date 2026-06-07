@@ -101,7 +101,8 @@
     "displayOptions": "Options d'affichage",
     "clearAllTitle": "Supprimer toute la progression sauvegardée (état de jeu, objets, pièces, historique)",
     "showSolution": "Afficher la grille solution (debug)",
-    "apModeLockedTitle": "Connecté à un serveur Archipelago — le mode est verrouillé"
+    "apModeLockedTitle": "Connecté à un serveur Archipelago — le mode est verrouillé",
+    "highlightLines": "Surligner la ligne et la colonne actives (D-pad)"
   },
   "ap": {
     "connectionTitle": "Connexion Archipelago",

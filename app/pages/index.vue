@@ -162,6 +162,7 @@
   const checkPulse = ref(false);
   const autoX = ref(true);
   const greyCompletedHints = ref(true);
+  const highlightLines = ref(true); // Highlight cursor row/column + clues (D-pad)
   const showDebugGrid = ref(false);
   // Debug: simulate Archipelago slot_data options without generating a seed
   const simAutoX = ref(true);
@@ -1545,6 +1546,7 @@
                   :mobile-cell-mode="mobileCellMode"
                   :cursor-row="isMobile ? cursorR : -1"
                   :cursor-col="isMobile ? cursorC : -1"
+                  :highlight-lines="highlightLines"
                   :reserved-bottom="controlsReserve"
                   :disabled="gameOver && !solved"
                   @cell="handleCellChange"
@@ -2110,6 +2112,11 @@
                     <label class="flex items-center gap-3 cursor-pointer group">
                       <input type="checkbox" v-model="dragPainting" class="checkbox-field" />
                       <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">{{ $t('controls.clickDrag') }}</span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" v-model="highlightLines" class="checkbox-field" />
+                      <span class="text-sm text-neutral-200 group-hover:text-white transition-colors flex items-center gap-2">{{ $t('settings.highlightLines') }}</span>
                     </label>
                   </div>
                 </section>

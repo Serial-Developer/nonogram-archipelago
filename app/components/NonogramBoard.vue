@@ -21,6 +21,7 @@
     mobileCellMode?: 'fill' | 'x' | 'maybe'; // For mobile mode toggle
     cursorRow?: number; // Mobile D-pad cursor cell (-1 to hide)
     cursorCol?: number;
+    highlightLines?: boolean; // Highlight cursor row/column + clues
     reservedBottom?: number; // px reserved below the board (e.g. mobile D-pad) so the grid still fits
     disabled?: boolean; // Disable interactions when puzzle is failed or completed
   }>();
@@ -88,6 +89,9 @@
 
   const colDepth = computed(() => Math.max(1, ...props.colClues.map((c) => c.length)));
   const rowDepth = computed(() => Math.max(1, ...props.rowClues.map((r) => r.length)));
+  const xhairOn = computed(
+    () => (props.highlightLines ?? true) && (props.cursorRow ?? -1) >= 0 && (props.cursorCol ?? -1) >= 0,
+  );
 
   // No hard floor: the board always fits the viewport. Cells shrink as needed so the whole grid
   // (cells + clues, both axes) stays visible without scrolling, whatever the grid size.
@@ -376,7 +380,7 @@
               v-for="c in cols"
               :key="`col-${c}-r-${i}`"
               class="flex items-end justify-center text-[11px] leading-none"
-              :class="
+              :class="[
                 (() => {
                   const clueArray = colClues[c - 1];
                   if (!clueArray) return 'clue-text-default';
@@ -386,8 +390,9 @@
                     return isComplete ? 'clue-text-complete' : 'clue-text-default';
                   }
                   return 'clue-text-default';
-                })()
-              "
+                })(),
+                { 'xhair-clue': xhairOn && c - 1 === cursorCol },
+              ]"
             >
               <!-- show from bottom, hide 0 clues -->
               {{
@@ -423,7 +428,7 @@
               v-for="i in rowDepth"
               :key="`row-${r}-c-${i}`"
               class="flex items-center justify-end pr-1.5 text-[11px] leading-none"
-              :class="
+              :class="[
                 (() => {
                   const clueArray = rowClues[r - 1];
                   if (!clueArray) return 'clue-text-default';
@@ -433,8 +438,9 @@
                     return isComplete ? 'clue-text-complete' : 'clue-text-default';
                   }
                   return 'clue-text-default';
-                })()
-              "
+                })(),
+                { 'xhair-clue': xhairOn && r - 1 === cursorRow },
+              ]"
             >
               <!-- show from right, hide 0 clues -->
               {{
@@ -522,6 +528,8 @@
               :class="{
                 'ring-2 ring-inset ring-amber-400 relative z-10':
                   cursorRow === Math.floor((idx - 1) / cols) && cursorCol === (idx - 1) % cols,
+                'xhair-cell':
+                  xhairOn && (cursorRow === Math.floor((idx - 1) / cols) || cursorCol === (idx - 1) % cols),
               }"
               :style="{
                 backgroundColor: (() => {
@@ -572,3 +580,21 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+.xhair-clue {
+  background: rgba(251, 191, 36, 0.22);
+  font-weight: 600;
+  border-radius: 2px;
+}
+.xhair-cell {
+  position: relative;
+}
+.xhair-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(251, 191, 36, 0.12);
+  pointer-events: none;
+}
+</style>

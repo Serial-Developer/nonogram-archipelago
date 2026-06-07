@@ -101,7 +101,8 @@
     "displayOptions": "Display Options",
     "clearAllTitle": "Delete all saved progress including game state, items, coins, and puzzle history",
     "showSolution": "Show solution grid (debug)",
-    "apModeLockedTitle": "Connected to an Archipelago server — the mode is locked"
+    "apModeLockedTitle": "Connected to an Archipelago server — the mode is locked",
+    "highlightLines": "Highlight active row & column (D-pad)"
   },
   "ap": {
     "connectionTitle": "Archipelago Connection",
