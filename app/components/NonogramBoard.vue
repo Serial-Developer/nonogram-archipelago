@@ -68,6 +68,7 @@
     if (typeof window === 'undefined' || !rootEl.value) return;
     const top = rootEl.value.getBoundingClientRect().top;
     measuredAvailH.value = Math.max(0, window.innerHeight - top - 12);
+    measureXhair();
   }
 
   // Add global event listeners
@@ -77,6 +78,7 @@
     updateWindowWidth();
     window.addEventListener('resize', updateWindowWidth);
     void nextTick(measureAvail);
+    void nextTick(measureXhair);
   });
 
   onUnmounted(() => {
@@ -182,6 +184,27 @@
 
   // Ref for the grid container
   const gridRef = ref<HTMLElement | null>(null);
+  const xhairV = ref<Record<string, string> | null>(null);
+  const xhairH = ref<Record<string, string> | null>(null);
+  function measureXhair() {
+    if (typeof window === 'undefined' || !xhairOn.value || !rootEl.value || !gridRef.value) {
+      xhairV.value = null;
+      xhairH.value = null;
+      return;
+    }
+    const g = gridRef.value.getBoundingClientRect();
+    const root = rootEl.value.getBoundingClientRect();
+    const cs = cellSize.value;
+    const cx = g.left - root.left + (props.cursorCol ?? 0) * cs;
+    const cy = g.top - root.top + (props.cursorRow ?? 0) * cs;
+    xhairV.value = { left: `${cx}px`, top: '0px', width: `${cs}px`, height: `${root.height}px` };
+    xhairH.value = { left: '0px', top: `${cy}px`, width: `${root.width}px`, height: `${cs}px` };
+  }
+  watch(
+    [() => props.cursorRow, () => props.cursorCol, cellSize, xhairOn, () => props.rows, () => props.cols],
+    () => void nextTick(measureXhair),
+    { immediate: true },
+  );
 
   function onTouchMove(e: TouchEvent) {
     if (!props.dragPainting || !isDragging.value || !dragMode.value) return;
@@ -341,7 +364,7 @@
 <template>
   <div
     ref="rootEl"
-    class="select-none"
+    class="select-none relative"
     :style="{
       '--cell': `${cellSize}px`,
       display: 'inline-block',
@@ -351,7 +374,7 @@
   >
     <!-- Whole thing is a 2x2 grid: [corner | col clues] / [row clues | board] -->
     <div
-      class="grid gap-1 sm:gap-2"
+      class="grid gap-1 sm:gap-2 relative z-[1]"
       :style="{
         gridTemplateColumns: `auto auto`,
         gridTemplateRows: `auto auto`,
@@ -528,8 +551,6 @@
               :class="{
                 'ring-2 ring-inset ring-amber-400 relative z-10':
                   cursorRow === Math.floor((idx - 1) / cols) && cursorCol === (idx - 1) % cols,
-                'xhair-cell':
-                  xhairOn && (cursorRow === Math.floor((idx - 1) / cols) || cursorCol === (idx - 1) % cols),
               }"
               :style="{
                 backgroundColor: (() => {
@@ -578,23 +599,20 @@
         </div>
       </div>
     </div>
+
+    <div v-if="xhairOn && xhairV" class="xhair-strip" :style="xhairV" />
+    <div v-if="xhairOn && xhairH" class="xhair-strip" :style="xhairH" />
   </div>
 </template>
 
 <style scoped>
 .xhair-clue {
-  background: rgba(251, 191, 36, 0.22);
   font-weight: 600;
-  border-radius: 2px;
 }
-.xhair-cell {
-  position: relative;
-}
-.xhair-cell::before {
-  content: '';
+.xhair-strip {
   position: absolute;
-  inset: 0;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(251, 191, 36, 0.13);
   pointer-events: none;
+  z-index: 0;
 }
 </style>
