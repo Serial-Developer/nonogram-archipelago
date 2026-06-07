@@ -1432,11 +1432,6 @@
                   <span class="text-sm font-bold">{{ items.randomCellSolves.value }}</span>
                 </button>
               </div>
-              <!-- Theme Picker - aligned to the right -->
-              <div class="ml-auto flex items-center gap-2">
-                <LanguageSwitcher />
-                <ThemePicker />
-              </div>
             </div>
           </div>
 
@@ -1934,6 +1929,15 @@
                 </div>
               </div>
 
+              <!-- Appearance & Language -->
+              <section class="space-y-3">
+                <h3 class="section-heading">Appearance &amp; Language</h3>
+                <div class="bg-neutral-800/30 rounded-sm p-4 flex items-center gap-3">
+                  <LanguageSwitcher />
+                  <ThemePicker />
+                </div>
+              </section>
+
               <!-- Archipelago Mode Indicator -->
               <div v-if="items.archipelagoMode.value" class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-sm">
                 <div class="flex items-center gap-2 text-amber-300 text-sm">
@@ -2197,7 +2201,13 @@
                 <!-- Game Actions -->
                 <section class="space-y-4">
                   <h3 class="section-heading">Game Actions</h3>
-                  <div class="bg-neutral-800/30 rounded-sm p-4 space-y-3">
+                  <div
+                    class="bg-neutral-800/30 rounded-sm p-4 space-y-3"
+                    :class="{ 'opacity-60 pointer-events-none': items.archipelagoMode.value }"
+                  >
+                    <div v-if="items.archipelagoMode.value" class="text-xs text-amber-300/70">
+                      Game actions are locked in Archipelago mode
+                    </div>
                     <button type="button" class="btn-destructive w-full" @click="clearPlayer()">Clear Current Puzzle</button>
                     <button
                       type="button"
