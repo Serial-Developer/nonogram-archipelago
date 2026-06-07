@@ -19,7 +19,8 @@
     "autoSolve": "Résoudre automatiquement",
     "heal": "Soigner +1 vie",
     "clickDrag": "Cliquer-glisser pour peindre les cases",
-    "revealHint": "Révèle 1 indice (ce puzzle uniquement)"
+    "revealHint": "Révèle 1 indice (ce puzzle uniquement)",
+    "solveRandomTitle": "Résoudre une case aléatoire"
   },
   "log": {
     "latest": "Dernier :",
@@ -30,10 +31,13 @@
   },
   "board": {
     "loading": "Chargement du puzzle…",
-    "complete": "Compléter"
+    "complete": "Compléter",
+    "quartersToHeart": "Quarts vers le prochain cœur"
   },
   "common": {
-    "goal": "Objectif"
+    "goal": "Objectif",
+    "disable": "Désactiver",
+    "enable": "Activer"
   },
   "nav": {
     "menu": "Menu"
@@ -85,7 +89,10 @@
     "gameActions": "Actions de jeu",
     "clearCurrent": "Effacer le puzzle actuel",
     "gameActionsLocked": "Les actions de jeu sont verrouillées en mode Archipelago",
-    "displayOptions": "Options d'affichage"
+    "displayOptions": "Options d'affichage",
+    "clearAllTitle": "Supprimer toute la progression sauvegardée (état de jeu, objets, pièces, historique)",
+    "showSolution": "Afficher la grille solution (debug)",
+    "apModeLockedTitle": "Connecté à un serveur Archipelago — le mode est verrouillé"
   },
   "ap": {
     "connectionTitle": "Connexion Archipelago",
@@ -95,7 +102,16 @@
     "port": "Port",
     "playerName": "Nom du joueur",
     "password": "Mot de passe",
-    "useSecure": "Utiliser une connexion sécurisée"
+    "useSecure": "Utiliser une connexion sécurisée",
+    "phHost": "localhost",
+    "phPort": "38281",
+    "phPlayer": "Votre nom de joueur",
+    "phPassword": "Mot de passe (optionnel)",
+    "disconnect": "Se déconnecter",
+    "connecting": "Connexion…",
+    "connect": "Se connecter",
+    "chatPlaceholder": "Message ou commande (ex. !hint)",
+    "chatPlaceholderOff": "Connectez-vous pour discuter"
   },
   "shop": {
     "subtitle": "Dépensez vos pièces en bonus et améliorations"
@@ -105,5 +121,24 @@
   },
   "misc": {
     "giveFeedback": "Donner un avis"
+  },
+  "aria": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "moveUp": "Monter",
+    "moveLeft": "Aller à gauche",
+    "moveRight": "Aller à droite",
+    "moveDown": "Descendre",
+    "fillMode": "Mode remplir",
+    "maybeMode": "Mode peut-être (modèle)",
+    "xMode": "Mode croix",
+    "useRandomSolve": "Utiliser une résolution de case aléatoire",
+    "fillSelected": "Remplir la case sélectionnée",
+    "crossSelected": "Croiser la case sélectionnée"
+  },
+  "resize": {
+    "gameOptions": "Glisser pour redimensionner Jeu / Options",
+    "shopTab": "Glisser pour redimensionner Shop / Onglet",
+    "logHeight": "Glisser pour redimensionner la hauteur du log"
   }
 }

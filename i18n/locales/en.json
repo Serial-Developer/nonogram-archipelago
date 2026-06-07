@@ -19,7 +19,8 @@
     "autoSolve": "Auto-Solve Puzzle",
     "heal": "Heal +1 Life",
     "clickDrag": "Click and drag to paint cells",
-    "revealHint": "Reveals 1 hint (this puzzle only)"
+    "revealHint": "Reveals 1 hint (this puzzle only)",
+    "solveRandomTitle": "Solve a random cell"
   },
   "log": {
     "latest": "Latest:",
@@ -30,10 +31,13 @@
   },
   "board": {
     "loading": "Loading puzzle...",
-    "complete": "Complete"
+    "complete": "Complete",
+    "quartersToHeart": "Quarters to next heart"
   },
   "common": {
-    "goal": "Goal"
+    "goal": "Goal",
+    "disable": "Disable",
+    "enable": "Enable"
   },
   "nav": {
     "menu": "Menu"
@@ -85,7 +89,10 @@
     "gameActions": "Game Actions",
     "clearCurrent": "Clear Current Puzzle",
     "gameActionsLocked": "Game actions are locked in Archipelago mode",
-    "displayOptions": "Display Options"
+    "displayOptions": "Display Options",
+    "clearAllTitle": "Delete all saved progress including game state, items, coins, and puzzle history",
+    "showSolution": "Show solution grid (debug)",
+    "apModeLockedTitle": "Connected to an Archipelago server — the mode is locked"
   },
   "ap": {
     "connectionTitle": "Archipelago Connection",
@@ -95,7 +102,16 @@
     "port": "Port",
     "playerName": "Player Name",
     "password": "Password",
-    "useSecure": "Use secure connection"
+    "useSecure": "Use secure connection",
+    "phHost": "localhost",
+    "phPort": "38281",
+    "phPlayer": "Your player name",
+    "phPassword": "Optional password",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting…",
+    "connect": "Connect",
+    "chatPlaceholder": "Message or command (e.g. !hint)",
+    "chatPlaceholderOff": "Connect to chat"
   },
   "shop": {
     "subtitle": "Spend coins on boosts & upgrades"
@@ -105,5 +121,24 @@
   },
   "misc": {
     "giveFeedback": "Give Feedback"
+  },
+  "aria": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "moveUp": "Move up",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "moveDown": "Move down",
+    "fillMode": "Fill mode",
+    "maybeMode": "Maybe (template) mode",
+    "xMode": "X mode",
+    "useRandomSolve": "Use a random cell solve",
+    "fillSelected": "Fill selected cell",
+    "crossSelected": "Cross selected cell"
+  },
+  "resize": {
+    "gameOptions": "Drag to resize Game / Options",
+    "shopTab": "Drag to resize Shop / Tab",
+    "logHeight": "Drag to resize the log height"
   }
 }

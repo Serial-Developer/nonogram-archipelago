@@ -1338,7 +1338,7 @@
       <button
         type="button"
         class="p-1.5 -ml-1 rounded hover:bg-neutral-800 text-neutral-200 transition-colors"
-        aria-label="Open menu"
+        :aria-label="$t('aria.openMenu')"
         @click="mobileMenuOpen = true"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -1354,7 +1354,7 @@
       <nav class="absolute left-0 top-0 h-full w-64 max-w-[80%] bg-neutral-900 border-r border-neutral-700/50 shadow-xl flex flex-col">
         <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-700/50 shrink-0">
           <span class="text-sm font-semibold text-neutral-100">{{ $t('nav.menu') }}</span>
-          <button type="button" class="p-1 text-neutral-400 hover:text-white" aria-label="Close menu" @click="mobileMenuOpen = false">
+          <button type="button" class="p-1 text-neutral-400 hover:text-white" :aria-label="$t('aria.closeMenu')" @click="mobileMenuOpen = false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" /></svg>
           </button>
         </div>
@@ -1403,7 +1403,7 @@
                   <span
                     v-if="items.archipelagoMode.value && items.zeldaHeartMode.value && !items.unlimitedLives.value && items.maxLives.value < 10"
                     class="text-xs text-rose-300/80 ml-1"
-                    title="Quarts vers le prochain coeur"
+                    :title="$t('board.quartersToHeart')"
                   >{{ items.heartQuarters.value }}/4&#9829;</span>
                 </div>
               </div>
@@ -1425,8 +1425,8 @@
                   "
                   :disabled="items.randomCellSolves.value <= 0"
                   @click="useRandomCellSolve()"
-                  title="Solve a random cell"
-                  aria-label="Use a random cell solve"
+                  :title="$t('controls.solveRandomTitle')"
+                  :aria-label="$t('aria.useRandomSolve')"
                 >
                   <span>🎯</span>
                   <span class="text-sm font-bold">{{ items.randomCellSolves.value }}</span>
@@ -1625,35 +1625,35 @@
             <!-- Directional pad: arrows move the cursor, center applies the current mode -->
             <div class="grid grid-cols-3 grid-rows-3 gap-1" style="width: 150px; height: 150px">
               <span></span>
-              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(-1, 0)" aria-label="Move up">&#9650;</button>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(-1, 0)" :aria-label="$t('aria.moveUp')">&#9650;</button>
               <span></span>
-              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, -1)" aria-label="Move left">&#9664;</button>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, -1)" :aria-label="$t('aria.moveLeft')">&#9664;</button>
               <button
                 type="button"
                 class="flex items-center justify-center rounded text-white text-xl font-bold transition active:scale-95"
                 :class="mobileCellMode === 'fill' ? 'bg-lime-600' : mobileCellMode === 'x' ? 'bg-red-600' : 'bg-sky-700'"
                 @click="applyCursor()"
-                :aria-label="mobileCellMode === 'fill' ? 'Fill selected cell' : 'Cross selected cell'"
+                :aria-label="mobileCellMode === 'fill' ? $t('aria.fillSelected') : $t('aria.crossSelected')"
               >
                 <span v-if="mobileCellMode === 'fill'">&#9632;</span><span v-else-if="mobileCellMode === 'x'">&#10005;</span><span v-else>?</span>
               </button>
-              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, 1)" aria-label="Move right">&#9654;</button>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(0, 1)" :aria-label="$t('aria.moveRight')">&#9654;</button>
               <span></span>
-              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(1, 0)" aria-label="Move down">&#9660;</button>
+              <button type="button" class="flex items-center justify-center rounded bg-neutral-800 text-neutral-200 text-lg active:bg-neutral-700" @click="moveCursor(1, 0)" :aria-label="$t('aria.moveDown')">&#9660;</button>
               <span></span>
             </div>
             <div class="flex flex-col gap-3">
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-neutral-400">{{ $t('controls.mode') }}</span>
                 <div class="flex items-center">
-                  <button type="button" class="px-3 py-2 rounded-l border border-neutral-700 text-lg" :class="mobileCellMode === 'fill' ? 'bg-lime-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'fill'" aria-label="Fill mode">&#9632;</button>
-                  <button type="button" class="px-3 py-2 border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'maybe' ? 'bg-sky-700 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'maybe'" aria-label="Maybe (template) mode">?</button>
-                  <button type="button" class="px-3 py-2 rounded-r border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'x' ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'x'" aria-label="X mode">&#10005;</button>
+                  <button type="button" class="px-3 py-2 rounded-l border border-neutral-700 text-lg" :class="mobileCellMode === 'fill' ? 'bg-lime-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'fill'" :aria-label="$t('aria.fillMode')">&#9632;</button>
+                  <button type="button" class="px-3 py-2 border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'maybe' ? 'bg-sky-700 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'maybe'" :aria-label="$t('aria.maybeMode')">?</button>
+                  <button type="button" class="px-3 py-2 rounded-r border border-l-0 border-neutral-700 text-lg" :class="mobileCellMode === 'x' ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300'" @click="mobileCellMode = 'x'" :aria-label="$t('aria.xMode')">&#10005;</button>
                 </div>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-neutral-400">{{ $t('controls.powerup') }}</span>
-                <button type="button" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-base transition-colors" :class="items.randomCellSolves.value > 0 ? 'bg-cyan-500/20 text-cyan-300 active:bg-cyan-500/30' : 'bg-neutral-700/30 text-neutral-500'" :disabled="items.randomCellSolves.value <= 0" @click="useRandomCellSolve()" aria-label="Use a random cell solve">
+                <button type="button" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded text-base transition-colors" :class="items.randomCellSolves.value > 0 ? 'bg-cyan-500/20 text-cyan-300 active:bg-cyan-500/30' : 'bg-neutral-700/30 text-neutral-500'" :disabled="items.randomCellSolves.value <= 0" @click="useRandomCellSolve()" :aria-label="$t('aria.useRandomSolve')">
                   <span>&#128302;</span>
                   <span class="text-sm font-bold">{{ items.randomCellSolves.value }}</span>
                 </button>
@@ -1667,7 +1667,7 @@
       <div
         class="hidden lg:block shrink-0 w-1.5 cursor-col-resize bg-neutral-700/40 hover:bg-cyan-500/60 transition-colors touch-none"
         @pointerdown="startResize('options', $event)"
-        title="Glisser pour redimensionner Jeu / Options"
+        :title="$t('resize.gameOptions')"
       ></div>
 
       <!-- RIGHT: sidebar attached to right side (hidden on mobile when puzzle tab active) -->
@@ -1893,7 +1893,7 @@
           <div
             class="hidden lg:block shrink-0 w-1.5 cursor-col-resize bg-neutral-700/40 hover:bg-cyan-500/60 transition-colors touch-none"
             @pointerdown="startResize('shop', $event)"
-            title="Glisser pour redimensionner Shop / Onglet"
+            :title="$t('resize.shopTab')"
           ></div>
 
           <!-- TAB COLUMN: tab bar + open tab content (fills the rest of the options width) -->
@@ -1955,10 +1955,10 @@
                         : 'bg-neutral-600/30 text-neutral-300 hover:bg-neutral-600/50'
                     "
                     :disabled="status === 'connected'"
-                    :title="status === 'connected' ? 'Connecté à un serveur Archipelago — le mode est verrouillé' : ''"
+                    :title="status === 'connected' ? $t('settings.apModeLockedTitle') : ''"
                     @click="items.archipelagoMode.value ? items.disableArchipelagoMode() : items.enableArchipelagoMode()"
                   >
-                    {{ items.archipelagoMode.value ? 'Disable' : 'Enable' }}
+                    {{ items.archipelagoMode.value ? $t('common.disable') : $t('common.enable') }}
                   </button>
                 </div>
               </div>
@@ -2197,7 +2197,7 @@
                       type="button"
                       class="btn-destructive w-full opacity-75 hover:opacity-100"
                       @click="clearAllProgress()"
-                      title="Delete all saved progress including game state, items, coins, and puzzle history"
+                      :title="$t('settings.clearAllTitle')"
                     >
                       🗑️ Clear All Game Data
                     </button>
@@ -2221,19 +2221,19 @@
                 <div class="space-y-3">
                   <div class="space-y-1">
                     <label class="text-xs font-medium text-neutral-300">{{ $t('ap.host') }}</label>
-                    <input v-model="host" class="input-field" placeholder="localhost" />
+                    <input v-model="host" class="input-field" :placeholder="$t('ap.phHost')" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-xs font-medium text-neutral-300">{{ $t('ap.port') }}</label>
-                    <input v-model.number="port" class="input-field" placeholder="38281" />
+                    <input v-model.number="port" class="input-field" :placeholder="$t('ap.phPort')" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-xs font-medium text-neutral-300">{{ $t('ap.playerName') }}</label>
-                    <input v-model="slot" class="input-field" placeholder="Your player name" />
+                    <input v-model="slot" class="input-field" :placeholder="$t('ap.phPlayer')" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-xs font-medium text-neutral-300">{{ $t('ap.password') }}</label>
-                    <input v-model="password" type="password" class="input-field" placeholder="Optional password" />
+                    <input v-model="password" type="password" class="input-field" :placeholder="$t('ap.phPassword')" />
                   </div>
                   <div class="flex items-center gap-3 pt-2">
                     <input type="checkbox" v-model="useSecureConnection" class="checkbox-field" id="secure-connection" />
@@ -2244,9 +2244,9 @@
 
                 <div class="flex gap-3 pt-2">
                   <button class="btn-primary flex-1" @click="connect()" :disabled="status === 'connected' || status === 'connecting'">
-                    {{ status === 'connecting' ? 'Connecting…' : 'Connect' }}
+                    {{ status === 'connecting' ? $t('ap.connecting') : $t('ap.connect') }}
                   </button>
-                  <button class="btn-secondary" @click="disconnect()" :disabled="status !== 'connected'">Disconnect</button>
+                  <button class="btn-secondary" @click="disconnect()" :disabled="status !== 'connected'">{{ $t('ap.disconnect') }}</button>
                 </div>
 
                 <div v-if="lastMessage" class="mt-4 p-3 bg-neutral-900/50 rounded-lg border border-neutral-600">
@@ -2317,7 +2317,7 @@
         <div
           class="hidden lg:block shrink-0 h-1.5 cursor-row-resize bg-neutral-700/40 hover:bg-cyan-500/60 transition-colors touch-none"
           @pointerdown="startResize('log', $event)"
-          title="Glisser pour redimensionner la hauteur du log"
+          :title="$t('resize.logHeight')"
         ></div>
         <!-- Bottom log panel (Game Log | Debug); height resizable on desktop -->
         <div
@@ -2361,7 +2361,7 @@
                 @keyup.enter="submitChat()"
                 :disabled="status !== 'connected'"
                 class="input-field flex-1 min-w-0"
-                :placeholder="status === 'connected' ? 'Message or command (e.g. !hint)' : 'Connect to chat'"
+                :placeholder="status === 'connected' ? $t('ap.chatPlaceholder') : $t('ap.chatPlaceholderOff')"
               />
               <button
                 type="button"
@@ -2384,7 +2384,7 @@
                 <div class="bg-neutral-800/30 rounded-sm p-4 space-y-4">
                   <label class="flex items-center gap-3 cursor-pointer group">
                     <input type="checkbox" v-model="showDebugGrid" class="checkbox-field" />
-                    <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">Show solution grid (debug)</span>
+                    <span class="text-sm text-neutral-200 group-hover:text-white transition-colors">{{ $t('settings.showSolution') }}</span>
                   </label>
                 </div>
               </section>
