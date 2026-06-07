@@ -1033,12 +1033,12 @@ export function useArchipelagoItems() {
     puzzlesCompleted[difficulty] += 1;
     const newChecks: number[] = [];
 
-    // Check if this completion unlocks a new check
-    const count = puzzlesCompleted[difficulty];
-    const maxCount = PUZZLE_COUNTS[difficulty];
-
-    if (count <= maxCount) {
-      const locationId = getPuzzleLocationId(difficulty, count);
+    // Send the current count's check AND backfill any lower threshold whose check was never
+    // confirmed (e.g. a send lost during a brief disconnect). AP checks are idempotent, so
+    // re-sending an already-checked location is a harmless no-op.
+    const upTo = Math.min(puzzlesCompleted[difficulty], PUZZLE_COUNTS[difficulty]);
+    for (let n = 1; n <= upTo; n++) {
+      const locationId = getPuzzleLocationId(difficulty, n);
       if (!completedChecks.value.has(locationId)) {
         addCompletedCheck(locationId);
         newChecks.push(locationId);
@@ -1046,6 +1046,30 @@ export function useArchipelagoItems() {
     }
 
     return newChecks;
+  }
+
+  // Re-send every puzzle-completion check implied by the current counts that the server is
+  // missing. Completion checks form a contiguous range (base+1..base+count); reconcile rebuilds
+  // the count as the highest checked id, so an interior hole (a lost mid-range send) stays hidden
+  // and is never re-sent by normal play. This catch-up (run on connect) fills those holes.
+  function getMissingCompletionChecks(): number[] {
+    if (!archipelagoMode.value) return [];
+    ensureCompletedChecksIsSet();
+    const out: number[] = [];
+    const bases: Array<{ diff: '5x5' | '10x10' | '15x15' | '20x20'; base: number }> = [
+      { diff: '5x5', base: AP_LOCATIONS.PUZZLE_5X5_BASE },
+      { diff: '10x10', base: AP_LOCATIONS.PUZZLE_10X10_BASE },
+      { diff: '15x15', base: AP_LOCATIONS.PUZZLE_15X15_BASE },
+      { diff: '20x20', base: AP_LOCATIONS.PUZZLE_20X20_BASE },
+    ];
+    for (const { diff, base } of bases) {
+      const upTo = Math.min(puzzlesCompleted[diff], PUZZLE_COUNTS[diff]);
+      for (let n = 1; n <= upTo; n++) {
+        const id = base + n;
+        if (!completedChecks.value.has(id)) out.push(id);
+      }
+    }
+    return out;
   }
 
   // Register something that voids a flawless clear: a wrong cell (gameplay) or a received DeathLink.
@@ -1370,6 +1394,7 @@ export function useArchipelagoItems() {
     buyDifficultyDecrease,
     markFirstLineCompleted,
     markPuzzleCompleted,
+    getMissingCompletionChecks,
     getPuzzleLocationId,
 
     // Computed

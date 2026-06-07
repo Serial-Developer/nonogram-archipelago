@@ -501,6 +501,15 @@ export function useArchipelago() {
 
       // Update status to playing
       client.updateStatus(clientStatuses.playing);
+
+      // Catch-up: re-send any puzzle-completion checks the server is missing (interior holes
+      // left by a send lost during an earlier disconnect). Runs now that status is 'connected'
+      // so checkLocations does not early-return; idempotent on the server side.
+      const missingChecks = items.getMissingCompletionChecks();
+      if (missingChecks.length > 0) {
+        checkLocations(missingChecks);
+        addLogMessage(`Re-sent ${missingChecks.length} missing completion check(s).`, 'info');
+      }
     } catch (e: any) {
       status.value = 'error';
       const errorMsg = e?.message ?? String(e);
