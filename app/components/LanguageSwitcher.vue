@@ -1,13 +1,40 @@
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { ref, nextTick, onBeforeUnmount } from 'vue';
 
   // useI18n is auto-imported by @nuxtjs/i18n.
   const { locale, locales, setLocale } = useI18n();
   const isOpen = ref(false);
+  const btnRef = ref<HTMLElement | null>(null);
+  const menuStyle = ref<Record<string, string>>({});
+
+  // Position the (teleported, fixed) menu under the button so it escapes the
+  // Settings panel's overflow clipping and the panels' stacking contexts.
+  function place() {
+    const el = btnRef.value;
+    if (!el || typeof window === 'undefined') return;
+    const r = el.getBoundingClientRect();
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - 8 - 160));
+    menuStyle.value = { top: `${r.bottom + 4}px`, left: `${left}px` };
+  }
+  function open() {
+    isOpen.value = true;
+    void nextTick(place);
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+  }
+  function close() {
+    isOpen.value = false;
+    window.removeEventListener('scroll', place, true);
+    window.removeEventListener('resize', place);
+  }
+  function toggle() {
+    isOpen.value ? close() : open();
+  }
   function pick(code: string) {
     void setLocale(code);
-    isOpen.value = false;
+    close();
   }
+  onBeforeUnmount(close);
 
   // Inline SVG flags (emoji flags don't render on Windows). Keyed by locale code.
   const flags: Record<string, string> = {
@@ -19,7 +46,8 @@
 <template>
   <div class="relative">
     <button
-      @click="isOpen = !isOpen"
+      ref="btnRef"
+      @click="toggle"
       class="btn-secondary flex items-center gap-2 text-sm"
       :title="$t('language.label')"
       :aria-label="$t('language.label')"
@@ -31,40 +59,43 @@
       <span class="hidden sm:inline uppercase">{{ locale }}</span>
     </button>
 
-    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 z-40" :aria-label="$t('language.closeAria')"></div>
-
-    <div
-      v-show="isOpen"
-      class="absolute right-0 mt-2 bg-color-glass-bg border border-color-glass-border rounded-lg shadow-lg z-50 p-2"
-      role="menu"
-      :aria-label="$t('language.label')"
-    >
-      <div class="flex flex-col gap-1">
-        <button
-          v-for="l in locales"
-          :key="l.code"
-          @click="pick(l.code)"
-          :aria-pressed="locale === l.code"
-          :title="l.name"
-          class="flex flex-row items-center gap-2 w-full px-3 py-2 rounded-md transition-all duration-200 text-sm"
-          :class="
-            locale === l.code
-              ? 'bg-color-primary-color text-color-btn-primary-text font-medium'
-              : 'text-color-text-primary hover:bg-color-tab-inactive-bg'
-          "
+    <!-- Dropdown teleported to body: fixed + high z-index so it is never clipped
+         by the Settings panel overflow nor covered by sibling panels. -->
+    <Teleport to="body">
+      <div v-if="isOpen">
+        <div @click="close" class="fixed inset-0 z-[999]" :aria-label="$t('language.closeAria')"></div>
+        <div
+          class="ls-menu fixed z-[1000] rounded-lg shadow-lg p-2"
+          :style="menuStyle"
+          role="menu"
+          :aria-label="$t('language.label')"
         >
-          <span
-            class="inline-flex w-7 h-[18px] rounded-sm overflow-hidden border border-black/20"
-            v-html="flags[l.code]"
-          ></span>
-          <span class="uppercase">{{ l.code }}</span>
-        </button>
+          <div class="flex flex-col gap-1">
+            <button
+              v-for="l in locales"
+              :key="l.code"
+              @click="pick(l.code)"
+              :aria-pressed="locale === l.code"
+              :title="l.name"
+              class="ls-item flex flex-row items-center gap-2 w-full px-3 py-2 rounded-md transition-all duration-200 text-sm"
+              :class="locale === l.code ? 'ls-item-active font-medium' : ''"
+            >
+              <span
+                class="inline-flex w-7 h-[18px] rounded-sm overflow-hidden border border-black/20"
+                v-html="flags[l.code]"
+              ></span>
+              <span class="uppercase">{{ l.code }}</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
+  /* Direct (non-:deep) selectors so styles still apply on teleported nodes,
+     which keep this component's scope-id attribute. Colors come from theme vars. */
   .btn-secondary {
     background-color: var(--color-btn-secondary-bg);
     color: var(--color-btn-secondary-text);
@@ -73,22 +104,19 @@
   .btn-secondary:hover {
     background-color: var(--color-btn-secondary-hover);
   }
-  :deep(.bg-color-glass-bg) {
+  .ls-menu {
     background-color: var(--color-glass-bg);
-  }
-  :deep(.border-color-glass-border) {
-    border-color: var(--color-glass-border);
-  }
-  :deep(.bg-color-primary-color) {
-    background-color: var(--color-primary-color);
-  }
-  :deep(.text-color-btn-primary-text) {
-    color: var(--color-btn-primary-text);
-  }
-  :deep(.text-color-text-primary) {
+    border: 1px solid var(--color-glass-border);
     color: var(--color-text-primary);
   }
-  :deep(.bg-color-tab-inactive-bg) {
+  .ls-item {
+    color: var(--color-text-primary);
+  }
+  .ls-item:hover {
     background-color: var(--color-tab-inactive-bg);
+  }
+  .ls-item-active {
+    background-color: var(--color-primary-color);
+    color: var(--color-btn-primary-text);
   }
 </style>
