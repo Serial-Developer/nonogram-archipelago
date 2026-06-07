@@ -41,7 +41,8 @@
   "common": {
     "goal": "Goal",
     "disable": "Disable",
-    "enable": "Enable"
+    "enable": "Enable",
+    "you": "you"
   },
   "nav": {
     "menu": "Menu"
@@ -52,7 +53,8 @@
     "log": "Game Log",
     "settings": "Settings",
     "puzzle": "Puzzle",
-    "archipelago": "Archipelago"
+    "archipelago": "Archipelago",
+    "debug": "Debug"
   },
   "modal": {
     "solvedTitle": "Puzzle Solved!",
@@ -120,7 +122,20 @@
     "chatPlaceholderOff": "Connect to chat"
   },
   "shop": {
-    "subtitle": "Spend coins on boosts & upgrades"
+    "subtitle": "Spend coins on boosts & upgrades",
+    "buyRandomCell": "Buy & Use Random Cell Solve",
+    "tempHint": "Temporary Hint Reveal",
+    "walletLevelCheck": "Wallet Level {level} (multiworld check)",
+    "sendsCheckCap": "Sends a check · cap becomes {cap}",
+    "walletUpgrade": "Wallet Upgrade → Level {level}",
+    "maxCoins": "Max coins {from} → {to}",
+    "livesWord": "lives",
+    "heartContainerCheck": "Heart Container {index} (multiworld check)",
+    "sendsCheckHearts": "Sends a check · {max}/10 max hearts",
+    "buyQuarterHeart": "Buy Quarter Heart",
+    "buyHeart": "Buy Heart",
+    "maxHearts": "max hearts",
+    "increaseDifficulty": "Increase Difficulty"
   },
   "goals": {
     "locationChecks": "Location checks for this world"
@@ -146,5 +161,9 @@
     "gameOptions": "Drag to resize Game / Options",
     "shopTab": "Drag to resize Shop / Tab",
     "logHeight": "Drag to resize the log height"
+  },
+  "flawless": {
+    "streakReset": "Flawless streak reset to 0",
+    "total": "total: {n}"
   }
 }

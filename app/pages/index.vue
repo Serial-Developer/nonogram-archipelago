@@ -475,7 +475,7 @@
     }, 4000);
   }
   function shopReceiverLabel(it: ScoutedItem): string {
-    return it.receiver === slot.value ? 'toi' : it.receiver;
+    return it.receiver === slot.value ? t('common.you') : it.receiver;
   }
 
   const AP_IT = items.AP_ITEMS;
@@ -1465,7 +1465,7 @@
                         <span>{{ itemIconFor(it) }}</span>
                         <span>{{ it.itemName }}</span>
                         <span v-if="itemClassBadge(it)">{{ itemClassBadge(it) }}</span>
-                        <span class="text-accent-300/70">→ {{ it.receiver === slot ? 'toi' : it.receiver }}</span>
+                        <span class="text-accent-300/70">→ {{ it.receiver === slot ? $t('common.you') : it.receiver }}</span>
                       </div>
                     </template>
                     <!-- Fallback when scouting is unavailable: show the location names -->
@@ -1512,7 +1512,7 @@
                   <div class="font-semibold text-sm sm:text-base">{{ $t('modal.gameOverTitle') }}</div>
                   <div v-if="items.archipelagoMode.value && items.flawlessChecks.value" class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
                     <span>&#11088;</span>
-                    <span>S&#233;rie sans faute remise &#224; 0 <span class="text-red-300/70">(total : {{ items.flawlessTotal.value }})</span></span>
+                    <span>{{ $t('flawless.streakReset') }} <span class="text-red-300/70">({{ $t('flawless.total', { n: items.flawlessTotal.value }) }})</span></span>
                   </div>
                   <div class="text-xs sm:text-sm text-red-300/80">{{ $t('modal.gameOverBody') }}</div>
                 </div>
@@ -1710,7 +1710,7 @@
                   :disabled="items.coins.value < items.RANDOM_CELL_SOLVE_COST.value"
                   @click="buyAndUseRandomCellSolve()"
                 >
-                  <span>🎯 Buy & Use Random Cell Solve</span>
+                  <span>🎯 {{ $t('shop.buyRandomCell') }}</span>
                   <span class="text-xs">🪙 {{ items.RANDOM_CELL_SOLVE_COST.value }}</span>
                 </button>
 
@@ -1727,7 +1727,7 @@
                   @click="buyTempHint()"
                 >
                   <div class="text-left">
-                    <span>👁️ Temporary Hint Reveal</span>
+                    <span>👁️ {{ $t('shop.tempHint') }}</span>
                     <div class="text-[10px] opacity-70">{{ $t('controls.revealHint') }}</div>
                   </div>
                   <span class="text-xs">🪙 {{ items.TEMP_HINT_COST.value }}</span>
@@ -1747,13 +1747,13 @@
                     @click="claimWalletShopCheck(items.nextWalletAction.value.level)"
                   >
                     <div class="text-left">
-                      <span>Wallet Level {{ items.nextWalletAction.value.level }} (multiworld check)</span>
-                      <div class="text-[10px] opacity-70">Sends a check &middot; cap becomes {{ items.WALLET_CAPS[items.nextWalletAction.value.level] }}</div>
+                      <span>{{ $t('shop.walletLevelCheck', { level: items.nextWalletAction.value.level }) }}</span>
+                      <div class="text-[10px] opacity-70">{{ $t('shop.sendsCheckCap', { cap: items.WALLET_CAPS[items.nextWalletAction.value.level] }) }}</div>
                       <div v-if="walletScout" class="text-[10px] text-accent-200/90 flex items-center gap-1">
                         <span>{{ itemIconFor(walletScout) }}</span>
                         <span class="truncate">{{ walletScout.itemName }}</span>
                         <span v-if="itemClassBadge(walletScout)">{{ itemClassBadge(walletScout) }}</span>
-                        <span class="opacity-70">&rarr; {{ walletScout.receiver === slot ? 'toi' : walletScout.receiver }}</span>
+                        <span class="opacity-70">&rarr; {{ walletScout.receiver === slot ? $t('common.you') : walletScout.receiver }}</span>
                       </div>
                     </div>
                     <span class="text-xs">🪙 {{ items.nextWalletAction.value.price }}</span>
@@ -1770,8 +1770,8 @@
                     @click="buyWalletUpgrade()"
                   >
                     <div class="text-left">
-                      <span>Wallet Upgrade &rarr; Level {{ items.nextWalletAction.value.level }}</span>
-                      <div class="text-[10px] opacity-70">Max coins {{ items.coinCap.value }} &rarr; {{ items.WALLET_CAPS[items.nextWalletAction.value.level] }}</div>
+                      <span>{{ $t('shop.walletUpgrade', { level: items.nextWalletAction.value.level }) }}</span>
+                      <div class="text-[10px] opacity-70">{{ $t('shop.maxCoins', { from: items.coinCap.value, to: items.WALLET_CAPS[items.nextWalletAction.value.level] }) }}</div>
                     </div>
                     <span class="text-xs">🪙 {{ items.nextWalletAction.value.price }}</span>
                   </button>
@@ -1791,7 +1791,7 @@
                 >
                   <div class="text-left">
                     <span>{{ $t('controls.heal') }}</span>
-                    <div class="text-[10px] opacity-70">{{ items.currentLives.value }}/{{ items.maxLives.value }} lives</div>
+                    <div class="text-[10px] opacity-70">{{ items.currentLives.value }}/{{ items.maxLives.value }} {{ $t('shop.livesWord') }}</div>
                   </div>
                   <span class="text-xs">&#129689; {{ items.nextHealingCost.value }}</span>
                 </button>
@@ -1810,13 +1810,13 @@
                     @click="claimHeartShopCheck(items.nextHeartAction.value.index)"
                   >
                     <div class="text-left">
-                      <span>Heart Container {{ items.nextHeartAction.value.index }} (multiworld check)</span>
-                      <div class="text-[10px] opacity-70">Sends a check &middot; {{ items.maxLives.value }}/10 max hearts</div>
+                      <span>{{ $t('shop.heartContainerCheck', { index: items.nextHeartAction.value.index }) }}</span>
+                      <div class="text-[10px] opacity-70">{{ $t('shop.sendsCheckHearts', { max: items.maxLives.value }) }}</div>
                       <div v-if="heartScout" class="text-[10px] text-accent-200/90 flex items-center gap-1">
                         <span>{{ itemIconFor(heartScout) }}</span>
                         <span class="truncate">{{ heartScout.itemName }}</span>
                         <span v-if="itemClassBadge(heartScout)">{{ itemClassBadge(heartScout) }}</span>
-                        <span class="opacity-70">&rarr; {{ heartScout.receiver === slot ? 'toi' : heartScout.receiver }}</span>
+                        <span class="opacity-70">&rarr; {{ heartScout.receiver === slot ? $t('common.you') : heartScout.receiver }}</span>
                       </div>
                     </div>
                     <span class="text-xs">&#129689; {{ items.nextHeartAction.value.price }}</span>
@@ -1833,10 +1833,10 @@
                     @click="buyHeart()"
                   >
                     <div class="text-left">
-                      <span>{{ items.zeldaHeartMode.value ? 'Buy Quarter Heart' : 'Buy Heart' }}</span>
+                      <span>{{ items.zeldaHeartMode.value ? $t('shop.buyQuarterHeart') : $t('shop.buyHeart') }}</span>
                       <div class="text-[10px] opacity-70">
                         <template v-if="items.zeldaHeartMode.value">{{ items.heartQuarters.value }}/4 &#9829; - {{ items.maxLives.value }}/10 max</template>
-                        <template v-else>{{ items.maxLives.value }}/10 max hearts</template>
+                        <template v-else>{{ items.maxLives.value }}/10 {{ $t('shop.maxHearts') }}</template>
                       </div>
                     </div>
                     <span class="text-xs">&#129689; {{ items.nextHeartAction.value.price }}</span>
@@ -1856,7 +1856,7 @@
                   @click="buyDifficultyIncrease()"
                 >
                   <div class="text-left">
-                    <span>📈 Increase Difficulty</span>
+                    <span>📈 {{ $t('shop.increaseDifficulty') }}</span>
                     <div class="text-[10px] opacity-70">
                       {{ items.currentDifficulty.value }}x{{ items.currentDifficulty.value }} →
                       {{ nextActiveSize }}x{{ nextActiveSize }}
@@ -2330,7 +2330,7 @@
             <!-- mini tab bar: Game Log | Debug -->
             <div class="flex border-b border-neutral-700/50 shrink-0">
               <button class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'log' }" @click="activeLogTab = 'log'">{{ $t('tabs.log') }}</button>
-              <button v-if="debugTabVisible" class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'debug' }" @click="activeLogTab = 'debug'">Debug</button>
+              <button v-if="debugTabVisible" class="tab-button whitespace-nowrap" :class="{ active: activeLogTab === 'debug' }" @click="activeLogTab = 'debug'">{{ $t('tabs.debug') }}</button>
             </div>
             <div v-show="activeLogTab === 'log'" ref="chatLogContainer" class="flex-1 min-h-0 px-4 pb-3 overflow-auto custom-scrollbar">
               <div v-if="messageLog.length === 0" class="flex items-center justify-center h-full text-xs text-neutral-500">
@@ -2560,7 +2560,7 @@
           <div class="flex items-center gap-4 w-1/2">
             <div class="status-indicator shrink-0">
               <span class="status-dot" :class="statusMeta.dot"></span>
-              <span class="text-neutral-400 font-medium">Archipelago</span>
+              <span class="text-neutral-400 font-medium">{{ $t('tabs.archipelago') }}</span>
               <span :class="statusMeta.text" class="font-semibold">{{ statusMeta.label }}</span>
             </div>
             <div class="text-xs text-white/70 hidden lg:block">
