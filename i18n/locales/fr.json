@@ -28,6 +28,8 @@
     "solveRandomTitle": "Résoudre une case aléatoire"
   },
   "log": {
+    "itemsSent": "Items envoyés",
+    "checksUnlocked": "Checks débloqués",
     "latest": "Dernier :",
     "send": "Envoyer",
     "eventsHere": "Les événements de jeu apparaîtront ici",
@@ -124,6 +126,15 @@
     "chatPlaceholderOff": "Connectez-vous pour discuter"
   },
   "shop": {
+    "toast": {
+      "purchase": "Achat !",
+      "checkUnlocked": "Check débloqué !",
+      "heal": "Soin !",
+      "healBody": "+1 vie"
+    },
+    "walletLevel": "Niveau de portefeuille {level}",
+    "heartContainer": "Conteneur de cœur",
+    "heartContainerN": "Conteneur de cœur {index}",
     "subtitle": "Dépensez vos pièces en bonus et améliorations",
     "buyRandomCell": "Acheter et utiliser une résolution de case",
     "tempHint": "Révélation d'indice temporaire",
@@ -139,6 +150,13 @@
     "maxHearts": "cœurs max",
     "increaseDifficulty": "Augmenter la difficulté",
     "decreaseDifficulty": "Diminuer la difficulté"
+  },
+  "difficulty": {
+    "tierClearedShop": "Tu as terminé toutes les grilles {size} ! Débloque la difficulté supérieure dans la boutique.",
+    "tierHint": "Termine toutes les grilles {size} pour débloquer la difficulté suivante"
+  },
+  "debug": {
+    "showMistakesForced": "(forcé ON si vies finies)"
   },
   "goals": {
     "locationChecks": "Checks de localisation pour ce monde",
@@ -169,6 +187,8 @@
     "logHeight": "Glisser pour redimensionner la hauteur du log"
   },
   "flawless": {
+    "streak": "Série sans faute : {streak}",
+    "totalInline": "(total : {total})",
     "streakReset": "Série sans faute remise à 0",
     "total": "total : {n}"
   },

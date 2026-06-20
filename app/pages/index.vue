@@ -849,27 +849,27 @@
     const lvl = items.nextWalletAction.value?.level;
     const result = items.buyWalletUpgrade();
     if (!result.success && result.reason) alert(result.reason);
-    else if (result.success) showShopNotice('', 'Achat !', 'Wallet niveau ' + (lvl ?? ''));
+    else if (result.success) showShopNotice('', t('shop.toast.purchase'), t('shop.walletLevel', { level: lvl ?? '' }));
   }
   // Shop: buy one heal (+1 life up to max).
   function buyHealing() {
     const result = items.buyHealing();
     if (!result.success && result.reason) alert(result.reason);
-    else if (result.success) showShopNotice('♥', 'Soin !', '+1 vie');
+    else if (result.success) showShopNotice('♥', t('shop.toast.heal'), t('shop.toast.healBody'));
   }
   // Shop: buy a heart container (whole, or a quarter in Zelda mode).
   function buyHeart() {
     const result = items.buyHeart();
     if (!result.success && result.reason) alert(result.reason);
-    else if (result.success) showShopNotice('♥', 'Achat !', 'Conteneur de cœur');
+    else if (result.success) showShopNotice('♥', t('shop.toast.purchase'), t('shop.heartContainer'));
   }
   function claimWalletShopCheck(level: number) {
     const result = items.claimWalletShopCheck(level);
     if (result.success && result.checkId != null) {
       checkLocations([result.checkId]);
       const it = scoutedShop.value[result.checkId];
-      if (it) showShopNotice(itemIconFor(it), 'Check débloqué !', it.itemName + ' → ' + shopReceiverLabel(it));
-      else showShopNotice('', 'Check débloqué !', 'Wallet niveau ' + level);
+      if (it) showShopNotice(itemIconFor(it), t('shop.toast.checkUnlocked'), it.itemName + ' → ' + shopReceiverLabel(it));
+      else showShopNotice('', t('shop.toast.checkUnlocked'), t('shop.walletLevel', { level }));
     } else if (result.reason) {
       alert(result.reason);
     }
@@ -879,8 +879,8 @@
     if (result.success && result.checkId != null) {
       checkLocations([result.checkId]);
       const it = scoutedShop.value[result.checkId];
-      if (it) showShopNotice(itemIconFor(it), 'Check débloqué !', it.itemName + ' → ' + shopReceiverLabel(it));
-      else showShopNotice('♥', 'Check débloqué !', 'Heart Container ' + index);
+      if (it) showShopNotice(itemIconFor(it), t('shop.toast.checkUnlocked'), it.itemName + ' → ' + shopReceiverLabel(it));
+      else showShopNotice('♥', t('shop.toast.checkUnlocked'), t('shop.heartContainerN', { index }));
     } else if (result.reason) {
       alert(result.reason);
     }
@@ -1453,12 +1453,12 @@
                   <div class="font-semibold text-sm sm:text-base">{{ $t('modal.solvedTitle') }}</div>
                   <div v-if="items.archipelagoMode.value && items.flawlessChecks.value" class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300">
                     <span>&#11088;</span>
-                    <span>S&#233;rie sans faute : {{ items.flawlessStreak.value }} <span class="text-accent-300/70">(total : {{ items.flawlessTotal.value }})</span></span>
+                    <span>{{ $t('flawless.streak', { streak: items.flawlessStreak.value }) }} <span class="text-accent-300/70">{{ $t('flawless.totalInline', { total: items.flawlessTotal.value }) }}</span></span>
                   </div>
                   <!-- Archipelago: show what solving this puzzle unlocked -->
                   <div v-if="solvedItems.length > 0 || solvedUnlockedChecks.length > 0 || goalCompleted" class="mt-1 space-y-0.5">
                     <div class="text-[11px] uppercase tracking-wider text-accent-300/70">
-                      {{ solvedItems.length > 0 ? 'Items envoyés' : 'Checks débloqués' }}
+                      {{ solvedItems.length > 0 ? $t('log.itemsSent') : $t('log.checksUnlocked') }}
                     </div>
                     <!-- Items found (scouted): icon + name + classification badge + recipient -->
                     <template v-if="solvedItems.length > 0">
@@ -1497,7 +1497,7 @@
                     class="mt-2 flex items-center gap-1.5 rounded bg-amber-500/15 px-2 py-1 text-xs sm:text-sm text-amber-300"
                   >
                     <span>🛒</span>
-                    <span>Tu as terminé toutes les grilles {{ apDifficultyKey }} ! Débloque la difficulté supérieure dans la boutique.</span>
+                    <span>{{ $t('difficulty.tierClearedShop', { size: apDifficultyKey }) }}</span>
                   </div>
                 </div>
               </div>
@@ -1879,7 +1879,7 @@
                   v-if="items.archipelagoMode.value && (nextActiveSize !== null) && items.requireTierCompletion.value && !currentTierComplete"
                   class="text-[11px] text-amber-400/80 -mt-1 px-1"
                 >
-                  Termine toutes les grilles {{ apDifficultyKey }} pour débloquer la difficulté suivante
+                  {{ $t('difficulty.tierHint', { size: apDifficultyKey }) }}
                   ({{ items.puzzlesCompleted[apDifficultyKey] }}/{{ items.PUZZLE_COUNTS[apDifficultyKey] }})
                 </p>
                 <!-- Decrease Difficulty (only shown once difficulty has been increased above the base 5x5) -->
@@ -2434,7 +2434,7 @@
                   </label>
                   <label class="flex items-center gap-3 cursor-pointer group" :class="{ 'opacity-50': !simUnlimitedLives }">
                     <input type="checkbox" v-model="simShowMistakes" class="checkbox-field" :disabled="!simUnlimitedLives" />
-                    <span class="text-sm text-neutral-200">show_mistakes <span class="text-2xs text-neutral-500">(forcé ON si vies finies)</span></span>
+                    <span class="text-sm text-neutral-200">show_mistakes <span class="text-2xs text-neutral-500">{{ $t('debug.showMistakesForced') }}</span></span>
                   </label>
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-neutral-200">starting_wallet_level</span>

@@ -28,6 +28,8 @@
     "solveRandomTitle": "Solve a random cell"
   },
   "log": {
+    "itemsSent": "Items sent",
+    "checksUnlocked": "Checks unlocked",
     "latest": "Latest:",
     "send": "Send",
     "eventsHere": "Game events will appear here",
@@ -124,6 +126,15 @@
     "chatPlaceholderOff": "Connect to chat"
   },
   "shop": {
+    "toast": {
+      "purchase": "Purchase!",
+      "checkUnlocked": "Check unlocked!",
+      "heal": "Heal!",
+      "healBody": "+1 life"
+    },
+    "walletLevel": "Wallet level {level}",
+    "heartContainer": "Heart Container",
+    "heartContainerN": "Heart Container {index}",
     "subtitle": "Spend coins on boosts & upgrades",
     "buyRandomCell": "Buy & Use Random Cell Solve",
     "tempHint": "Temporary Hint Reveal",
@@ -139,6 +150,13 @@
     "maxHearts": "max hearts",
     "increaseDifficulty": "Increase Difficulty",
     "decreaseDifficulty": "Decrease Difficulty"
+  },
+  "difficulty": {
+    "tierClearedShop": "You've completed all {size} puzzles! Unlock the next difficulty in the shop.",
+    "tierHint": "Complete all {size} puzzles to unlock the next difficulty"
+  },
+  "debug": {
+    "showMistakesForced": "(forced ON with finite lives)"
   },
   "goals": {
     "locationChecks": "Location checks for this world",
@@ -169,6 +187,8 @@
     "logHeight": "Drag to resize the log height"
   },
   "flawless": {
+    "streak": "Flawless streak: {streak}",
+    "totalInline": "(total: {total})",
     "streakReset": "Flawless streak reset to 0",
     "total": "total: {n}"
   },
