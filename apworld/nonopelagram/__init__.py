@@ -176,9 +176,14 @@ class NonogramWorld(World):
                 self.multiworld.itempool.append(self.create_item(name))
 
     def set_rules(self) -> None:
-        """Set access rules for locations."""
-        # Most locations just require completing puzzles, no special rules needed
-        # Goal is to complete enough puzzles
+        """Set the completion condition.
+
+        Per-tier and per-location access rules live in Regions.py: wallet gates on the tier
+        connections and on the wallet/heart shop checks. When no gate bites (self._wallet_gates
+        is False) the world is fully open — every location is reachable from the start, so a
+        Universal Tracker "all in logic" pass is expected. When a gate bites, real spheres form:
+        the goal and the gated tiers require the corresponding received Wallet Upgrade items.
+        """
         self.multiworld.completion_condition[self.player] = lambda state: (
             state.has("Victory", self.player)
         )

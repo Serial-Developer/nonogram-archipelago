@@ -29,10 +29,10 @@ class NonogramItem(Item):
 
 item_table: Dict[str, NonogramItemData] = {
 
-    # === Hint Reveals (Progression - needed to solve harder puzzles) ===
+    # === Hint Reveal (Useful - reveals a row/column hint; gates no progression) ===
     "Hint Reveal": NonogramItemData(
         code=8001001,
-        classification=ItemClassification.progression
+        classification=ItemClassification.useful
     ),
 
     # === Lives (Useful) ===
@@ -73,9 +73,9 @@ item_table: Dict[str, NonogramItemData] = {
 }
 
 
-# Item groups for hint system
+# Item groups for the hint system
 item_groups: Dict[str, Set[str]] = {
-    "Progression": {
+    "Hints": {
         "Hint Reveal",
     },
     "Consumables": {
