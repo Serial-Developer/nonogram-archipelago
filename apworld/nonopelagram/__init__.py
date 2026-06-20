@@ -5,12 +5,39 @@ A picross/nonogram puzzle game for Archipelago multiworld randomizer.
 """
 
 from typing import Dict, Any, ClassVar
-from BaseClasses import Item, Location, Region, Tutorial
+from BaseClasses import Item, ItemClassification, Location, Region, Tutorial
 from worlds.AutoWorld import World, WebWorld
 from .Items import NonogramItem, item_table, item_groups
 from .Locations import NonogramLocation, location_table
 from .Options import NonogramOptions
 from .Regions import create_regions
+
+
+# === Wallet economy — MUST stay in sync with app/composables/useArchipelagoItems.ts
+# (WALLET_CAPS ~l.105, WALLET_PRICES ~l.107). ===
+WALLET_CAPS = [49, 99, 999, 4999, 9999]   # coin capacity at each wallet level (index = level)
+WALLET_PRICES = [0, 30, 90, 900, 3333]    # shop price to obtain each wallet level (index = level)
+
+
+def _wallet_level_for_cost(cost: int):
+    """Smallest wallet level whose capacity can hold `cost` coins, or None if cost > max cap."""
+    for level, cap in enumerate(WALLET_CAPS):
+        if cap >= cost:
+            return level
+    return None
+
+
+def _wallets_required(cost: int, start_level: int, wallets_in_pool: int):
+    """Number of Wallet Upgrade items that must be RECEIVED to afford `cost` coins.
+
+    S = start_level, P = wallets_in_pool. Wallet levels at or below P live in the multiworld
+    pool and must be received; levels above P are auto-bought in-shop with coins (never gated).
+    Returns None when `cost` exceeds the highest wallet capacity (unaffordable at any level).
+    """
+    level = _wallet_level_for_cost(cost)
+    if level is None:
+        return None
+    return max(0, min(level, wallets_in_pool) - start_level)
 
 
 class NonogramWebWorld(WebWorld):
@@ -54,9 +81,17 @@ class NonogramWorld(World):
     item_name_groups = item_groups
 
     def create_item(self, name: str) -> NonogramItem:
-        """Create an item for this world."""
+        """Create an item for this world.
+
+        Wallet Upgrade is promoted to progression only when a wallet gate actually bites this
+        seed (computed in generate_early as self._wallet_gates); otherwise it stays useful.
+        Every other item keeps its static classification from the item table.
+        """
         item_data = item_table[name]
-        return NonogramItem(name, item_data.classification, item_data.code, self.player)
+        classification = item_data.classification
+        if name == "Wallet Upgrade" and getattr(self, "_wallet_gates", False):
+            classification = ItemClassification.progression
+        return NonogramItem(name, classification, item_data.code, self.player)
 
     # Effective puzzle counts per grid size, resolved from the preset/custom options.
     grid_counts: Dict[str, int]
@@ -81,6 +116,68 @@ class NonogramWorld(World):
         if mode == "progressive":
             return {10: 99, 15: 999, 20: 1999}.get(target, 0)
         return 30  # low (default)
+
+    @staticmethod
+    def _heart_step_cost(mode: str, custom: int, m: int) -> int:
+        """Coin cost of the m-th shop heart (1-based) under a heart_cost mode (mirror of client)."""
+        if mode == "free":
+            return 0
+        if mode == "low":
+            return 30
+        if mode == "high":
+            return 300
+        if mode == "progressive":
+            return min(9999, 50 * m)
+        if mode == "custom":
+            return custom
+        return 100  # normal (default)
+
+    def _wallets_needed(self, cost: int):
+        """Wallet Upgrades to receive to afford `cost` coins, for this world's S and P."""
+        return _wallets_required(
+            cost,
+            self.options.starting_wallet_level.value,
+            self.options.wallets_in_pool.value,
+        )
+
+    def wallet_access_rule(self, cost: int):
+        """Access rule for a location/connection guarded by needing `cost` coins.
+
+        Returns None when no Wallet Upgrade is required (affordable from the start), or a
+        `lambda state: state.has("Wallet Upgrade", player, n)` rule. Raises ValueError when
+        `cost` can never be afforded (exceeds the max wallet capacity) — an unbeatable seed.
+        """
+        n = self._wallets_needed(cost)
+        if n is None:
+            raise ValueError(
+                f"Nonopelagram: a required coin cost of {cost} exceeds the highest wallet "
+                f"capacity ({WALLET_CAPS[-1]}), so the seed would be unbeatable. This only "
+                f"happens with an aberrant custom cost — lower it."
+            )
+        if n == 0:
+            return None
+        player = self.player
+        return lambda state, n=n, player=player: state.has("Wallet Upgrade", player, n)
+
+    def difficulty_access_rule(self, target_size: int):
+        """Wallet rule for the connection that reaches the `target_size` tier."""
+        return self.wallet_access_rule(
+            self._difficulty_step_cost(self.options.difficulty_cost.current_key, target_size)
+        )
+
+    def wallet_shop_access_rule(self, k: int):
+        """Wallet rule for claiming the level-`k` wallet shop check (costs WALLET_PRICES[k])."""
+        return self.wallet_access_rule(WALLET_PRICES[k])
+
+    def heart_shop_access_rule(self, m: int):
+        """Wallet rule for claiming the m-th heart shop check (costs the m-th heart's price)."""
+        return self.wallet_access_rule(
+            self._heart_step_cost(
+                self.options.heart_cost.current_key,
+                self.options.heart_cost_custom.value,
+                m,
+            )
+        )
 
     def generate_early(self) -> None:
         """Resolve the effective per-size puzzle counts from the preset/custom options."""
@@ -115,6 +212,59 @@ class NonogramWorld(World):
                     f"is {max_cap}). Increase starting_wallet_level / wallets_in_pool or choose a "
                     f"cheaper difficulty_cost."
                 )
+
+        # Wallet gating. This replaces the old, over-strict guard that summed starting_wallet_level
+        # + wallets_in_pool into a single reachable cap and rejected any step costing more than it.
+        # That guard ignored that wallet levels above the pool are auto-bought in-shop with coins,
+        # so it wrongly rejected winnable seeds (e.g. difficulty_cost=normal with wallets_in_pool=0,
+        # where every level is simply bought with coins).
+        #
+        # Now we only (a) reject a truly unbeatable seed — a required coin cost above the highest
+        # wallet capacity (9999), which the built-in modes never reach (max 1999) and only an
+        # aberrant custom cost could hit — and (b) record whether any wallet gate actually bites,
+        # which drives the Wallet Upgrade classification (create_item) and the rules (Regions.py).
+        start = self.options.starting_wallet_level.value
+        pool = self.options.wallets_in_pool.value
+        cost_mode = self.options.difficulty_cost.current_key
+        active = [s for s in (5, 10, 15, 20) if self.grid_counts[f"{s}x{s}"] > 0]
+
+        self._wallet_gates = False
+
+        def _check_gate(cost: int) -> None:
+            n = _wallets_required(cost, start, pool)
+            if n is None:
+                raise ValueError(
+                    f"Nonopelagram: a required coin cost of {cost} exceeds the highest wallet "
+                    f"capacity ({WALLET_CAPS[-1]}), making the seed unbeatable. Lower the cost "
+                    f"(only an aberrant custom heart cost can reach this)."
+                )
+            if n > 0:
+                self._wallet_gates = True
+
+        # Difficulty steps required to reach each tier above the start tier (these gate the goal).
+        for target in active[1:]:
+            _check_gate(self._difficulty_step_cost(cost_mode, target))
+
+        # Mandatory wallet shop checks (levels 1..pool): their purchase price must be affordable.
+        for k in range(1, pool + 1):
+            _check_gate(WALLET_PRICES[k])
+
+        # Heart shop checks (1..hearts_in_pool), only with finite lives + shop hearts.
+        if self.options.shop_hearts.value and not self.options.unlimited_lives.value:
+            heart_mode = self.options.heart_cost.current_key
+            heart_custom = self.options.heart_cost_custom.value
+            for m in range(1, self.options.hearts_in_pool.value + 1):
+                _check_gate(self._heart_step_cost(heart_mode, heart_custom, m))
+
+        # Invariant (always holds): the goal never needs more Wallet Upgrades than the pool size,
+        # since required = max(0, min(L, P) - S) <= P. Kept as a defensive check.
+        goal_reqs = [
+            _wallets_required(self._difficulty_step_cost(cost_mode, t), start, pool) or 0
+            for t in active[1:]
+        ]
+        assert all(r <= pool for r in goal_reqs), (
+            "Nonopelagram: goal needs more Wallet Upgrades than the pool provides"
+        )
 
     def create_regions(self) -> None:
         """Create and connect all regions for this world."""
