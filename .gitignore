@@ -26,3 +26,6 @@ logs
 # Python
 __pycache__/
 *.pyc
+
+# Built APWorld artifact (distributed via GitHub release, see README)
+apworld/nonopelagram.apworld
