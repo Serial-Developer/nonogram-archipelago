@@ -2,6 +2,25 @@
 
 All notable changes to Nonopelagram (the nonogram Archipelago world + web client) are documented here.
 
+## [1.0.2]
+
+Requires Archipelago 0.6.7 or newer.
+
+### Fixed
+- Multiworld logic: difficulty tiers and the goal are now gated behind the Wallet Upgrade items the player actually receives. Paid-difficulty seeds with wallets in the pool previously left the world fully open, which could place another world's progression behind locations the player could not yet afford and make a seed unwinnable.
+- Replaced an over-strict beatability guard that rejected winnable seeds: it collapsed the starting wallet level and pooled wallets into a single cap and ignored that wallet levels above wallets_in_pool are bought in-shop with farmed coins.
+- Localization: English (and other non-French) players no longer see hardcoded French text in the shop / purchase notices, the flawless-streak line, the items-sent / checks-unlocked counters and the difficulty-progression messages; these now resolve through the locale files.
+
+### Changed
+- Hint Reveal is reclassified from progression to useful (it never gated a location); its item group is renamed from "Progression" to "Hints".
+- Wallet Upgrade is promoted to progression only when a wallet gate actually applies to the seed; otherwise it stays useful.
+
+### Added
+- Universal Tracker support: the world can be re-generated from slot_data alone (interpret_slot_data + ut_can_gen_without_yaml), so trackers report the correct in-logic locations and reveal the higher difficulty tiers as Wallet Upgrades are received.
+
+### Internal
+- Manifest world_version bumped to 1.0.2; Serial-Developer added to authors.
+
 ## [1.0.0]
 
 First stable release. Requires Archipelago 0.6.7 or newer.
