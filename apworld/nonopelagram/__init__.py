@@ -80,6 +80,10 @@ class NonogramWorld(World):
 
     item_name_groups = item_groups
 
+    # Universal Tracker: allow regenerating this slot purely from its slot_data (no YAML on the
+    # tracker's side). Works together with interpret_slot_data / generate_early's passthrough path.
+    ut_can_gen_without_yaml = True
+
     def create_item(self, name: str) -> NonogramItem:
         """Create an item for this world.
 
@@ -179,18 +183,56 @@ class NonogramWorld(World):
             )
         )
 
+    def interpret_slot_data(self, slot_data: dict) -> dict:
+        """Universal Tracker hook. Returning the slot_data triggers a passthrough re-gen so
+        generate_early can restore the exact gating state (the grid preset and per-slot options
+        are not otherwise recoverable during tracking)."""
+        return slot_data
+
+    def _restore_from_slot_data(self, sd: dict) -> None:
+        """Restore generation-affecting state from slot_data (Universal Tracker re-gen)."""
+        self.grid_counts = {
+            "5x5": sd.get("puzzles_5x5", 0),
+            "10x10": sd.get("puzzles_10x10", 0),
+            "15x15": sd.get("puzzles_15x15", 0),
+            "20x20": sd.get("puzzles_20x20", 0),
+        }
+        o = self.options
+        o.starting_wallet_level.value = sd.get("starting_wallet_level", o.starting_wallet_level.value)
+        o.wallets_in_pool.value = sd.get("wallets_in_pool", o.wallets_in_pool.value)
+        dc = sd.get("difficulty_cost")
+        if dc is not None:
+            o.difficulty_cost.value = type(o.difficulty_cost).options[str(dc)]
+        o.shop_hearts.value = int(sd.get("shop_hearts", o.shop_hearts.value))
+        o.unlimited_lives.value = int(sd.get("unlimited_lives", o.unlimited_lives.value))
+        o.hearts_in_pool.value = sd.get("hearts_in_pool", o.hearts_in_pool.value)
+        hc = sd.get("heart_cost")
+        if hc is not None:
+            o.heart_cost.value = type(o.heart_cost).options[str(hc)]
+        o.heart_cost_custom.value = sd.get("heart_cost_custom", o.heart_cost_custom.value)
+        o.flawless_checks.value = int(sd.get("flawless_checks", o.flawless_checks.value))
+        o.require_tier_completion.value = int(sd.get("require_tier_completion", o.require_tier_completion.value))
+
     def generate_early(self) -> None:
-        """Resolve the effective per-size puzzle counts from the preset/custom options."""
-        preset = self.options.grid_preset
-        if preset.current_key == "custom":
-            self.grid_counts = {
-                "5x5": self.options.puzzles_5x5.value,
-                "10x10": self.options.puzzles_10x10.value,
-                "15x15": self.options.puzzles_15x15.value,
-                "20x20": self.options.puzzles_20x20.value,
-            }
+        """Resolve the effective per-size puzzle counts from the preset/custom options.
+
+        Under Universal Tracker re-generation, multiworld.re_gen_passthrough carries this slot's
+        slot_data, from which we restore grid_counts and the gating options exactly (the preset
+        isn't sent, so it can't be re-derived otherwise)."""
+        passthrough = getattr(self.multiworld, "re_gen_passthrough", None)
+        if passthrough and self.game in passthrough:
+            self._restore_from_slot_data(passthrough[self.game])
         else:
-            self.grid_counts = dict(self.GRID_PRESETS[preset.current_key])
+            preset = self.options.grid_preset
+            if preset.current_key == "custom":
+                self.grid_counts = {
+                    "5x5": self.options.puzzles_5x5.value,
+                    "10x10": self.options.puzzles_10x10.value,
+                    "15x15": self.options.puzzles_15x15.value,
+                    "20x20": self.options.puzzles_20x20.value,
+                }
+            else:
+                self.grid_counts = dict(self.GRID_PRESETS[preset.current_key])
         # Safety: never allow an empty goal (would make the seed unwinnable).
         if sum(self.grid_counts.values()) <= 0:
             self.grid_counts["5x5"] = 1
