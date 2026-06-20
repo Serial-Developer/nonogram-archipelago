@@ -195,24 +195,6 @@ class NonogramWorld(World):
         if sum(self.grid_counts.values()) <= 0:
             self.grid_counts["5x5"] = 1
 
-        # Beatability guard: held coins are capped by the wallet, so a difficulty step costing
-        # more than the highest reachable cap can never be bought, making higher tiers (and the
-        # goal) unreachable. Reject such seeds.
-        wallet_caps = [49, 99, 999, 4999, 9999]
-        max_level = min(4, self.options.starting_wallet_level.value + self.options.wallets_in_pool.value)
-        max_cap = wallet_caps[max_level]
-        cost_mode = self.options.difficulty_cost.current_key
-        active = [s for s in (5, 10, 15, 20) if self.grid_counts[f"{s}x{s}"] > 0]
-        for target in active[1:]:
-            cost = self._difficulty_step_cost(cost_mode, target)
-            if cost > max_cap:
-                raise ValueError(
-                    f"Nonopelagram: difficulty_cost '{cost_mode}' makes the {target}x{target} tier "
-                    f"unreachable (step costs {cost} but the highest wallet capacity you can reach "
-                    f"is {max_cap}). Increase starting_wallet_level / wallets_in_pool or choose a "
-                    f"cheaper difficulty_cost."
-                )
-
         # Wallet gating. This replaces the old, over-strict guard that summed starting_wallet_level
         # + wallets_in_pool into a single reachable cap and rejected any step costing more than it.
         # That guard ignored that wallet levels above the pool are auto-bought in-shop with coins,
