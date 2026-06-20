@@ -9,6 +9,7 @@ This creates a nonopelagram.apworld file that can be installed in Archipelago.
 """
 
 import os
+import json
 import zipfile
 from pathlib import Path
 
@@ -28,6 +29,11 @@ def build_apworld():
         output_file.unlink()
         print(f"Removed existing: {output_file}")
 
+    # APContainer format version. The official Launcher "Build APWorlds" component (source installs
+    # only) injects these into the packaged manifest automatically; we replicate it here so the
+    # artifact built on a frozen install is identical. APContainer 7 ships with Archipelago 0.6.4+.
+    APCONTAINER_VERSION = 7
+
     # Create the apworld (which is just a zip file)
     with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(world_dir):
@@ -42,8 +48,19 @@ def build_apworld():
                 file_path = Path(root) / file
                 # Calculate the archive name (relative to apworld directory, with nonopelagram/ prefix)
                 arcname = "nonopelagram" / file_path.relative_to(world_dir)
-                zipf.write(file_path, arcname)
-                print(f"  Added: {arcname}")
+
+                if file == 'archipelago.json':
+                    # Carry over the source manifest and add the APContainer version fields,
+                    # matching what the official "Build APWorlds" component would produce.
+                    manifest = json.loads(file_path.read_text(encoding='utf-8'))
+                    manifest.setdefault('version', APCONTAINER_VERSION)
+                    manifest.setdefault('compatible_version', APCONTAINER_VERSION)
+                    zipf.writestr(str(arcname).replace(os.sep, '/'),
+                                  json.dumps(manifest, indent=4))
+                    print(f"  Added (manifest + version/compatible_version): {arcname}")
+                else:
+                    zipf.write(file_path, arcname)
+                    print(f"  Added: {arcname}")
 
     print(f"\nSuccessfully created: {output_file}")
     print(f"File size: {output_file.stat().st_size} bytes")
